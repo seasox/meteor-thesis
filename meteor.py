@@ -872,7 +872,7 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
     return message
 
 model_name = 'gpt2-medium'
-device = 'cuda'
+device = 'cpu'
 
 enc, model = get_model(model_name=model_name, device=device)
 
