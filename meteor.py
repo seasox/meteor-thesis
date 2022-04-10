@@ -44,8 +44,35 @@ enc, model = get_model(model_name=model_name, device=device)
     
 coder = MeteorCoder(enc, model, device)
 
-key = b'\x03'*64
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import serialization
+
+# generate a private key pair
+private_key = X25519PrivateKey.generate()
+public_key = private_key.public_key()
+public_key_data = public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+
+# encode public key with zero key
+pk_key = b'\x00'*64
+pk_nonce = b'\xfa'*64
+encoded_pk = coder.encode_binary(public_key_data, chosen_context, pk_key, pk_nonce)
+
+# send encoded_pk to bob
+
+# Bob: generate key and send via stego channel
+bobs_pk_data = X25519PrivateKey.generate().public_key().public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+bobs_encoded_pk = coder.encode_binary(bobs_pk_data, chosen_context, pk_key, pk_nonce)
+# Alice receives Bob's PK
+bobs_pk = X25519PublicKey.from_public_bytes(coder.decode_binary(bobs_encoded_pk[0], chosen_context, pk_key, pk_nonce))
+
+
+# derive key
+shared_key = private_key.exchange(bobs_pk)
+derived_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b'handshake data').derive(shared_key)
+
 nonce = b'\x01'*64
 
-x = coder.encode_message(message_text, chosen_context, key, nonce)
-y = coder.decode_message(x[0], chosen_context, key, nonce)
+x = coder.encode_message(message_text, chosen_context, derived_key, nonce)
+y = coder.decode_message(x[0], chosen_context, derived_key, nonce)
