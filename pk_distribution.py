@@ -1,13 +1,11 @@
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import hashes
 
 
-def get_bits(data: bytes, length: int) -> [int]:
-	bits = [0] * (8 * length)
-	for i, byte in enumerate(data):
-		for j in range(8):
-			bits[i*8+j] = (byte >> j) & 1
-	return bits
+def get_bits(data: bytes) -> [int]:
+	return [int(i) for i in ''.join(['{:08b}'.format(b) for b in data])]
 
 def add_all(stat: [int], data: [int]) -> [int]:
 	assert len(data) == len(stat)
@@ -17,9 +15,18 @@ def add_all(stat: [int], data: [int]) -> [int]:
 
 stat = [0] * (8 * 32)
 
-for i in range(100000000):
-	pk_data = X25519PrivateKey.generate().public_key().public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
-	bits = get_bits(pk_data, 32)
-	stat = add_all(stat, bits)
+derived_key_stat = [0] * (8 * 32)
+
+for i in range(10**6):
+	sk = X25519PrivateKey.generate()
+	pk = X25519PrivateKey.generate().public_key()
+	pk_data = pk.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+	shared_key = sk.exchange(pk)
+	derived_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b'handshake data').derive(shared_key)
+	pk_bits = get_bits(pk_data)
+	derived_key_bits = get_bits(derived_key)
+	stat = add_all(stat, pk_bits)
+	derived_key_stat = add_all(derived_key_stat, derived_key_bits)
 	print(i)
 print(stat)
+print(derived_key_stat)
