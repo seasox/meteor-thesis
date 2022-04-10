@@ -850,6 +850,17 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
+    def encode_binary(self, data, context, key, nonce):
+	    import base64
+	    # TODO actually encode byte array
+	    encoded = base64.b64encode(data).decode('ascii')
+	    return self.encode_message(encoded, context, key, nonce)
+
+    def decode_binary(self, data, context, key, nonce):
+	    import base64
+	    b64 = self.decode_message(data, context, key, nonce)
+	    return base64.b64decode(b64)
+
     def encode_message(self, message_str, context, key, nonce):
         temp = 0.95
         precision = 32
@@ -913,5 +924,6 @@ class MeteorCoder:
 
         # Remove <eos>
         return reconst[:-5]
+
 
 
