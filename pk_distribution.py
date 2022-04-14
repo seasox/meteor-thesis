@@ -28,5 +28,11 @@ for i in range(10**6):
 	stat = add_all(stat, pk_bits)
 	derived_key_stat = add_all(derived_key_stat, derived_key_bits)
 	print(i)
+
+from scipy.stats import chisquare
+
+# remove MSB from stat
+assert stat.pop(len(stat)-8) == 0
 print(stat)
-print(derived_key_stat)
+print(chisquare(stat))
+print(chisquare(derived_key_stat))
