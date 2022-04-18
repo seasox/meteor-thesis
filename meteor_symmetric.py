@@ -1,3 +1,5 @@
+import sys
+
 from coder import MeteorCoder, MeteorEncryption, DRBG
 
 chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
@@ -37,14 +39,6 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
     return enc, model
 
 
-model_name = 'gpt2-medium'
-device = 'cpu'
-
-enc, model = get_model(model_name=model_name, device=device)
-
-coder = MeteorCoder(enc, model, device)
-
-
 class PRGEncryption(MeteorEncryption):
     def __init__(self, prg):
         self.prg = prg
@@ -64,14 +58,28 @@ class PRGEncryption(MeteorEncryption):
         return new_bits
 
 
-# Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
-sample_seed_prefix = b'sample'
-sample_key = b'0x01'*64
-sample_nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+def main():
+    model_name = 'gpt2-medium'
+    device = 'cpu'
+
+    enc, model = get_model(model_name=model_name, device=device)
+
+    coder = MeteorCoder(enc, model, device)
 
 
-encryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
-decryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
+    # Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
+    sample_seed_prefix = b'sample'
+    sample_key = b'0x01'*64
+    sample_nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
-x = coder.encode_message(message_text, chosen_context, encryption)
-y = coder.decode_message(x[0], chosen_context, decryption)
+
+    encryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
+    decryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
+
+    x = coder.encode_message(message_text, chosen_context, encryption)
+    y = coder.decode_message(x[0], chosen_context, decryption)
+
+
+if __name__ == '__main__':
+    main()
+    quit()
