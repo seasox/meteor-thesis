@@ -4,6 +4,13 @@ import bitarray
 import numpy as np
 import torch.nn.functional as F
 
+class MeteorEncryption:
+
+    def encrypt(self, data, n):
+        raise Exception("Not implemented")
+
+    def decrypt(self, data, n):
+        raise Exception("Not implemented")
 
 
 def limit_past(past):
@@ -271,22 +278,10 @@ def compute_entropy(lists):
     return entropy
 
 
-#@title
 import torch
 
-import os
 
-# Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
-sample_key = b'0x01'*64
-sample_seed_prefix = b'sample'
-sample_nonce_counter = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-
-
-def encode_meteor(model, enc, message, context, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False, randomize_key=False, input_key=sample_key, input_nonce=sample_nonce_counter):
-
-    if randomize_key:
-        input_key = os.urandom(64)
-    mask_generator = DRBG(input_key, sample_seed_prefix + input_nonce)
+def encode_meteor(model, enc, message, context, encryption: MeteorEncryption, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
 
@@ -365,9 +360,8 @@ def encode_meteor(model, enc, message, context, finish_sent=False, device='cuda'
                 if i+precision > len(message):
                     message_bits = message_bits + [0]*(i+precision-len(message))
 
-                mask_bits = mask_generator.generate_bits(precision)
-                for b in range(0, len(message_bits)):
-                    message_bits[b] = message_bits[b] ^ mask_bits[b]
+                print(message_bits)
+                message_bits = encryption.encrypt(message_bits, precision)
 
                 # Get selected index based on binary fraction from message bits
                 message_idx = bits2int(reversed(message_bits))
@@ -411,14 +405,14 @@ def encode_meteor(model, enc, message, context, finish_sent=False, device='cuda'
 
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
 
-def decode_meteor(model, enc, text, context, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False, input_key=sample_key, input_nonce=sample_nonce_counter):
+
+def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
     import torch
     # inp is a list of token indices
     # context is a list of token indices
     inp = enc.encode(text)
 
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
-    mask_generator = DRBG(input_key, sample_seed_prefix + input_nonce)
 
     max_val = 2**precision
     threshold = 2**(-precision)
@@ -532,9 +526,7 @@ def decode_meteor(model, enc, text, context, device='cuda', temp=1.0, precision=
                 new_bits = new_int_top_bits_inc[:num_bits_encoded]
 
             # Get the mask and apply it to the recovered bits
-            mask_bits = mask_generator.generate_bits(precision)
-            for b in range(0, len(new_bits)):
-                new_bits[b] = new_bits[b] ^ mask_bits[b]
+            new_bits = encryption.encrypt(new_bits, precision)
             message += new_bits
 
             # Update history with new token
@@ -799,6 +791,7 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
 
     return message
 
+
 """ 
 A Deterministic Random Bit Generator
 """
@@ -861,7 +854,8 @@ class MeteorCoder:
 	    b64 = self.decode_message(data, context, key, nonce)
 	    return base64.b64decode(b64)
 
-    def encode_message(self, message_str, context, key, nonce):
+
+    def encode_message(self, message_str, context, encryption):
         temp = 0.95
         precision = 32
         topk = 50000
@@ -880,8 +874,8 @@ class MeteorCoder:
 
         # Next encode bits into cover text, using arbitrary context
         Hq = 0
-        out, nll, kl, words_per_bit, Hq = encode_meteor(self.model, self.enc, message, context_tokens, temp=temp, finish_sent=finish_sent,
-                                                        precision=precision, topk=topk, device=self.device, is_sort=meteor_sort, randomize_key=meteor_random, input_key=key, input_nonce=nonce)
+        out, nll, kl, words_per_bit, Hq = encode_meteor(self.model, self.enc, message, context_tokens, encryption, temp=temp, finish_sent=finish_sent,
+                                                        precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
         text = self.enc.decode(out)
 
         print("="*40 + " Encoding " + "="*40)
@@ -899,7 +893,7 @@ class MeteorCoder:
         return text, stats
 
 
-    def decode_message(self, text, context, key, nonce):
+    def decode_message(self, text, context, encryption):
         temp = 0.95
         precision = 32
         topk = 50000
@@ -911,8 +905,8 @@ class MeteorCoder:
         context_tokens = encode_context(context, self.enc)
         message_ctx = [self.enc.encoder['<|endoftext|>']]
 
-        message_rec = decode_meteor(self.model, self.enc, text, context_tokens, temp=temp,
-                                    precision=precision, topk=topk, device=self.device, is_sort=meteor_sort, input_key=key, input_nonce=nonce)
+        message_rec = decode_meteor(self.model, self.enc, text, context_tokens, encryption, temp=temp,
+                                    precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
 
         reconst = encode_arithmetic(
             self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
