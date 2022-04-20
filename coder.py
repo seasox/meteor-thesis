@@ -1,5 +1,7 @@
 import hashlib
 import hmac
+from typing import Union, List
+
 import bitarray
 import numpy as np
 import torch.nn.functional as F
@@ -54,7 +56,7 @@ def num_same_from_beg(bits1, bits2):
 
     return i
 
-def encode_context(raw_text, enc):
+def encode_context(raw_text, enc) -> List[int]:
     context_tokens = [enc.encoder['<|endoftext|>']] + enc.encode(raw_text)
     return context_tokens
 
@@ -281,7 +283,7 @@ def compute_entropy(lists):
 import torch
 
 
-def encode_meteor(model, enc, message, context, encryption: MeteorEncryption, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
+def encode_meteor(model, enc, message, context: List[int], encryption: MeteorEncryption, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
 
@@ -360,7 +362,6 @@ def encode_meteor(model, enc, message, context, encryption: MeteorEncryption, fi
                 if i+precision > len(message):
                     message_bits = message_bits + [0]*(i+precision-len(message))
 
-                print(message_bits)
                 message_bits = encryption.encrypt(message_bits, precision)
 
                 # Get selected index based on binary fraction from message bits
@@ -526,7 +527,7 @@ def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, devic
                 new_bits = new_int_top_bits_inc[:num_bits_encoded]
 
             # Get the mask and apply it to the recovered bits
-            new_bits = encryption.encrypt(new_bits, precision)
+            new_bits = encryption.decrypt(new_bits, precision)
             message += new_bits
 
             # Update history with new token
@@ -843,18 +844,7 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, data, context, encrypt):
-        import base64
-        # TODO actually encode byte array
-        encoded = base64.b64encode(data).decode('ascii')
-        return self.encode_message(encoded, context, encrypt)
-
-    def decode_binary(self, data, context, decrypt):
-        import base64
-        b64 = self.decode_message(data, context, decrypt)
-        return base64.b64decode(b64)
-
-    def encode_message(self, message_str: str, context, encryption):
+    def encode_binary(self, message: List[bool], context_tokens, encryption):
         temp = 0.95
         precision = 32
         topk = 50000
@@ -862,14 +852,6 @@ class MeteorCoder:
         finish_sent = False
         meteor_sort = False
         meteor_random = False
-
-        # First encode message to uniform bits, without any context
-        # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
-        context_tokens = encode_context(context, self.enc)
-        message_ctx = [self.enc.encoder['<|endoftext|>']]
-        message_str += '<eos>'
-        message = decode_arithmetic(
-            self.model, self.enc, message_str, message_ctx, precision=40, topk=60000, device=self.device)
 
         # Next encode bits into cover text, using arbitrary context
         Hq = 0
@@ -891,32 +873,45 @@ class MeteorCoder:
         }
         return text, stats
 
-
-    def decode_message(self, text, context, encryption):
+    def decode_binary(self, text, context_tokens: List[int], encryption):
         temp = 0.95
         precision = 32
         topk = 50000
 
         meteor_sort = False
 
-        # First encode message to uniform bits, without any context
-        # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
-        context_tokens = encode_context(context, self.enc)
-        message_ctx = [self.enc.encoder['<|endoftext|>']]
-
-        message_rec = decode_meteor(self.model, self.enc, text, context_tokens, encryption, temp=temp,
+        return decode_meteor(self.model, self.enc, text, context_tokens, encryption, temp=temp,
                                     precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
 
-        reconst = encode_arithmetic(
-            self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
-        reconst = self.enc.decode(reconst[0])
+    def encode_message(self, message_str: str, context_str: str, encryption):
+        # First encode message to uniform bits, without any context
+        # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
+        context_tokens = encode_context(context_str, self.enc)
+        message_ctx = [self.enc.encoder['<|endoftext|>']]
+        message_str += '<eos>'
+        message = bitarray.bitarray()
+        message.fromstring(message_str)
+        message = message.tolist()
+
+        return self.encode_binary(message, context_tokens, encryption)
+
+
+    def decode_message(self, text, context_str: str, encryption):
+        context_tokens = encode_context(context_str, self.enc)
+        message_rec = self.decode_binary(text, context_tokens, encryption)
+        reconst = bitarray.bitarray(message_rec)
+        reconst = reconst.tobytes().decode('utf-8', 'replace')
+        eos_idx = reconst.find('<eos>')
+        #reconst = encode_arithmetic(
+            #self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
+        #reconst = self.enc.decode(reconst[0])
 
         print("="*40 + " Recovered Message " + "="*40)
-        print(reconst[:-5])
+        print(reconst[:eos_idx])
         print("=" * 99)
 
         # Remove <eos>
-        return reconst[:-5]
+        return reconst[:eos_idx]
 
 
 
