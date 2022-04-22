@@ -4,6 +4,7 @@ from coder import MeteorCoder, DRBG, encode_context
 from meteor_symmetric import PRGEncryption
 from util import get_model
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import serialization
@@ -20,10 +21,20 @@ chosen_context = encode_context(chosen_context_str, enc)
 
 coder = MeteorCoder(enc, model, device)
 
-# generate a private key pair
+# generate a DSA key pair
+
+alice_sign = Ed25519PrivateKey.generate()
+alice_verify = alice_sign.public_key()
+
+# generate a DH private key pair
 alice_sk = X25519PrivateKey.generate()
 alice_pk = alice_sk.public_key()
 alice_pk_data = alice_pk.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+
+alice_signature: bytes = alice_sign.sign(alice_pk_data)  # 64 bytes
+
+assert len(alice_pk_data) == 32
+assert len(alice_signature) == 64
 
 
 print('Alice\'s public key (base64):')
@@ -34,7 +45,7 @@ print('Encoding Alice\'s public key to send...')
 
 # pk_encryption = PRGEncryption(DRBG(pk_key, sample_seed_prefix + pk_nonce))
 public_key_data_ba = bitarray()
-public_key_data_ba.frombytes(alice_pk_data)
+public_key_data_ba.frombytes(alice_pk_data + alice_signature)
 
 # encoded_pk = coder.encode_binary(public_key_data_ba.tolist(), chosen_context, pk_encryption)
 
@@ -43,11 +54,19 @@ public_key_data_ba.frombytes(alice_pk_data)
 
 print('Encoding Bob\'s public key to send...')
 # Bob: generate key and send via stego channel
+bob_sign = Ed25519PrivateKey.generate()
+bob_verify = bob_sign.public_key()
 bob_sk = X25519PrivateKey.generate()
 bob_pk = bob_sk.public_key()
+bob_pk_data = bob_pk.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+bob_signature = bob_sign.sign(bob_pk_data)
+
+assert len(bob_pk_data) == 32
+assert len(bob_signature) == 64
+
 bobs_pk_data_ba = bitarray()
-bobs_pk_data_ba.frombytes(bob_pk.public_bytes(encoding=serialization.Encoding.Raw,
-                                              format=serialization.PublicFormat.Raw))
+bobs_pk_data_ba.frombytes(bob_pk_data + bob_signature)
+
 sample_seed_prefix = b'sample'
 pk_key = b'\x00' * 64
 pk_nonce = b'\xfa' * 64
@@ -56,7 +75,12 @@ pk_decryption = PRGEncryption(DRBG(pk_key, sample_seed_prefix + pk_nonce))
 bob_encoded_pk = coder.encode_binary(bobs_pk_data_ba.tolist(), chosen_context, pk_encryption)
 print('Send Bob\'s PK to Alice')
 # Alice receives Bob's PK
-bob_pk_data_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_decryption)[:32*8]).tobytes()
+bob_msg_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_decryption)[:96*8]).tobytes()
+bob_pk_data_recv = bob_msg_recv[:32]
+bob_signature_recv = bob_msg_recv[32:96]
+
+bob_verify.verify(bob_signature_recv, bob_pk_data_recv)  # this throws InvalidSignature on failure
+
 bob_pk_recv = X25519PublicKey.from_public_bytes(bob_pk_data_recv)
 print('Received Bob\'s PK')
 
@@ -80,5 +104,13 @@ sample_nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0
 print('Encode message using derived key')
 encryption = PRGEncryption(DRBG(derived_key, sample_seed_prefix + sample_nonce))
 decryption = PRGEncryption(DRBG(derived_key, sample_seed_prefix + sample_nonce))
+message_text = "Hi! Did anyone follow you last night?"
 x = coder.encode_message(message_text, chosen_context_str, encryption)
 y = coder.decode_message(x[0], chosen_context_str, decryption)
+assert y == message_text
+chosen_context_str = x[0]
+message_text = "Yes, but I was able to get away. Are you okay, too? Is the plan still as we talked?"
+x = coder.encode_message(message_text, chosen_context_str, encryption)
+y = coder.decode_message(x[0], chosen_context_str, decryption)
+assert y == message_text
+
