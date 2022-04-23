@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from typing import Union, List
+from typing import List, Dict, Tuple
 
 import bitarray
 import numpy as np
@@ -50,6 +50,7 @@ def is_sent_finish(token_idx, enc):
 
 def num_same_from_beg(bits1, bits2):
     assert len(bits1) == len(bits2)
+    assert len(bits1) > 0
     for i in range(len(bits1)):
         if bits1[i] != bits2[i]:
             break
@@ -302,6 +303,8 @@ def encode_meteor(model, enc, message, context: List[int], encryption: MeteorEnc
     total_entropy_ptau = 0
     total_num_sents = 0
 
+    debug_entropies = []
+    debug_encoded_num = []
     with torch.no_grad():
         i = 0
         sent_finish = False
@@ -380,6 +383,9 @@ def encode_meteor(model, enc, message, context: List[int], encryption: MeteorEnc
                 num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
                 i += num_bits_encoded
 
+                debug_entropies.append(entropy_in_this_distribution)
+                debug_encoded_num.append(num_bits_encoded)
+
                 # Gather statistics
                 total_log_probs += log_probs[selection].item()
 
@@ -399,6 +405,8 @@ def encode_meteor(model, enc, message, context: List[int], encryption: MeteorEnc
             if '<eos>' in partial:
                 break
 
+    for i in range(len(debug_entropies)):
+        print("%.02f,%d" % (debug_entropies[i], debug_encoded_num[i]), end=';')
     avg_NLL = -total_log_probs/total_num_for_stats
     avg_KL = total_kl/total_num_for_stats
     avg_Hq = total_entropy_ptau/total_num_for_stats
@@ -407,7 +415,7 @@ def encode_meteor(model, enc, message, context: List[int], encryption: MeteorEnc
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
 
 
-def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
+def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> str:
     import torch
     # inp is a list of token indices
     # context is a list of token indices
@@ -422,6 +430,8 @@ def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, devic
     prev = context
     past = None
     message = []
+    debug_entropies = []
+    debug_encoded_num = []
     with torch.no_grad():
         i = 0
         while i < len(inp):
@@ -526,6 +536,9 @@ def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, devic
             else:
                 new_bits = new_int_top_bits_inc[:num_bits_encoded]
 
+            debug_entropies.append(entropy_in_this_distribution)
+            debug_encoded_num.append(num_bits_encoded)
+
             # Get the mask and apply it to the recovered bits
             new_bits = encryption.decrypt(new_bits, precision)
             message += new_bits
@@ -535,6 +548,8 @@ def decode_meteor(model, enc, text, context, encryption: MeteorEncryption, devic
 
             i += 1
 
+    for i in range(len(debug_entropies)):
+        print("%.02f,%d" % (debug_entropies[i], debug_encoded_num[i]), end=';')
     return message
 
 def encode_arithmetic(model, enc, message, context, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000):
@@ -844,7 +859,7 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, encryption):
+    def encode_binary(self, message: List[bool], context_tokens, encryption) -> Tuple[str, Dict]:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -873,7 +888,7 @@ class MeteorCoder:
         }
         return text, stats
 
-    def decode_binary(self, text, context_tokens: List[int], encryption):
+    def decode_binary(self, text, context_tokens: List[int], encryption) -> list:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -883,7 +898,10 @@ class MeteorCoder:
         return decode_meteor(self.model, self.enc, text, context_tokens, encryption, temp=temp,
                                     precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
 
-    def encode_message(self, message_str: str, context_str: str, encryption):
+    """
+    Encode a message_str to a meteor stegotext
+    """
+    def encode_message(self, message_str: str, context_str: str, encryption) -> Tuple[str, Dict]:
         # First encode message to uniform bits, without any context
         # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
         context_tokens = encode_context(context_str, self.enc)
@@ -895,8 +913,10 @@ class MeteorCoder:
 
         return self.encode_binary(message, context_tokens, encryption)
 
-
-    def decode_message(self, text, context_str: str, encryption):
+    """
+    Decode a meteor stegotext to message string
+    """
+    def decode_message(self, text: str, context_str: str, encryption) -> str:
         context_tokens = encode_context(context_str, self.enc)
         message_rec = self.decode_binary(text, context_tokens, encryption)
         reconst = bitarray.bitarray(message_rec)
