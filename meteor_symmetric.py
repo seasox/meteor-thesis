@@ -27,7 +27,10 @@ def main():
     model_name = 'gpt2-medium'
     device = 'cpu'
 
+    print('get model')
+    logging.basicConfig(level=logging.DEBUG)
     enc, model = get_model(model_name=model_name, device=device)
+    print('done')
 
     coder = MeteorCoder(enc, model, device)
 
