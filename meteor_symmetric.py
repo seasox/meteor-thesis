@@ -36,21 +36,18 @@ def main():
 
     # Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
     sample_seed_prefix = b'sample'
-    sample_key = b'0x01'*64
+    sample_key = b'0x01' * 64
     sample_nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-
-    chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
-    message_text = "sample text"
-
     encryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
     decryption = PRGEncryption(DRBG(sample_key, sample_seed_prefix + sample_nonce))
-
-    x = coder.encode_message(message_text, chosen_context, encryption)
-    y = coder.decode_message(x[0], chosen_context, decryption)
-
-    assert y == message_text
+    chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
+    message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
+    while True:
+        print("DRBG states: %d,%d" % (encryption.prg.key, encryption.prg.val), encryption.prg)
+        x = coder.encode_message(message_text, chosen_context, encryption)
+        y = coder.decode_message(x[0], chosen_context, decryption)
+        assert y == message_text
 
 
 if __name__ == '__main__':
     main()
-    quit()
