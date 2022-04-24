@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from util import get_model
@@ -7,10 +8,13 @@ from coder import MeteorCoder, MeteorEncryption, DRBG
 class PRGEncryption(MeteorEncryption):
     def __init__(self, prg):
         self.prg = prg
+        self.encrypt_masks = []
+        self.decrypt_masks = []
 
     def encrypt(self, data, n):
         new_bits = data.copy()
         mask_bits = self.prg.generate_bits(n)
+        self.encrypt_masks.append(mask_bits.tobytes())
         for b in range(0, len(new_bits)):
             new_bits[b] = new_bits[b] ^ mask_bits[b]
         return new_bits
@@ -18,6 +22,7 @@ class PRGEncryption(MeteorEncryption):
     def decrypt(self, data, n):
         new_bits = data.copy()
         mask_bits = self.prg.generate_bits(n)
+        self.decrypt_masks.append(mask_bits.tobytes())
         for b in range(0, len(new_bits)):
             new_bits[b] = new_bits[b] ^ mask_bits[b]
         return new_bits
