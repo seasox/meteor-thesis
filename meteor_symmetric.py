@@ -9,14 +9,14 @@ class PRGEncryption(MeteorEncryption):
         self.prg = prg
 
     def encrypt(self, data, n):
-        new_bits = data
+        new_bits = data.copy()
         mask_bits = self.prg.generate_bits(n)
         for b in range(0, len(new_bits)):
             new_bits[b] = new_bits[b] ^ mask_bits[b]
         return new_bits
 
     def decrypt(self, data, n):
-        new_bits = data
+        new_bits = data.copy()
         mask_bits = self.prg.generate_bits(n)
         for b in range(0, len(new_bits)):
             new_bits[b] = new_bits[b] ^ mask_bits[b]
