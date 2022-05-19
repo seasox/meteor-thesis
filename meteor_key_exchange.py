@@ -1,7 +1,8 @@
+import time
+
 from bitarray import bitarray
 
 from coder import MeteorCoder, DRBG, encode_context
-from meteor_symmetric import PRGEncryption
 from util import get_model
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -11,7 +12,8 @@ from cryptography.hazmat.primitives import serialization
 import base64
 
 if __name__ == '__main__':
-    chosen_context_str = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
+    #chosen_context_str = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
+    chosen_context_str = "The following text is a conversation between two friends named Sebastian and Anna. They have been engaged for two years and are planning their vacation together, which they plan to spend in Moscow next month:\n\n"
     model_name = 'gpt2-medium'
     device = 'cpu'
 
@@ -73,12 +75,10 @@ if __name__ == '__main__':
     sample_seed_prefix = b'sample'
     pk_key = b'\x00' * 64
     pk_nonce = b'\xfa' * 64
-    pk_encryption = PRGEncryption(DRBG(pk_key, sample_seed_prefix + pk_nonce))
-    pk_decryption = PRGEncryption(DRBG(pk_key, sample_seed_prefix + pk_nonce))
-    bob_encoded_pk = coder.encode_binary(bobs_pk_data_ba.tolist(), chosen_context, pk_encryption)
+    bob_encoded_pk = coder.encode_binary(bobs_pk_data_ba.tolist(), chosen_context, pk_key, pk_nonce)
     print('Send Bob\'s PK to Alice')
     # Alice receives Bob's PK
-    bob_msg_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_decryption)[:96*8]).tobytes()
+    bob_msg_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_key, pk_nonce)[:96*8]).tobytes()
     bob_pk_data_recv = bob_msg_recv[:32]
     bob_signature_recv = bob_msg_recv[32:96]
 
@@ -100,19 +100,19 @@ if __name__ == '__main__':
     derived_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b'handshake data').derive(shared_key)
 
     # Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
-    sample_seed_prefix = b'sample'
-    sample_key = b'0x01' * 64
     sample_nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
     print('Encode message using derived key')
-    encryption = PRGEncryption(DRBG(derived_key, sample_seed_prefix + sample_nonce))
-    decryption = PRGEncryption(DRBG(derived_key, sample_seed_prefix + sample_nonce))
     message_text = "Hi! Did anyone follow you last night?"
-    x = coder.encode_message(message_text, chosen_context_str, encryption)
-    y = coder.decode_message(x[0], chosen_context_str, decryption)
+    start = time.time()
+    x = coder.encode_message(message_text, chosen_context_str, derived_key, sample_nonce)
+    y = coder.decode_message(x[0], chosen_context_str, derived_key, sample_nonce)
+    end = time.time()
+    print(end - start)
     assert y == message_text
-    chosen_context_str = x[0]
+    chosen_context_str += x[0]
+    chosen_context_str += '\n\n'
     message_text = "No, I\'m fine"
-    x = coder.encode_message(message_text, chosen_context_str, encryption)
-    y = coder.decode_message(x[0], chosen_context_str, decryption)
+    x = coder.encode_message(message_text, chosen_context_str, derived_key, sample_nonce)
+    y = coder.decode_message(x[0], chosen_context_str, derived_key, sample_nonce)
     assert y == message_text
