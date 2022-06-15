@@ -34,7 +34,7 @@ def main():
         y = coder.decode_message(x[0], chosen_context, key, nonce)
         end = time.time()
         print("Decode took {:.02f} s".format(end-start))
-        assert y == message_text
+        assert y[0] == message_text
 
 
 if __name__ == '__main__':
