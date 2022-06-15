@@ -934,13 +934,10 @@ class MeteorCoder:
         else:
             raise 'unknown coding ' + coding
         eos_idx = reconst.find('<eos>')
-        #reconst = encode_arithmetic(
-            #self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
-        #reconst = self.enc.decode(reconst[0])
 
-        print("="*40 + " Recovered Message " + "="*40)
-        print(reconst[:eos_idx])
-        print("=" * 99)
+        #print("="*40 + " Recovered Message " + "="*40)
+        #print(reconst[:eos_idx])
+        #print("=" * 99)
 
         # Remove <eos>
         return reconst[:eos_idx], tokens
