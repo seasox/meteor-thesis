@@ -1,5 +1,8 @@
 # Use gpt2-medium for 345M param model
 # Use gpt2-large for 774M param model
+from typing import Tuple, List
+
+
 def get_model(seed=1234, model_name='gpt2', device='cuda'):
     import numpy as np
     import torch
@@ -19,10 +22,10 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
 
     # model.double()  # want to avoid using this
 
-    def decode(self, token_ids, **kwargs):
+    def decode(self, token_ids, **kwargs) -> Tuple[str, List[str]]:
         filtered_tokens = self.convert_ids_to_tokens(token_ids)
         text = self.convert_tokens_to_string(filtered_tokens)
-        return text
+        return text, filtered_tokens
 
     GPT2Tokenizer.decode = decode
 

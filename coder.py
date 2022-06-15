@@ -411,7 +411,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
 
 
-def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> str:
+def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> Tuple[str, List[str]]:
     import torch
     # inp is a list of token indices
     # context is a list of token indices
@@ -547,7 +547,7 @@ def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0
 
             i += 1
 
-    return message
+    return message, enc.decode(inp)[1]
 
 def encode_arithmetic(model, enc, message, context, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000):
 
@@ -656,7 +656,7 @@ def encode_arithmetic(model, enc, message, context, finish_sent=False, device='c
             total_num += 1
 
             # For text->bits->text
-            partial = enc.decode(output[len(context):].tolist())
+            partial, tokens = enc.decode(output[len(context):].tolist())
             if '<eos>' in partial:
                 break
 
@@ -856,7 +856,7 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, key, nonce) -> Tuple[str, Dict]:
+    def encode_binary(self, message: List[bool], context_tokens, key, nonce) -> Tuple[str, List[str], Dict]:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -869,23 +869,24 @@ class MeteorCoder:
         Hq = 0
         out, nll, kl, words_per_bit, Hq = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
                                                         precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
-        text = self.enc.decode(out)
+        text, tokens = self.enc.decode(out)
 
-        print("="*40 + " Encoding " + "="*40)
-        print(text)
-        print('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
-              (math.exp(nll), kl, words_per_bit, 1/words_per_bit, Hq/0.69315))
-        print("=" * 90)
+        #print("="*40 + " Encoding " + "="*40)
+        #print(text)
+        #print('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
+        #      (math.exp(nll), kl, words_per_bit, 1/words_per_bit, Hq/0.69315))
+        #print('tokens: ', tokens)
+        #print("=" * 90)
 
         stats = {
             "ppl": math.exp(nll),
             "kl": kl,
             "wordsbit": words_per_bit,
-            "entropy": Hq/0.69315
+            "entropy": Hq/0.69315,
         }
-        return text, stats
+        return text, tokens, stats
 
-    def decode_binary(self, text, context_tokens: List[int], key, nonce) -> list:
+    def decode_binary(self, text, context_tokens: List[int], key, nonce) -> Tuple[list, List[str]]:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -898,26 +899,40 @@ class MeteorCoder:
     """
     Encode a message_str to a meteor stegotext
     """
-    def encode_message(self, message_str: str, context_str: str, key, nonce) -> Tuple[str, Dict]:
+    def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str], Dict]:
         # First encode message to uniform bits, without any context
         # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
         context_tokens = encode_context(context_str, self.enc)
         message_ctx = [self.enc.encoder['<|endoftext|>']]
         message_str += '<eos>'
-        message = bitarray.bitarray()
-        message.fromstring(message_str)
-        message = message.tolist()
+        if coding == 'utf-8':
+            message = bitarray.bitarray()
+            message.fromstring(message_str)
+            message = message.tolist()
+        elif coding == 'arithmetic':
+            message = decode_arithmetic(
+                self.model, self.enc, message_str, message_ctx, precision=40, topk=60000, device=self.device)
+        else:
+            raise 'unknown coding ' + coding
 
         return self.encode_binary(message, context_tokens, key, nonce)
 
     """
     Decode a meteor stegotext to message string
     """
-    def decode_message(self, text: str, context_str: str, key, nonce) -> str:
+    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str]]:
         context_tokens = encode_context(context_str, self.enc)
-        message_rec = self.decode_binary(text, context_tokens, key, nonce)
-        reconst = bitarray.bitarray(message_rec)
-        reconst = reconst.tobytes().decode('utf-8', 'replace')
+        message_ctx = [self.enc.encoder['<|endoftext|>']]
+        message_rec, tokens = self.decode_binary(text, context_tokens, key, nonce)
+        if coding == 'utf-8':
+            reconst = bitarray.bitarray(message_rec)
+            reconst = reconst.tobytes().decode('utf-8', 'replace')
+        elif coding == 'arithmetic':
+            reconst = encode_arithmetic(
+            self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
+            reconst, _ = self.enc.decode(reconst[0])
+        else:
+            raise 'unknown coding ' + coding
         eos_idx = reconst.find('<eos>')
         #reconst = encode_arithmetic(
             #self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
@@ -928,7 +943,7 @@ class MeteorCoder:
         print("=" * 99)
 
         # Remove <eos>
-        return reconst[:eos_idx]
+        return reconst[:eos_idx], tokens
 
 
 
