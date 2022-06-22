@@ -1,7 +1,7 @@
 # meteor-thesis
 Python code for my bachelor's thesis regarding extensions of the Meteor stegosystem
 
-This repository is a fork of [https://colab.research.google.com/gist/tusharjois/ec8603b711ff61e09167d8fef37c9b86](the original Meteor Colab Notebook).
+This repository is a fork of [the original Meteor Colab Notebook](https://colab.research.google.com/gist/tusharjois/ec8603b711ff61e09167d8fef37c9b86).
 Meteor is a steganographic system which uses a generative neural network to hide hidden text in a ML-based covert channel.
 
 # REQUIREMENTS
