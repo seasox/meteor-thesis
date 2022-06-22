@@ -35,19 +35,21 @@ def compare_tokens(encode_tokens, decode_tokens):
                     curr_prefix = ""
                     i += 1
                 num_mismatch += 1
-            if is_dec_longer:
+            if is_dec_longer and enc_tok is not None:
                 curr_prefix += enc_tok
                 mismatch_enc_tokens += [enc_tok]
                 i += 1
-            else:
+            elif dec_tok is not None:
                 curr_prefix += dec_tok
                 mismatch_dec_tokens += [dec_tok]
                 j += 1
+            else:
+                raise 'is this the real life?'
             cum_mismatch_len += 1
             if curr_prefix.startswith(curr_mismatch):
                 if curr_prefix == curr_mismatch:
                     # end of mismatch
-                    mismatches = mismatches + [ (mismatch_enc_tokens.copy(), mismatch_dec_tokens.copy()) ]
+                    mismatches = mismatches + [(i, mismatch_enc_tokens.copy(), j, mismatch_dec_tokens.copy())]
                     mismatch_enc_tokens = []
                     mismatch_dec_tokens = []
                     curr_mismatch = None
