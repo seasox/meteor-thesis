@@ -898,6 +898,8 @@ class MeteorCoder:
 
     """
     Encode a message_str to a meteor stegotext
+    
+    Returns: tex, tokens, stats
     """
     def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str], Dict]:
         # First encode message to uniform bits, without any context
