@@ -1,8 +1,6 @@
 import logging
 import os
 import pickle
-import signal
-import sys
 
 from meteor_analysis import compare_tokens
 from util import get_model
@@ -19,11 +17,14 @@ def write_mismatches(mismatches):
 
 def load_mismatches():
     print("load mismatches...")
-    f = open("mismatches.bin", "rb")
-    o = pickle.load(f)
-    f.close()
+    from os.path import exists
+    if exists("mismatches.bin"):
+        f = open("mismatches.bin", "rb")
+        o = pickle.load(f)
+        f.close()
+        return o
     print("done")
-    return o
+    return []
 
 
 def main():
@@ -43,11 +44,11 @@ def main():
     chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
     message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
     comparisons = load_mismatches()
-    failures = comparisons[len(comparisons)-1]['failures']
-    count = comparisons[len(comparisons)-1]['count']
-    num_encoded_tokens = comparisons[len(comparisons)-1]['encoded_tokens']
-    num_decoded_tokens = comparisons[len(comparisons)-1]['decoded_tokens']
-    num_mismatch = comparisons[len(comparisons)-1]['num_mismatch']
+    failures = comparisons[len(comparisons)-1]['failures'] if len(comparisons) > 0 else 0
+    count = comparisons[len(comparisons)-1]['count'] if len(comparisons) > 0 else 0
+    num_encoded_tokens = comparisons[len(comparisons)-1]['encoded_tokens'] if len(comparisons) > 0 else 0
+    num_decoded_tokens = comparisons[len(comparisons)-1]['decoded_tokens'] if len(comparisons) > 0 else 0
+    num_mismatch = comparisons[len(comparisons)-1]['num_mismatch'] if len(comparisons) > 0 else 0
     while True:
         key = os.urandom(64)
         nonce = os.urandom(64)
