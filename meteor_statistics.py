@@ -54,21 +54,21 @@ def main():
         nonce = os.urandom(64)
         import time
         start = time.time()
-        x = coder.encode_message(message_text, chosen_context, key, nonce)
+        text, enc_toks, stats = coder.encode_message(message_text, chosen_context, key, nonce)
         end = time.time()
         print("Encode took {:.02f} s".format(end-start))
         start = time.time()
         #y = coder.decode_message(x[0], chosen_context, key, nonce)
-        dec_toks = enc.tokenize(x[0])
+        dec_toks = enc.tokenize(text)
         end = time.time()
         print("Decode took {:.02f} s".format(end-start))
         count += 1
-        num_encoded_tokens += len(x[1])
+        num_encoded_tokens += len(enc_toks)
         num_decoded_tokens += len(dec_toks)
         # decode failed
-        failures += 1 if dec_toks != x[1] else 0
+        failures += 1 if dec_toks != enc_toks else 0
         # log # of mismatching tokens
-        comparison = compare_tokens(x[1], dec_toks)
+        comparison = compare_tokens(enc_toks, dec_toks)
         num_mismatch += comparison["num_mismatch"]
         comparison.update({
             "encoded_tokens": num_encoded_tokens,
@@ -76,11 +76,12 @@ def main():
             "failures": failures,
             "count": count,
             "num_mismatch": num_mismatch,
+            "stats": stats
         })
         comparisons += [comparison]
         write_mismatches(comparisons)
         print(comparison)
-        print("encode: ", x[1])
+        print("encode: ", enc_toks)
         print("decode: ", dec_toks)
 
         print("{}/{}={}".format(failures, count, failures/count))
