@@ -39,16 +39,9 @@ def main():
     coder = MeteorCoder(enc, model, device)
 
     # Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
-    key = b'0x01' * 64
-    nonce = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
     chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
     message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
     comparisons = load_mismatches()
-    failures = comparisons[len(comparisons)-1]['failures'] if len(comparisons) > 0 else 0
-    count = comparisons[len(comparisons)-1]['count'] if len(comparisons) > 0 else 0
-    num_encoded_tokens = comparisons[len(comparisons)-1]['encoded_tokens'] if len(comparisons) > 0 else 0
-    num_decoded_tokens = comparisons[len(comparisons)-1]['decoded_tokens'] if len(comparisons) > 0 else 0
-    num_mismatch = comparisons[len(comparisons)-1]['num_mismatch'] if len(comparisons) > 0 else 0
     while True:
         key = os.urandom(64)
         nonce = os.urandom(64)
@@ -62,31 +55,17 @@ def main():
         dec_toks = enc.tokenize(text)
         end = time.time()
         print("Decode took {:.02f} s".format(end-start))
-        count += 1
-        num_encoded_tokens += len(enc_toks)
-        num_decoded_tokens += len(dec_toks)
-        # decode failed
-        failures += 1 if dec_toks != enc_toks else 0
-        # log # of mismatching tokens
-        comparison = compare_tokens(enc_toks, dec_toks)
-        num_mismatch += comparison["num_mismatch"]
-        comparison.update({
-            "encoded_tokens": num_encoded_tokens,
-            "decoded_tokens": num_decoded_tokens,
-            "failures": failures,
-            "count": count,
-            "num_mismatch": num_mismatch,
-            "stats": stats
-        })
+        num_encoded_tokens = len(enc_toks)
+        num_decoded_tokens = len(dec_toks)
+        # log comparison statistics
+        comparison = compare_tokens(enc_toks, dec_toks, stats)
         comparisons += [comparison]
+        num_mismatch = len(comparison.mismatches)
         write_mismatches(comparisons)
         print(comparison)
         print("encode: ", enc_toks)
         print("decode: ", dec_toks)
 
-        print("{}/{}={}".format(failures, count, failures/count))
-        print("encoded tokens = ", num_encoded_tokens)
-        print("decoded tokens = ", num_decoded_tokens)
         print("mismatches = ", num_mismatch)
         print("encoded tokens per mismatch = ", num_encoded_tokens/num_mismatch if num_mismatch > 0 else 0)
         print("decoded tokens per mismatch = ", num_decoded_tokens/num_mismatch if num_mismatch > 0 else 0)
