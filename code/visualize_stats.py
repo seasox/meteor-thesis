@@ -1,5 +1,5 @@
 def ld():
-	f = open("mismatches.bin", "rb")
+	f = open("meteor_statistics.pickle", "rb")
 	import pickle
 	o = pickle.load(f)
 	f.close()
@@ -28,10 +28,12 @@ if __name__ == '__main__':
 	#print(mismatches)
 	import matplotlib.pyplot as plt
 	fig, axs = plt.subplots(3)
-	axs[0].plot(bits_per_word, label="bits per word")
+	axs[0].set_title("bits per word")
+	axs[0].plot(bits_per_word)
 	axs[0].plot(avg_bits_per_word, label="avg bits per word")
-	axs[1].plot(mismatch_stat, label="mismatch rate")
-	#axs[2].plot(kl, label="KL")
-	#axs[1].ylabel('mismatches per encoded tokens')
-
+	axs[1].set_title("mismatch rate")
+	axs[1].plot(mismatch_stat)
+	axs[2].set_title("KL")
+	axs[2].plot(kl, label="KL")
+	fig.tight_layout()
 	plt.show()
