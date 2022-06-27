@@ -9,7 +9,7 @@ from coder import MeteorCoder
 
 def write_mismatches(mismatches):
     print("write mismatches...")
-    f = open("mismatches.pickle", "wb+")
+    f = open("meteor_statistics.pickle", "wb+")
     pickle.dump(mismatches, f)
     f.close()
     print("done")
@@ -18,8 +18,8 @@ def write_mismatches(mismatches):
 def load_mismatches():
     print("load mismatches...")
     from os.path import exists
-    if exists("mismatches.pickle"):
-        f = open("mismatches.pickle", "rb")
+    if exists("meteor_statistics.pickle"):
+        f = open("meteor_statistics.pickle", "rb")
         o = pickle.load(f)
         f.close()
         return o
