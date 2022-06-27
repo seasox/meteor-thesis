@@ -278,7 +278,7 @@ def compute_entropy(lists):
 import torch
 
 
-def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False):
+def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False, max_length=2**64):
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
@@ -303,7 +303,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     with torch.no_grad():
         i = 0
         sent_finish = False
-        while i < len(message) or (finish_sent and not sent_finish):
+        while len(output[len(context):]) < max_length and (i < len(message) or (finish_sent and not sent_finish)):
             logits, past = model(prev.unsqueeze(0), past=past)
             past = limit_past(past)
             logits[0, -1, -1] = -1e20 # endoftext token can't happen
@@ -408,7 +408,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     avg_Hq = total_entropy_ptau/total_num_for_stats
     words_per_bit = total_num_for_stats/i
 
-    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
+    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, message[i:]
 
 
 def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> Tuple[str, List[str]]:
@@ -856,7 +856,7 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, key, nonce) -> Tuple[str, List[str], Dict]:
+    def encode_binary(self, message: List[bool], context_tokens, key, nonce, max_length=2**64) -> Tuple[str, List[str], Dict, List[bool]]:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -867,7 +867,7 @@ class MeteorCoder:
 
         # Next encode bits into cover text, using arbitrary context
         Hq = 0
-        out, nll, kl, words_per_bit, Hq = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
+        out, nll, kl, words_per_bit, Hq, remainder = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
                                                         precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
         text, tokens = self.enc.decode(out)
 
@@ -884,7 +884,7 @@ class MeteorCoder:
             "wordsbit": words_per_bit,
             "entropy": Hq/0.69315,
         }
-        return text, tokens, stats
+        return text, tokens, stats, remainder
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce) -> Tuple[list, List[str]]:
         temp = 0.95
