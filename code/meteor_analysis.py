@@ -28,7 +28,6 @@ def compare_tokens(encode_tokens, decode_tokens, stats) -> MeteorStatistic:
         enc_tok = encode_tokens[i] if i < enclen else None
         dec_tok = decode_tokens[j] if j < declen else None
         if enc_tok != dec_tok:
-            print(f'{enc_tok} != {dec_tok}')
             if curr_mismatch == None:
                 if dec_tok is not None:
                     is_dec_longer = len(dec_tok) > len(enc_tok) if enc_tok is not None else True
