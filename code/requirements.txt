@@ -4,3 +4,6 @@ bitarray == 1.0.1
 cryptography == 36.0.2
 scipy
 matplotlib
+tikzplotlib
+anytree
+pytest
