@@ -289,6 +289,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
 
     prev = context
     output = context
+    encoded_bits_in_output = []
     past = None
 
     total_num = 0
@@ -296,10 +297,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     total_log_probs = 0
     total_kl = 0 # in bits
     total_entropy_ptau = 0
-    total_num_sents = 0
 
-    debug_entropies = []
-    debug_encoded_num = []
     with torch.no_grad():
         i = 0
         sent_finish = False
@@ -381,10 +379,8 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
 
                 # Consume most significant bits which are now fixed and update interval
                 num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
+                encoded_bits_in_output += [num_bits_encoded] # for statistics
                 i += num_bits_encoded
-
-                debug_entropies.append(entropy_in_this_distribution)
-                debug_encoded_num.append(num_bits_encoded)
 
                 # Gather statistics
                 total_log_probs += log_probs[selection].item()
@@ -409,8 +405,9 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     avg_KL = total_kl/total_num_for_stats
     avg_Hq = total_entropy_ptau/total_num_for_stats
     words_per_bit = total_num_for_stats/i
+    stats = { "encoded_bits_in_output": encoded_bits_in_output }
 
-    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, message[i:]
+    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, message[i:], stats
 
 
 def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> Tuple[str, List[str]]:
@@ -860,7 +857,7 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, key, nonce, max_length=2**64) -> Tuple[str, List[str], Dict, List[bool]]:
+    def encode_binary(self, message: List[bool], context_tokens, key, nonce, max_length=2**64) -> Tuple[str, List[str], Dict]:
         temp = 0.95
         precision = 32
         topk = 50000
@@ -871,7 +868,7 @@ class MeteorCoder:
 
         # Next encode bits into cover text, using arbitrary context
         Hq = 0
-        out, nll, kl, words_per_bit, Hq, remainder = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
+        out, nll, kl, words_per_bit, Hq, remainder, stats = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
                                                         precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
         text, tokens = self.enc.decode(out)
 
@@ -882,13 +879,13 @@ class MeteorCoder:
         #print('tokens: ', tokens)
         #print("=" * 90)
 
-        stats = {
+        stats.update({
             "ppl": math.exp(nll),
             "kl": kl,
             "wordsbit": words_per_bit,
             "entropy": Hq/0.69315,
-        }
-        return text, tokens, stats, remainder
+        })
+        return text, tokens, stats  # todo remainder
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce) -> Tuple[list, List[str]]:
         temp = 0.95
