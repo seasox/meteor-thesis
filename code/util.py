@@ -60,12 +60,12 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
 
 
 if __name__ == '__main__':
-    text = """
-    "Steganography", "breaking the pen", "to embed text in a message", "hot spread", "until its cover is removed", or whatever, has a long history among computer scientists celebrated by publications like Hunt Eilers' Frauenkumme[4] and that of Dr. Ralf Corroon in particular. Or the respected Peter Iversen[5] who has been working on Steganography and NetWrappers since 1989[6] and you could say that it's been "tovert[ing] for years".
+    text = """   
+"Steganography", "breaking the pen", "to embed text in a message", "hot spread", "until its cover is removed", or whatever, has a long history among computer scientists celebrated by publications like Hunt Eilers' Frauenkumme[4] and that of Dr. Ralf Corroon in particular. Or the respected Peter Iversen[5] who has been working on Steganography and NetWrappers since 1989[6] and you could say that it's been "tovert[ing] for years".
 
-    Armed Upon Me![7] was an excellent article about Parrot Steganography system and its derivatives that has good graphics what to be original and features between the quoted text and the "hidden" image-fiche and snapshot files specially written for peer review, but also Steve Fox who has released allowed full text of both elements[8]
+Armed Upon Me![7] was an excellent article about Parrot Steganography system and its derivatives that has good graphics what to be original and features between the quoted text and the "hidden" image-fiche and snapshot files specially written for peer review, but also Steve Fox who has released allowed full text of both elements[8]
 
-    The term "Steganography"(stype "e") is derived from the German vs in Roman Meaning with an AI"""
+The term "Steganography"(stype "e") is derived from the German vs in Roman Meaning with an AI"""
     text = 'hello world'
     from anytree import RenderTree
 
