@@ -1,6 +1,7 @@
 # Use gpt2-medium for 345M param model
 # Use gpt2-large for 774M param model
-from typing import Tuple, List
+import sys
+from typing import Tuple, List, Optional
 
 
 def get_model(seed=1234, model_name='gpt2', device='cuda'):
@@ -11,12 +12,13 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
     torch.random.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
-    enc = GPT2Tokenizer.from_pretrained(model_name)
+    enc = GPT2Tokenizer.from_pretrained(model_name, additional_special_tokens=['<sp1>, <sp2>'])
     enc.unk_token = None
     enc.bos_token = None
     enc.eos_token = None
 
     model = GPT2LMHeadModel.from_pretrained(model_name)
+    model.resize_token_embeddings(len(enc))
     model.to(device)
     model.eval()
 
