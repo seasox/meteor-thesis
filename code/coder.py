@@ -55,7 +55,7 @@ def num_same_from_beg(bits1, bits2):
     return i
 
 def encode_context(raw_text, enc) -> List[int]:
-    context_tokens = [enc.encoder['<|endoftext|>']] + enc.encode(raw_text)
+    context_tokens = [enc.encoder['<|endoftext|>']] + enc.encode(raw_text, truncation=True)
     return context_tokens
 
 enc32_itoc = ['\0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.', ',', "'", '!', ' ']
