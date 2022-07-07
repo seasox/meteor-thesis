@@ -12,7 +12,10 @@ sample_seed_prefix = b'sample'
 def limit_past(past):
     past = list(past)
     for i in range(len(past)):
-        past[i] = past[i][:, :, :, -1022:]
+        past[i] = list(past[i])
+        for j in range(len(past[i])):
+            past[i][j] = past[i][j][:,:,-1022:,:]
+        past[i] = tuple(past[i])
     return past
 
 def kl(q, logq, logp):
@@ -305,7 +308,7 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values
-            #past = limit_past(past)
+            past = limit_past(past)
             logits[0, -1, -1] = -1e20 # endoftext token can't happen
             logits[0, -1, 628] = -1e20 # 2 newlines token can't happen
             logits, indices = logits[0, -1, :].sort(descending=True)
@@ -434,7 +437,7 @@ def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values
-            #past = limit_past(past)
+            past = limit_past(past)
             logits[0, -1, -1] = -1e20 # endoftext can't happen
             logits[0, -1, 628] = -1e20 # 2 newlines can't happen
             logits, indices = logits[0, -1, :].sort(descending=True)
@@ -573,7 +576,9 @@ def encode_arithmetic(model, enc, message, context, finish_sent=False, device='c
         i = 0
         sent_finish = False
         while i < len(message) or (finish_sent and not sent_finish):
-            logits, past = model(prev.unsqueeze(0), past=past)
+            result = model(prev.unsqueeze(0), past_key_values=past)
+            logits = result.logits
+            past = result.past_key_values
             past = limit_past(past)
             logits[0, -1, -1] = -1e20 # endoftext token can't happen
             logits[0, -1, 628] = -1e20 # 2 newlines token can't happen
@@ -695,7 +700,9 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
     with torch.no_grad():
         i = 0
         while i < len(inp):
-            logits, past = model(prev.unsqueeze(0), past=past)
+            result = model(prev.unsqueeze(0), past_key_values=past)
+            logits = result.logits
+            past = result.past_key_values
             past = limit_past(past)
             logits[0, -1, -1] = -1e10 # endoftext can't happen
             logits[0, -1, 628] = -1e10 # 2 newlines can't happen
