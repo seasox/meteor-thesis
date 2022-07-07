@@ -4,14 +4,19 @@ from typing import Tuple, Dict
 
 @dataclass
 class MeteorStatistic:
-    encoded_tokens: bytes
-    decoded_tokens: bytes
+    message: bytes
+    context: str
+    key: bytes
+    nonce: bytes
+    coding: str
+    encoded_tokens: [str]
+    decoded_tokens: [str]
     len_offset: int
     mismatches: [Tuple[Tuple[int, str], Tuple[int, str]]]
     stats: Dict
 
 
-def compare_tokens(encode_tokens, decode_tokens, stats) -> MeteorStatistic:
+def compare_tokens(message, context, key, nonce, coding, encode_tokens, decode_tokens, stats) -> MeteorStatistic:
     i = 0
     j = 0
     cum_mismatch_len = 0
@@ -70,7 +75,7 @@ def compare_tokens(encode_tokens, decode_tokens, stats) -> MeteorStatistic:
         else:
             i += 1
             j += 1
-    return MeteorStatistic(encode_tokens, decode_tokens, len_offset, mismatches, stats)
+    return MeteorStatistic(message, context, key, nonce, coding, encode_tokens, decode_tokens, len_offset, mismatches, stats)
 
 
 class TestMeteorAnalysis:
