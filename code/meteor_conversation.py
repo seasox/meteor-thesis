@@ -43,16 +43,20 @@ def main():
         "Well, just take Harry for example: he's an orphan who was raised without love, but when he came to Hogwarts, he was loved everywhere.",
     ]
     message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
+    import coder as codr
+    message_ctx = [enc.encoder['<|endoftext|>']]
+    message = codr.decode_arithmetic(
+        model, enc, message_text, message_ctx, precision=40, topk=60000, device=device)
     key = os.urandom(64)
     nonce = os.urandom(64)
     reconst = ''
     while True:
-        if message_text == '':
+        if not message:
             break
         bob_says = input('Please enter your message: ')
         print("Bob: " + bob_says)
         history += [bob_says]
-        stegotext, tokens, stats, message_text = coder.encode_conversation(message_text, history, key, nonce)
+        stegotext, tokens, stats, message = coder.encode_conversation(message, history, key, nonce)
         print('Alice: ' + stegotext)
         recovered, tokens = coder.decode_conversation(stegotext, history, key, nonce)
         reconst += recovered
