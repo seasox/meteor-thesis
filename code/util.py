@@ -26,7 +26,7 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
     # model.double()  # want to avoid using this
 
     def decode(self, token_ids, **kwargs) -> Tuple[str, List[str]]:
-        filtered_tokens = self.convert_ids_to_tokens(token_ids)
+        filtered_tokens = self.convert_ids_to_tokens(token_ids, kwargs)
         text = self.convert_tokens_to_string(filtered_tokens)
         return text, filtered_tokens
 
