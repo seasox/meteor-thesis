@@ -68,6 +68,40 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
                     tokenize_edges[text] += [(remainder, token, id)]
     GPT2Tokenizer.tokenize_candidates = tokenize_candidates
 
+    def prepare_model_inputs(self: GPT2LMHeadModel, inputs: torch.Tensor, num_return_sequences=None, bos_token_id=None, output_attentions=None, output_hidden_states=None, use_cache=None, **model_kwargs):
+        bos_token_id = bos_token_id if bos_token_id is not None else self.config.bos_token_id
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        num_return_sequences = (
+            num_return_sequences if num_return_sequences is not None else self.config.num_return_sequences
+        )
+        # 2. Define model inputs
+        # inputs_tensor has to be defined
+        # model_input_name is defined if model-specific keyword input is passed
+        # otherwise model_input_name is None
+        # all model-specific keyword inputs are removed from `model_kwargs`
+        inputs_tensor, model_input_name, model_kwargs = self._prepare_model_inputs(inputs, bos_token_id, model_kwargs)
+        batch_size = inputs_tensor.shape[0]
+
+        # expect decoder-only
+        input_ids = inputs_tensor
+
+        # 3. Define other model kwargs
+        model_kwargs["output_attentions"] = output_attentions
+        model_kwargs["output_hidden_states"] = output_hidden_states
+        model_kwargs["use_cache"] = use_cache
+        # 11. expand input_ids with `num_return_sequences` additional sequences per batch
+        input_ids, model_kwargs = self._expand_inputs_for_generation(
+            input_ids,
+            expand_size=num_return_sequences,
+            is_encoder_decoder=self.config.is_encoder_decoder,
+            **model_kwargs,
+        )
+        return input_ids, model_kwargs
+    GPT2LMHeadModel.prepare_model_inputs = prepare_model_inputs
+
     return enc, model
 
 # the performance of this is really bad
