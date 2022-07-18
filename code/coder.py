@@ -405,12 +405,12 @@ def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_se
     avg_KL = total_kl/total_num_for_stats
     avg_Hq = total_entropy_ptau/total_num_for_stats
     words_per_bit = total_num_for_stats/i
-    stats = { "encoded_bits_in_output": encoded_bits_in_output }
+    stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output}
 
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
 
 
-def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> Tuple[str, List[str]]:
+def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000, is_sort=False) -> Tuple[List[bool], List[str]]:
     import torch
     # inp is a list of token indices
     # context is a list of token indices
@@ -550,6 +550,8 @@ def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0
 
     return message, enc.decode(inp)[1]
 
+
+# <editor-fold desc="Arithmetic Coding">
 def encode_arithmetic(model, enc, message, context, finish_sent=False, device='cuda', temp=1.0, precision=16, topk=50000):
 
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
@@ -669,6 +671,7 @@ def encode_arithmetic(model, enc, message, context, finish_sent=False, device='c
     words_per_bit = total_num_for_stats/i
 
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
+
 
 def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precision=16, topk=50000):
     import torch.nn.functional as F
@@ -810,11 +813,10 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
             i += 1
 
     return message
+# </editor-fold>
 
 
-""" 
-A Deterministic Random Bit Generator
-"""
+# A Deterministic Random Bit Generator
 class DRBG(object):
     def __init__(self, key, seed):
         self.key = key
@@ -854,7 +856,6 @@ class DRBG(object):
 
 
 class MeteorCoder:
-
     """
     Constructor for MeteorCoder
     """
@@ -863,20 +864,15 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, key, nonce) -> Tuple[str, List[str], Dict]:
-        temp = 0.95
-        precision = 32
-        topk = 50000
-
+    def encode_binary(self, message: List[bool], context_tokens, key, nonce, temp=0.95, precision=32, topk=50000) -> Tuple[str, List[str], Dict[str, any]]:
         finish_sent = False
         meteor_sort = False
         meteor_random = False
 
         # Next encode bits into cover text, using arbitrary context
-        Hq = 0
         out, nll, kl, words_per_bit, Hq, stats = encode_meteor(self.model, self.enc, message, context_tokens, key, nonce, temp=temp, finish_sent=finish_sent,
-                                                        precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
-        text, tokens = self.enc.decode(out)
+                                                               precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
+        text, tokens = self.enc.decode(out, skip_special_tokens=True)
 
         #print("="*40 + " Encoding " + "="*40)
         #print(text)
@@ -893,11 +889,7 @@ class MeteorCoder:
         })
         return text, tokens, stats
 
-    def decode_binary(self, text, context_tokens: List[int], key, nonce) -> Tuple[list, List[str]]:
-        temp = 0.95
-        precision = 32
-        topk = 50000
-
+    def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000) -> Tuple[list, List[str]]:
         meteor_sort = False
 
         return decode_meteor(self.model, self.enc, text, context_tokens, key, nonce, temp=temp,
