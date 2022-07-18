@@ -891,14 +891,13 @@ class MeteorCoder:
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000) -> Tuple[list, List[str]]:
         meteor_sort = False
-
         return decode_meteor(self.model, self.enc, text, context_tokens, key, nonce, temp=temp,
                                     precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
 
     """
     Encode a message_str to a meteor stegotext
     
-    Returns: tex, tokens, stats
+    Returns: text, tokens, stats
     """
     def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str], Dict]:
         # First encode message to uniform bits, without any context
@@ -937,14 +936,14 @@ class MeteorCoder:
     """
     def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str]]:
         context_tokens = encode_context(context_str, self.enc)
-        message_ctx = [self.enc.encoder['<|endoftext|>']]
         message_rec, tokens = self.decode_binary(text, context_tokens, key, nonce)
         if coding == 'utf-8':
             reconst = bitarray.bitarray(message_rec)
             reconst = reconst.tobytes().decode('utf-8', 'replace')
         elif coding == 'arithmetic':
+            message_ctx = [self.enc.encoder['<|endoftext|>']]
             reconst = encode_arithmetic(
-            self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
+                self.model, self.enc, message_rec, message_ctx, precision=40, topk=60000, device=self.device)
             reconst, _ = self.enc.decode(reconst[0])
         else:
             raise 'unknown coding ' + coding
