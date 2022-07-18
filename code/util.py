@@ -47,7 +47,6 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
         return bins
 
     def tokenize_candidates(self, text):
-        import sys
         tokens = bucketize_tokens(self.encoder.items())
         tokenize_edges = {}
         for i in range(len(text)):
@@ -55,7 +54,6 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
         return tokenize_edges
 
     def _do_tokenize_candidates(self, text, tokens, tokenize_edges): # parent: Union[str, Node]
-        from anytree import Node
         if text in tokenize_edges or text == '':
             return
         #for token, id in self.encoder.items():
