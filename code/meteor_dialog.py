@@ -1,9 +1,7 @@
 import logging
-import os
-import sys
 
-from util import get_model
 from coder import MeteorCoder
+from util import get_model
 
 
 def main():
@@ -29,11 +27,11 @@ def main():
         start = time.time()
         x = coder.encode_message(message_text, chosen_context, key, nonce)
         end = time.time()
-        print("Encode took {:.02f} s".format(end-start))
+        print("Encode took {:.02f} s".format(end - start))
         start = time.time()
         y = coder.decode_message(x[0], chosen_context, key, nonce)
         end = time.time()
-        print("Decode took {:.02f} s".format(end-start))
+        print("Decode took {:.02f} s".format(end - start))
         assert y[0] == message_text
 
 

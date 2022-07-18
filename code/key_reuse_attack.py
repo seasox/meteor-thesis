@@ -1,8 +1,8 @@
 import logging
 from typing import Dict
-from util import get_model
 
 from coder import MeteorCoder, encode_context
+from util import get_model
 
 
 def get_cached_model(model_name, device):
@@ -20,6 +20,7 @@ def get_cached_model(model_name, device):
     cached_model = query_cached_model
 
     return enc, cached_model
+
 
 def generate_message():
     return "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
@@ -47,7 +48,6 @@ def main():
         message_text = generate_message()
         encoded_message = coder.encode_message(message_text, chosen_context_str, key, nonce)
         print(encoded_message[0])
-
 
 
 if __name__ == '__main__':

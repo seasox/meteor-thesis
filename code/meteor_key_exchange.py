@@ -1,18 +1,18 @@
+import base64
 import time
 
 from bitarray import bitarray
-
-from coder import MeteorCoder, DRBG, encode_context
-from util import get_model
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives import serialization
-import base64
+
+from coder import MeteorCoder, encode_context
+from util import get_model
 
 if __name__ == '__main__':
-    #chosen_context_str = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
+    # chosen_context_str = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
     chosen_context_str = "The following text is a conversation between two friends named Sebastian and Anna. They have been engaged for two years and are planning their vacation together, which they plan to spend in Moscow next month:\n\n"
     model_name = 'gpt2-medium'
     device = 'cpu'
@@ -39,7 +39,6 @@ if __name__ == '__main__':
     assert len(alice_signature) == 64
 
     alice_verify.verify(alice_signature, alice_pk_data)
-
 
     print('Alice\'s public key (base64):')
     print(base64.b64encode(alice_pk_data))
@@ -78,7 +77,7 @@ if __name__ == '__main__':
     bob_encoded_pk = coder.encode_binary(bobs_pk_data_ba.tolist(), chosen_context, pk_key, pk_nonce)
     print('Send Bob\'s PK to Alice')
     # Alice receives Bob's PK
-    bob_msg_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_key, pk_nonce)[:96*8]).tobytes()
+    bob_msg_recv = bitarray(coder.decode_binary(bob_encoded_pk[0], chosen_context, pk_key, pk_nonce)[:96 * 8]).tobytes()
     bob_pk_data_recv = bob_msg_recv[:32]
     bob_signature_recv = bob_msg_recv[32:96]
 
@@ -88,8 +87,9 @@ if __name__ == '__main__':
     print('Received Bob\'s PK')
 
     assert bob_pk_recv.public_bytes(encoding=serialization.Encoding.Raw,
-                                                  format=serialization.PublicFormat.Raw) == bob_pk.public_bytes(encoding=serialization.Encoding.Raw,
-                                                  format=serialization.PublicFormat.Raw)
+                                    format=serialization.PublicFormat.Raw) == bob_pk.public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw)
 
     print('Derive key')
     # derive key

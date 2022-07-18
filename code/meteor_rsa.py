@@ -1,15 +1,10 @@
-import os
-import random
-from typing import Tuple
-
 import bitarray
+import cryptography.hazmat.primitives.asymmetric.rsa as rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
 import meteor_symmetric
 from coder import MeteorCoder, DRBG
-import cryptography.hazmat.primitives.asymmetric.rsa as rsa
-
 from util import get_model
 
 """
@@ -75,9 +70,7 @@ if __name__ == '__main__':
 
     chosen_context = enc.encode(chosen_context_str)
 
-
     coder = MeteorCoder(enc, model, device)
-
 
     # generate a private key pair
     bob_private_key = rsa.generate_private_key(65537, 2048)
@@ -87,9 +80,9 @@ if __name__ == '__main__':
 
     # apply OAEP padding
     pad = padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None)
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None)
 
     # encrypt message using Bob's public key
     encrypted_message: bytes = bob_public_key.encrypt(message_text.encode('UTF-8'), pad)
@@ -108,6 +101,7 @@ if __name__ == '__main__':
     x = coder.encode_binary(encrypted_message_ba.tolist(), chosen_context, encryption)
     recovered_encrypted_message = coder.decode_binary(x[0], chosen_context, decryption)
 
-    decrypted_message = bob_private_key.decrypt(bitarray.bitarray(recovered_encrypted_message).tobytes()[:256], pad).decode('UTF-8')
+    decrypted_message = bob_private_key.decrypt(bitarray.bitarray(recovered_encrypted_message).tobytes()[:256],
+                                                pad).decode('UTF-8')
 
     assert decrypted_message == message_text

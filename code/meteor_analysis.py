@@ -40,12 +40,12 @@ def compare_tokens(message, context, key, nonce, coding, encode_tokens, decode_t
                     is_dec_longer = False
                 if is_dec_longer:
                     curr_mismatch = dec_tok
-                    mismatch_dec_tokens += [ dec_tok ]
+                    mismatch_dec_tokens += [dec_tok]
                     curr_prefix = ""
                     j += 1
                 else:
                     curr_mismatch = enc_tok
-                    mismatch_enc_tokens += [ enc_tok ]
+                    mismatch_enc_tokens += [enc_tok]
                     curr_prefix = ""
                     i += 1
             if is_dec_longer and enc_tok is not None:
@@ -75,60 +75,61 @@ def compare_tokens(message, context, key, nonce, coding, encode_tokens, decode_t
         else:
             i += 1
             j += 1
-    return MeteorStatistic(message, context, key, nonce, coding, encode_tokens, decode_tokens, len_offset, mismatches, stats)
+    return MeteorStatistic(message, context, key, nonce, coding, encode_tokens, decode_tokens, len_offset, mismatches,
+                           stats)
 
 
 class TestMeteorAnalysis:
     def test_one_mismatch_decoded_longer(self):
-        encoded = [ "hello", " world" ]
-        decoded = [ "he", "llo", " world" ]
+        encoded = ["hello", " world"]
+        decoded = ["he", "llo", " world"]
 
         res = compare_tokens(encoded, decoded)
 
         assert res["num_mismatch"] == 1
         assert res["len_offset"] == 1
         assert res["cum_mismatch_len"] == 2
-        assert res["mismatches"] == [ ([ "hello" ], [ "he", "llo" ]) ]
+        assert res["mismatches"] == [(["hello"], ["he", "llo"])]
 
     def test_one_mismatch_encoded_longer(self):
-        encoded = [ "he", "llo", " world" ]
-        decoded = [ "hello", " world" ]
+        encoded = ["he", "llo", " world"]
+        decoded = ["hello", " world"]
 
         res = compare_tokens(encoded, decoded)
 
         assert res["num_mismatch"] == 1
         assert res["len_offset"] == 1
         assert res["cum_mismatch_len"] == 2
-        assert res["mismatches"] == [ ([ "he", "llo" ], [ "hello" ]) ]
+        assert res["mismatches"] == [(["he", "llo"], ["hello"])]
 
     def test_two_mismatch_decoded_longer(self):
-        encoded = [ "hello", " world", " lorem", " ipsum" ]
-        decoded = [ "he", "llo", " world", " lor", "em", " ipsum" ]
+        encoded = ["hello", " world", " lorem", " ipsum"]
+        decoded = ["he", "llo", " world", " lor", "em", " ipsum"]
 
         res = compare_tokens(encoded, decoded)
 
         assert res["num_mismatch"] == 2
         assert res["len_offset"] == abs(len(encoded) - len(decoded))
         assert res["cum_mismatch_len"] == 4
-        assert res["mismatches"] == [ ([ "hello" ], [ "he", "llo" ]), ([ " lorem" ], [ " lor", "em" ]) ]
+        assert res["mismatches"] == [(["hello"], ["he", "llo"]), ([" lorem"], [" lor", "em"])]
 
     def test_overlapping_mismatch(self):
         # still breaks for overlapping mismatches
-        encoded = [ "he", "ll", "o wo", "rld" ]
-        decoded = [ "hello", " world" ]
+        encoded = ["he", "ll", "o wo", "rld"]
+        decoded = ["hello", " world"]
 
         res = compare_tokens(encoded, decoded)
 
         assert res["num_mismatch"] == 1
         assert res["len_offset"] == 2
-        assert res["cum_mismatch_len"] == 5 # FIXME 4?
-        assert res["mismatches"] == [ ([ "he", "ll", "o wo", "rld" ], [ "hello", " world" ]) ]
+        assert res["cum_mismatch_len"] == 5  # FIXME 4?
+        assert res["mismatches"] == [(["he", "ll", "o wo", "rld"], ["hello", " world"])]
 
         return 0
 
     def test_no_mismatch(self):
-        encoded = [ "lorem", " ipsum", " dolor" ]
-        decoded = [ "lorem", " ipsum", " dolor" ]
+        encoded = ["lorem", " ipsum", " dolor"]
+        decoded = ["lorem", " ipsum", " dolor"]
 
         res = compare_tokens(encoded, decoded)
 

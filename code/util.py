@@ -49,13 +49,13 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
         tokens = bucketize_tokens(self.encoder.items())
         tokenize_edges = {}
         for i in range(len(text)):
-            _do_tokenize_candidates(self, text[-(i+1):], tokens, tokenize_edges)
+            _do_tokenize_candidates(self, text[-(i + 1):], tokens, tokenize_edges)
         return tokenize_edges
 
-    def _do_tokenize_candidates(self, text, tokens, tokenize_edges): # parent: Union[str, Node]
+    def _do_tokenize_candidates(self, text, tokens, tokenize_edges):  # parent: Union[str, Node]
         if text in tokenize_edges or text == '':
             return
-        #for token, id in self.encoder.items():
+        # for token, id in self.encoder.items():
         for token, id in tokens[text[0]]:
             if text.startswith(token):
                 remainder = text[len(token):]
@@ -63,9 +63,11 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
                     tokenize_edges[text] = []
                 if remainder not in tokenize_edges[text]:
                     tokenize_edges[text] += [(remainder, token, id, -len(token))]
+
     GPT2Tokenizer.tokenize_candidates = tokenize_candidates
 
-    def prepare_model_inputs(self: GPT2LMHeadModel, inputs: torch.Tensor, num_return_sequences=None, bos_token_id=None, output_attentions=None, output_hidden_states=None, use_cache=None, **model_kwargs):
+    def prepare_model_inputs(self: GPT2LMHeadModel, inputs: torch.Tensor, num_return_sequences=None, bos_token_id=None,
+                             output_attentions=None, output_hidden_states=None, use_cache=None, **model_kwargs):
         bos_token_id = bos_token_id if bos_token_id is not None else self.config.bos_token_id
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -97,9 +99,11 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
             **model_kwargs,
         )
         return input_ids, model_kwargs
+
     GPT2LMHeadModel.prepare_model_inputs = prepare_model_inputs
 
     return enc, model
+
 
 # the performance of this is really bad
 def all_paths(graph, root) -> [[Optional[str]]]:
@@ -128,16 +132,18 @@ if __name__ == '__main__':
         text = ''.join([enc.byte_encoder[b] for b in text.encode('utf-8')])
     graph = enc.tokenize_candidates(text)
 
-    #import timeit
-    #print(timeit.timeit(lambda: enc.tokenize_candidates(text), number=1))
+
+    # import timeit
+    # print(timeit.timeit(lambda: enc.tokenize_candidates(text), number=1))
     # speedup 4.6 -> 2.3 seconds if sorted tokens
 
     def print_graph(g):
         for node in g:
             print(node, " ---> ", [i for i in g[node]])
 
+
     print_graph(graph)
     paths = all_paths(graph, text)
     print(len(paths))
-    #print(paths)
-    #print(graph[text])
+    # print(paths)
+    # print(graph[text])
