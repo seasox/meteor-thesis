@@ -1,13 +1,13 @@
 import logging
 import os
-import sys
 
-from util import get_model
 from coder import MeteorCoder
+from util import get_model
 
 
 def main():
-    model_name = 'gpt2-medium'
+    # model_name = 'gpt2-medium'
+    model_name = 'microsoft/DialoGPT-large'
     device = 'cpu'
 
     print('get model')
@@ -42,29 +42,44 @@ def main():
         "How that?",
         "Well, just take Harry for example: he's an orphan who was raised without love, but when he came to Hogwarts, he was loved everywhere.",
     ]
-    message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
-    import coder as codr
-    message_ctx = [enc.encoder['<|endoftext|>']]
-    message = codr.decode_arithmetic(
-        model, enc, message_text, message_ctx, precision=40, topk=60000, device=device)
+    history = []
+    # message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
+    message_text = "Hi there!"
+    # message_ctx = [enc.encoder['<|endoftext|>']]
+    # message = codr.decode_arithmetic(
+    #    model, enc, message_text, message_ctx, precision=40, topk=60000, device=device)
+    import bitarray
+    message = bitarray.bitarray()
+    message.fromstring(message_text)
+    message = message.tolist()
     key = os.urandom(64)
     nonce = os.urandom(64)
-    reconst = ''
+    print("session key: ", key)
+    print("session nonce: ", nonce)
+    reconst = []
+    remainder = message
     while True:
-        if not message:
+        if not remainder:
             break
         bob_says = input('Please enter your message: ')
+        # bob_says = "But who is your favorite character?"
         print("Bob: " + bob_says)
         history += [bob_says]
-        stegotext, tokens, stats, message = coder.encode_conversation(message, history, key, nonce)
+        chunk_length = 20
+        stegotext, remainder = coder.encode_conversation(remainder, history, key, nonce, max_length=chunk_length)
         print('Alice: ' + stegotext)
         recovered, tokens = coder.decode_conversation(stegotext, history, key, nonce)
-        reconst += recovered
+        reconst += recovered[:chunk_length]
         history += [stegotext]
-    print("*"*16 + " RECONST " + "*"*16)
+        print(f'{len(remainder)} bits left')
+        print("history: %s" % ' -- '.join(history))
+    reconst = bitarray.bitarray(reconst)
+    reconst = reconst.tobytes().decode('utf-8', 'replace')
+    # reconst = codr.encode_arithmetic(model, enc, reconst, message_ctx, precision=40, topk=60000, device=device)
+    print("*" * 16 + " RECONST " + "*" * 16)
     print(reconst)
     print("*" * 16 + " CONVERSATION " + "*" * 16)
-    print(coder.conversation_context_from_history(history))
+    print('\n'.join(history))
 
 
 if __name__ == '__main__':
