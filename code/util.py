@@ -63,7 +63,7 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
                 if text not in tokenize_edges:
                     tokenize_edges[text] = []
                 if remainder not in tokenize_edges[text]:
-                    tokenize_edges[text] += [(remainder, token, id)]
+                    tokenize_edges[text] += [(remainder, token, id, -len(token))]
     GPT2Tokenizer.tokenize_candidates = tokenize_candidates
 
     def prepare_model_inputs(self: GPT2LMHeadModel, inputs: torch.Tensor, num_return_sequences=None, bos_token_id=None, output_attentions=None, output_hidden_states=None, use_cache=None, **model_kwargs):
