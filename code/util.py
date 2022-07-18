@@ -13,13 +13,12 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
     torch.cuda.manual_seed(seed)
 
     enc = GPT2Tokenizer.from_pretrained(model_name)
-    #enc.add_tokens(['<sp1>', '<sp2>'])
-    enc.unk_token = None
-    enc.bos_token = None
-    enc.eos_token = None
+    # enc.unk_token = None
+    # enc.bos_token = None
+    # enc.eos_token = None
 
     model = GPT2LMHeadModel.from_pretrained(model_name)
-    #model.resize_token_embeddings(len(enc))
+    # model.resize_token_embeddings(len(enc))
     model.to(device)
     model.eval()
 
