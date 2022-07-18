@@ -1195,20 +1195,6 @@ class MeteorCoder:
 
         return self.encode_binary(message, context_tokens, key, nonce)
 
-    @staticmethod
-    def conversation_context_from_history(history: [str]):
-        history = history + ['']  # add empty message to end of history (this is the start of the answer
-        return '\n'.join([('<sp1> ' if i % 2 == 0 else '<sp2> ') + msg for i, msg in enumerate(history)])
-
-    def encode_conversation(self, message: str, history: [str], key, nonce, max_length=100, coding='arithmetic') -> Tuple[str, List[str], Dict, str]:
-        message, remainder = message[:max_length], message[max_length:]
-        text, tokens, stats = self.encode_message(message, self.conversation_context_from_history(history), key, nonce, coding)
-        return text, tokens, stats, remainder
-
-    def decode_conversation(self, encoded_message, history: [str], key, nonce,  coding='arithmetic') -> Tuple[str, List[str]]:
-        msg, tokens = self.decode_message(encoded_message, self.conversation_context_from_history(history), key, nonce, coding)
-        return msg, tokens
-
     """
     Decode a meteor stegotext to message string
     """
@@ -1233,6 +1219,28 @@ class MeteorCoder:
 
         # Remove <eos>
         return reconst[:eos_idx], tokens
+
+    def encode_conversation_history(self, history: [str]):
+        context_str = self.enc.eos_token.join(history) + self.enc.eos_token
+        return self.enc.encode(context_str, truncation=True)
+
+    def encode_conversation(self, message: List[bool], history: [str], key, nonce, max_length=12) -> Tuple[str, List[bool]]:
+        message_part = message[:max_length]
+        context_tokens = self.encode_conversation_history(history)
+        out, nll, kl, words_per_bit, Hq, stats, remainder = encode_conversation_meteor(self.model, self.enc, message_part,
+                                                                                       context_tokens, key, nonce,
+                                                                                       temp=0.6, finish_sent=False,
+                                                                                       precision=16, topk=50,
+                                                                                       device=self.device, is_sort=False)
+        text, tokens = self.enc.decode(out, skip_special_tokens=True)
+        remainder += message[max_length:]
+        return text, remainder
+
+    def decode_conversation(self, encoded_message, history: [str], key, nonce) -> Tuple[List[bool], List[str]]:
+        context_tokens = self.encode_conversation_history(history)
+        msg, tokens = decode_conversation_meteor(self.model, self.enc, encoded_message, context_tokens, key, nonce,
+                                                 temp=0.6, precision=16, topk=50, device=self.device, is_sort=False)
+        return msg, tokens
 
 
 
