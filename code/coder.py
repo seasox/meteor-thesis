@@ -1,10 +1,11 @@
 import hashlib
 import hmac
-import pickle
 from typing import List, Dict, Tuple
 
 import bitarray
+import math
 import numpy as np
+import torch
 import torch.nn.functional as F
 
 sample_seed_prefix = b'sample'
@@ -84,11 +85,6 @@ def expansion_ratio(message, encoded):
     encoded_bits = len(encoded_ba.tolist())
     return encoded_bits/message_bits
 
-#@title
-
-import torch
-import math
-import random
 
 def bin_sort(l, token_indices, total, entropy, device):
     #compute entropy for upper bound on the number of bins we need
