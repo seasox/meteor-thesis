@@ -133,7 +133,7 @@
   % Date on which the thesis is turned in German, formatted the
   % traditional German way:
   %
-  Datum                 = {1. Oktober 2022},
+  Datum                 = {\today},
   %
   % The English abstract. You must always provide abstracts in German
   % and in English. 
@@ -354,6 +354,7 @@
 %%%%%%%
 
 \usepackage[inline]{enumitem}
+\usepackage{todonotes}
 
 
 
@@ -386,15 +387,33 @@ TODO
 
 \section{Structure Of This Thesis}
 
-TODO
+Chapter 2 discusses previous works.
+First, we will discuss steganography and provably secure steganography, introduced by Hopper et. al. \todo{add bibtex}
+Afterwards, we discuss how generative neural networks (GNNs) such as GPT-2 produce high-quality text iteratively.
+Concluding, I will present the Meteor stegosystem, a provably secure steganographic system over ML-based channels as introduced by XYZ.
+
+Chapter 3 provides an analysis of the correctness of the Meteor stegosystem. 
+We will see that the Meteor stegosystem is not correct because of the way tokenization in GNNs work.
+Afterwards, I will present algorithms which ensure correctness of Meteor on the receiver site.
+Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
+
+In chapter 4, I present a small modification to the Meteor stegosystem which allows two-way communication.
+There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \todo{bibtex} to generate dialog-like messages.
+This modification makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is negligible for shorter messages.
+
+In chapter 5, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
+We will compare the definition of security used by the Meteor authors with the definition of security by Hopper.
+We then will show that the Meteor stegosystem is not universally secure in Hopper's definition.
+
+Finally, in chapter 6, I will discuss the results in a conclusion and give ideas for further research.
 
 \chapter{Previous Work}
 
-\section{Steganography}
+\section{Provably Secure Steganography}
 
 Steganography extends the concepts of cryptography to hide the mere existence of a message.
 This makes it robust against censorship and prohibition.
-While cryptography can be used to hide the contents of a confidental message, its use is easily discoverable by adversaries.
+While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
 Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons83}.
 There, two prisoners Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a Warden.
@@ -403,14 +422,71 @@ Warden observes messages exchanged between Alice and Bob.
 He tries to distinguish the exchange of the escape plan from innocous messages.
 
 In steganography, a message is represented by a sequence of documents from an underlying distribution.
-We call 
 Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
 If the original photograph is unknown to Warden, Alice can encode hidden text in the original photograph
 
+In his doctoral thesis ``Toward a theory of Steganography'', Nicholas J. Hopper \todo{bibtex} establishes a cryptographic point of view on steganography. 
+This allows us to do cryptanalysis on steganographic protocols.
+In section 3, he defines a stegosystem as follows:
 
-\section{Provably Secure Steganography}
+\begin{definition}
+(Stegosystem, Hopper) A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, is a pair of probabilistic algorithms:
 
-TODO introduce Hopper, games and so on
+\begin{itemize}
+	\item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $K \in \{0,1\}*$, a string $m \in \{0,1\}*$ (the hiddentext), and a message history $h$.
+		SE(K, m, h) returns a sequence of documents $s_1||s_2||\dots||s_l$ (the stegotext) from the support of $\mathcal{C})h^l$.
+	\item $\mathcal{S}$.Decode (abbreviated $SD$) takes as input a key $K$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h$.
+		SD(K, s, h) returns a hiddentext $m \in \{0,1\}*$
+\end{itemize}
+\end{definition}
+
+We want our stegosystem to be correct.
+To achieve that, the decoding of a given stegotext $s$, given the correct key $k$ and history $h$, should yield the original hiddentext $m$.
+Hopper defines the correctness of a stegosystem as follows:
+
+\begin{definition}
+(Correctness, Hopper) A stegosystem $\mathcal{S}$ is \emph{correct} if for every polynomial $p(k)$, there exists a negligible function $\mu(k)$ such that $SE$ and $SD$ also satisfy the relationship:
+
+$$\forall m \in \{0,1\}^{p(k)}, h \in D^* \colon Pr(SD(K, SE(K, m, h), h) = m) \geq 1 - \mu(k)$$
+
+where the randomization is over the key $K$ and any coin tosses of $SE$, $SD$, and the oracles accessed by $SE$, $SD$.
+\end{definition}
+
+The introduction of a \emph{negligible} polynomial $\mu(k)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the length $m$.
+While stegosystem with $\mu(k) = 0$ can exist, the introduction of negligible polynomials proves helpful for reductions on established cryptographic primitives. 
+
+Since we want our stegosystem to be prone to analysis by warden, we also need a definition of security.
+We want any warden to not be able to efficiently decode our stegotext $s$ to the original message $m$ without knowledge of our secret key $k$.
+As described above in the Prisoners' Game, we don't want any warden to be able to distinguish a stegotext $s := SE(K, m, h)$ from a covertext $c$ randomly sampled from the underlying distribution $\mathcal{C}$.
+If the warden is allowed to choose the hiddentext $m$ used to generate $s$, we call warden a \emph{chosen hiddentext attacker}. 
+
+If the warden can distinguish the stegotext from a covertext, they have an advantage against the stegosystem in the distingushing game.
+The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
+The attackers are limited by running time $t(k)$, number of queries $q(k)$ and total length $l(k)$ of hiddentexts.
+Formally, Hopper defined a chosen hiddentext attack as follows:
+
+\begin{definition}
+(Chosen Hiddentext Attack, Hopper) In a chosen hiddentext attack, $W$ is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
+
+\begin{enumerate}
+\item $ST$: The oracle $ST$ has a uniformly chosen key $K \leftarrow U_k$ and responds to queries $(m, h)$ with a StegoText drawn from $SE(K, m, h)$.
+\item $CT$: The oracle $CT$ has a uniformly chosen $K$ as well, and responds to queries $(m, h)$ with a CoverText of length $\mathcal{l} = |SE(K, m, h)|$ drawn from $\mathcal{C}_h^{\mathcal{l}}$
+\end{enumerate}
+
+$W^M(1^k)$ outputs a bit which represents its guess about the type of $M$.
+
+We define $W$'s advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$ by
+
+$$\mathop{Adv}_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) = |Pr[W^{ST}(1^k)=1] - Pr[W^{CT}(1^k)=1]|$$ \todo{why above/below?}
+
+where the probability is taken over the randomness of $ST$, $CT$, and $W$. 
+
+Define the insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$ by
+
+$$\mathop{InSec}_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t, q, l) \left\{ \mathop{Adv}_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) \right\}$$
+
+where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totaling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
+\end{definition}
 
 \section{Generative Neural Networks}
 
