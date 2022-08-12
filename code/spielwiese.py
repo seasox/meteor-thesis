@@ -1,3 +1,4 @@
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 history = [
@@ -22,21 +23,21 @@ model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-medium")
 
 history = conversation_context_from_history(tokenizer.eos_token, history)
 
-chat_history_ids = tokenizer.encode(history, return_tensors='pt')
+# chat_history_ids = tokenizer.encode(history, return_tensors='pt')
 
 # Let's chat for 5 lines
 # for step in range(5):
 while True:
     # encode the new user input, add the eos_token and return a tensor in Pytorch
-    # inp = input(">> User:")
-    inp = "Hey! How are you?"
+    inp = input(">> User:")
+    # inp = "Hey! How are you?"
     new_user_input_ids = tokenizer.encode(inp + tokenizer.eos_token, return_tensors='pt')
-
+    chat_history_ids = None
     # append the new user input tokens to the chat history
     # bot_input_ids = torch.cat((chat_history_ids, new_user_input_ids), dim=-1)
     # bot_input_ids = torch.cat((chat_history_ids, new_user_input_ids), dim=-1) if step > 0 else new_user_input_ids
-    # bot_input_ids = torch.cat((chat_history_ids, new_user_input_ids), dim=-1) if chat_history_ids is not None else new_user_input_ids
-    bot_input_ids = new_user_input_ids
+    bot_input_ids = torch.cat((chat_history_ids, new_user_input_ids), dim=-1) if chat_history_ids is not None else new_user_input_ids
+    # bot_input_ids = new_user_input_ids
 
     # generated a response while limiting the total chat history to 1000 tokens,
     chat_history_ids = model.generate(bot_input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id,

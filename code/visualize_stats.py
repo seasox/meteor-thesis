@@ -25,8 +25,8 @@ if __name__ == '__main__':
         mismatched_codings = list(filter(lambda x: len(x.mismatches) > 0, data_w_coding))
         encoded_tokens = list(map(lambda x: len(x.encoded_tokens), data_w_coding))
         mismatch_count = list(map(lambda x: len(x.mismatches), data_w_coding))
-        mismatch_rate = list(map(lambda x: x[0] / x[1] if x[1] != 0 else 0, zip(mismatch_count, encoded_tokens)))
-        avg_mismatch_rate = [sum(mismatch_count) / sum(encoded_tokens) for _ in range(len(encoded_tokens))]
+        mismatch_rate = list(map(lambda x: x[0] / x[1] if x[1] != 0 else x[0], zip(encoded_tokens, mismatch_count)))
+        avg_mismatch_rate = [sum(encoded_tokens) / sum(mismatch_count) for _ in range(len(encoded_tokens))]
         # avg_mismatch_rate = [np.mean(mismatch_stat[:i]) if i > 0 else 0 for i in range(len(mismatch_stat))]
         bits_per_word = list(flat_map(lambda x: x.stats['encoded_bits_in_output'], data_w_coding))
         avg_bits = np.mean(bits_per_word)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         axs[1].yaxis.set_major_locator(loc)
         axs[1].plot(mismatch_count)
         # axs[1].plot(avg_mismatch_rate, label="avg mismatch rate")
-        axs[2].set_title("mismatch rate (#mismatch/#encoded)")
+        axs[2].set_title("mismatch rate (#encoded/#mismatch)")
         axs[2].plot(mismatch_rate, label="mismatch rate (#mismatch/#encoded)")
         axs[2].annotate('%E' % avg_mismatch_rate[-1], (len(avg_mismatch_rate), avg_mismatch_rate[-1]))
         axs[2].plot(avg_mismatch_rate, label="avg mismatch rate")

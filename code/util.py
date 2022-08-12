@@ -106,22 +106,23 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
 
 
 # the performance of this is really bad
-def all_paths(graph, root) -> [[Optional[str]]]:
-    if root == '':
+def all_paths(graph, root: tuple[str, str, int, int]) -> [[Optional[tuple[str, str, int, int]]]]:
+    if root[0] == '':
         return [[None]]
     queue = []
-    hops = graph[root]
+    hops = graph[root[0]]
     queue += hops
     paths = []
     for hop in hops:
-        subpaths = all_paths(graph, hop[0])
+        subpaths = all_paths(graph, hop)
         for subpath in subpaths:
             paths += [[root] + subpath]
     return paths
 
 
 if __name__ == '__main__':
-    text = "I am feeling great. I hope you are fine too?"
+    #text = "I am feeling great. I hope you are fine too?"
+    text = "hello"
 
     enc, model = get_model(device='cpu')
 
@@ -143,7 +144,7 @@ if __name__ == '__main__':
 
 
     print_graph(graph)
-    paths = all_paths(graph, text)
+    paths = all_paths(graph, (text, None, None, None))
     print(len(paths))
-    # print(paths)
+    print(paths)
     # print(graph[text])
