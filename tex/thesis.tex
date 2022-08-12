@@ -107,7 +107,7 @@
 %  Mit Unterstützung von = {Harry Hilfreich},
   % 
   %   Weitere Unterstützung = {
-  %     Die Arbeit ist im Rahmen einer Tätigkeit bei der Firma Muster GmbH
+  %     Die Arbeit ist im Rahmen einer Tätigkeit bei der Firma Muster GmbH
   %     entstanden.
   %   },
   %
@@ -388,7 +388,7 @@ TODO
 \section{Structure Of This Thesis}
 
 Chapter 2 discusses previous works.
-First, we will discuss steganography and provably secure steganography, introduced by Hopper et. al. \todo{add bibtex}
+First, we will discuss steganography and provably secure steganography, introduced in \cite{Hopper04}.
 Afterwards, we discuss how generative neural networks (GNNs) such as GPT-2 produce high-quality text iteratively.
 Concluding, I will present the Meteor stegosystem, a provably secure steganographic system over ML-based channels as introduced by XYZ.
 
@@ -398,7 +398,7 @@ Afterwards, I will present algorithms which ensure correctness of Meteor on the 
 Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
 
 In chapter 4, I present a small modification to the Meteor stegosystem which allows two-way communication.
-There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \todo{bibtex} to generate dialog-like messages.
+There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang20} to generate dialog-like messages.
 This modification makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is negligible for shorter messages.
 
 In chapter 5, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
@@ -425,7 +425,7 @@ In steganography, a message is represented by a sequence of documents from an un
 Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
 If the original photograph is unknown to Warden, Alice can encode hidden text in the original photograph
 
-In his doctoral thesis ``Toward a theory of Steganography'', Nicholas J. Hopper \todo{bibtex} establishes a cryptographic point of view on steganography. 
+In his doctoral thesis ``Toward a theory of Steganography'', \cite{Hopper04} establishes a cryptographic point of view on steganography. 
 This allows us to do cryptanalysis on steganographic protocols.
 In section 3, he defines a stegosystem as follows:
 
@@ -477,27 +477,27 @@ $W^M(1^k)$ outputs a bit which represents its guess about the type of $M$.
 
 We define $W$'s advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$ by
 
-$$\mathop{Adv}_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) = |Pr[W^{ST}(1^k)=1] - Pr[W^{CT}(1^k)=1]|$$ \todo{why above/below?}
+$$Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) = |Pr[W^{ST}(1^k)=1] - Pr[W^{CT}(1^k)=1]|$$
 
 where the probability is taken over the randomness of $ST$, $CT$, and $W$. 
 
 Define the insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$ by
 
-$$\mathop{InSec}_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t, q, l) \left\{ \mathop{Adv}_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) \right\}$$
+$$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t, q, l) \left\{ Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) \right\}$$
 
 where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totaling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
 \end{definition}
 
 \section{Generative Neural Networks}
 
-Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language or photographs.
+Generative Neural Networks (GNN) establish a model which approximate realistic distributions which are hard to determine, such as natural language.
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
 The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
 This model works on a set of tokens, which are words or sub-words of the approximated distribution.
 To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \ref{fig-generative-network}.
 To generate the next token in the sequence, there are basically two approaches:
 \begin{enumerate*}[label=(\roman*)] \item \label{enum-gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum-gnn-sample} sampling according to the generated distribution \end{enumerate*}.
-While \ref{enum-gnn-most-likely} creates determinstic output, the generated sequences tend to be repetitive.
+While \ref{enum-gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
 On the other hand, approach \ref{enum-gnn-sample} is not deterministic, but usually creates higher quality output.
 For a comparison of GNN model outputs, see examples \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample}.
 
@@ -513,6 +513,8 @@ For a comparison of GNN model outputs, see examples \ref{ex-gpt2-output} and \re
 	At the same time, she said we can understand an
 	\label{ex-gpt2-output-sample}
 \end{example}
+
+When given a history, the ML model generates a probability distribution over $t_i$, more formally a list of 2-tuples $((p_1, t_1), (p_2, t_2), \dots, (p_n, t_n))$ with $\sum_{i=1}^n p_i = 1$.
 
 
 \begin{figure}[htpb]
@@ -667,6 +669,32 @@ TODO write a conclusion.
    title={The Prisoners' Problem And The Subliminal Channel},
    year=1983,
    pages={1-2}
+}
+@inproceedings{Hopper04,
+  title={Toward a theory of Steganography},
+  author={Manuel Blum and Nicholas Hopper},
+  year={2004}
+}
+@inproceedings{Zhang20,
+    title = "{DIALOGPT} : Large-Scale Generative Pre-training for Conversational Response Generation",
+    author = "Zhang, Yizhe  and
+      Sun, Siqi  and
+      Galley, Michel  and
+      Chen, Yen-Chun  and
+      Brockett, Chris  and
+      Gao, Xiang  and
+      Gao, Jianfeng  and
+      Liu, Jingjing  and
+      Dolan, Bill",
+    booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+    month = jul,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2020.acl-demos.30",
+    doi = "10.18653/v1/2020.acl-demos.30",
+    pages = "270--278",
+    abstract = "We present a large, tunable neural conversational response generation model, DIALOGPT (dialogue generative pre-trained transformer). Trained on 147M conversation-like exchanges extracted from Reddit comment chains over a period spanning from 2005 through 2017, DialoGPT extends the Hugging Face PyTorch transformer to attain a performance close to human both in terms of automatic and human evaluation in single-turn dialogue settings. We show that conversational systems that leverage DialoGPT generate more relevant, contentful and context-consistent responses than strong baseline systems. The pre-trained model and training pipeline are publicly released to facilitate research into neural response generation and the development of more intelligent open-domain dialogue systems.",
 }
 \end{bibtex-entries}
 
