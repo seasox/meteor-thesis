@@ -3,3 +3,6 @@ venv
 __pycache__
 .DS_Store
 model_cache
+plot.eps
+plot.pdf
+plot.png
