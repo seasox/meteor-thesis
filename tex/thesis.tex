@@ -490,32 +490,21 @@ where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at mo
 
 \section{Generative Neural Networks}
 
-Generative Neural Networks (GNN) establish a model which approximate realistic distributions which are hard to determine, such as natural language.
+Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
 The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
+GPT-2 has been introduced in \cite{OpenAI19}.
 This model works on a set of tokens, which are words or sub-words of the approximated distribution.
 To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \ref{fig-generative-network}.
-To generate the next token in the sequence, there are basically two approaches:
-\begin{enumerate*}[label=(\roman*)] \item \label{enum-gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum-gnn-sample} sampling according to the generated distribution \end{enumerate*}.
-While \ref{enum-gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
-On the other hand, approach \ref{enum-gnn-sample} is not deterministic, but usually creates higher quality output.
-For a comparison of GNN model outputs, see examples \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample}.
 
+On a high level, we can understand the ML model as a black box.
+When given a history, the ML model first generates a logits vector for tokens $t_i$, more formally a list of 2-tuples $((z_1, t_1), (z_2, t_2), \dots, (z_n, t_n)),~ z_i \in ( -\infty, \infty )$.
+In the next step, we convert the logits vector $z := (z_i)^{1 \leq i \leq n}$ to a probability distribution $(p_i)^{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function $\sigma$:
 
-\begin{example}[Example of GPT-2 model output without sampling]
-	Hello, I'm a language model, not a programming language. I'm a language model. I'm a language model. I'm a language model
-	\label{ex-gpt2-output}
-\end{example}
+$$\sigma \colon \mathbb{R}^n \rightarrow (0,1)^n,$$
+$$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}}\right)^{1 \leq i \leq n}$$
 
-
-\begin{example}[Example of GPT-2 model output with sampling]
-	Hello, I'm a language model, I'm a problem solver in languages."
-	At the same time, she said we can understand an
-	\label{ex-gpt2-output-sample}
-\end{example}
-
-When given a history, the ML model generates a probability distribution over $t_i$, more formally a list of 2-tuples $((p_1, t_1), (p_2, t_2), \dots, (p_n, t_n))$ with $\sum_{i=1}^n p_i = 1$.
-
+When combined, we get the black box for our ML model in \ref{fig-generative-network}.
 
 \begin{figure}[htpb]
 	\centering
@@ -534,10 +523,50 @@ When given a history, the ML model generates a probability distribution over $t_
             %\draw[->] (oracle) -- (t4);
             \draw[->] (oracle) -- node[midway,below] {$p_n$} (tn);
 	\end{tikzpicture} \label{fig-generative-network}
-	\caption{Generative ML Model as black-box function, taking a history as input.}
+	\caption{Generative ML Model as black box function, taking a history as input.}
 \end{figure}
+To generate the next token in the sequence, there are basically two approaches:
+\begin{enumerate*}[label=(\roman*)] \item \label{enum-gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum-gnn-sample} sampling according to the generated distribution \end{enumerate*}.
+While \ref{enum-gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
+On the other hand, approach \ref{enum-gnn-sample} is not deterministic, but usually creates higher quality output.
+For a comparison of GNN model outputs, see examples \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample}.
+
+To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
+In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
+A Python program which generates the outputs in \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample} can be found at \ref{code-gpt2-demo}.
+
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code-gpt2-demo}]{code/pipeline_gpt2.py}
 
 
+While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
+A more sophisticated way to generate text using GPT-2 can be found in \ref{code-gpt2-logits-demo}.
+The output of \ref{code-gpt2-logits-demo} resembles those shown in \ref{ex-gpt2-output-sample}. 
+This code example shows how we can:
+
+\begin{itemize}
+	\item use a tokenizer to convert strings to a vector of tokens
+	\item use the model to get a logits vector
+	\item transform the logits vector into a probability distribution using the softmax function
+	\item sample the next token from the distribution
+	\item convert a vector of tokens to a string using the tokenizer
+\end{itemize}
+
+
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code-gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+
+
+
+\begin{example}[Example of GPT-2 model output without sampling]
+	Hello, I'm a language model, not a programming language. I'm a language model. I'm a language model. I'm a language model. I'm a language model. I'm a language model.
+	\label{ex-gpt2-output}
+\end{example}
+
+\begin{example}[Example of GPT-2 model output with sampling]
+	Hello, I'm a language model, I'm a problem solver in languages."
+
+	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
+	\label{ex-gpt2-output-sample}
+\end{example}
 
 \section{Meteor Stegosystem}
 
@@ -547,11 +576,19 @@ TODO
 
 TODO
 
+\section{Ambiguous Tokenization}
+
+TODO
+
 \chapter{Two-Way-Communication}
 
 TODO
 
 \chapter{Security Analysis}
+
+TODO
+
+\section{Comparison Of Meteor's And Hopper's Security Game}
 
 TODO
 
@@ -695,6 +732,11 @@ TODO write a conclusion.
     doi = "10.18653/v1/2020.acl-demos.30",
     pages = "270--278",
     abstract = "We present a large, tunable neural conversational response generation model, DIALOGPT (dialogue generative pre-trained transformer). Trained on 147M conversation-like exchanges extracted from Reddit comment chains over a period spanning from 2005 through 2017, DialoGPT extends the Hugging Face PyTorch transformer to attain a performance close to human both in terms of automatic and human evaluation in single-turn dialogue settings. We show that conversational systems that leverage DialoGPT generate more relevant, contentful and context-consistent responses than strong baseline systems. The pre-trained model and training pipeline are publicly released to facilitate research into neural response generation and the development of more intelligent open-domain dialogue systems.",
+}
+@inproceedings{OpenAI19,
+  title={Language Models are Unsupervised Multitask Learners},
+  author={Alec Radford and Jeff Wu and Rewon Child and David Luan and Dario Amodei and Ilya Sutskever},
+  year={2019}
 }
 \end{bibtex-entries}
 
