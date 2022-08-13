@@ -495,7 +495,7 @@ In the last few years, the artificial intelligence community achieved tremendous
 The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
 GPT-2 has been introduced in \cite{OpenAI19}.
 This model works on a set of tokens, which are words or sub-words of the approximated distribution.
-To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \ref{fig-generative-network}.
+To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \autoref{fig:generative-network}.
 
 On a high level, we can understand the ML model as a black box.
 When given a history, the ML model first generates a logits vector for tokens $t_i$, more formally a list of 2-tuples $((z_1, t_1), (z_2, t_2), \dots, (z_n, t_n)),~ z_i \in ( -\infty, \infty )$.
@@ -504,7 +504,7 @@ In the next step, we convert the logits vector $z := (z_i)^{1 \leq i \leq n}$ to
 $$\sigma \colon \mathbb{R}^n \rightarrow (0,1)^n,$$
 $$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}}\right)^{1 \leq i \leq n}$$
 
-When combined, we get the black box for our ML model in \ref{fig-generative-network}.
+When combined, we get the black box for our ML model in \autoref{fig:generative-network}.
 
 \begin{figure}[htpb]
 	\centering
@@ -522,25 +522,25 @@ When combined, we get the black box for our ML model in \ref{fig-generative-netw
             \draw[->] (oracle) -- node[midway,below] {$p_3$} (t3);
             %\draw[->] (oracle) -- (t4);
             \draw[->] (oracle) -- node[midway,below] {$p_n$} (tn);
-	\end{tikzpicture} \label{fig-generative-network}
+	\end{tikzpicture} \label{fig:generative-network}
 	\caption{Generative ML Model as black box function, taking a history as input.}
 \end{figure}
 To generate the next token in the sequence, there are basically two approaches:
-\begin{enumerate*}[label=(\roman*)] \item \label{enum-gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum-gnn-sample} sampling according to the generated distribution \end{enumerate*}.
-While \ref{enum-gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
-On the other hand, approach \ref{enum-gnn-sample} is not deterministic, but usually creates higher quality output.
-For a comparison of GNN model outputs, see examples \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample}.
+\begin{enumerate*}[label=(\roman*)] \item \label{enum:gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum:gnn-sample} sampling according to the generated distribution \end{enumerate*}.
+While \ref{enum:gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
+On the other hand, approach \ref{enum:gnn-sample} is not deterministic, but usually creates higher quality output.
+For a comparison of GNN model outputs, see examples \autoref{example:gpt2-output} and \autoref{example:gpt2-output-sample}.
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
 In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
-A Python program which generates the outputs in \ref{ex-gpt2-output} and \ref{ex-gpt2-output-sample} can be found at \ref{code-gpt2-demo}.
+A Python program which generates the outputs in \autoref{example:gpt2-output} and \autoref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
 
-\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code-gpt2-demo}]{code/pipeline_gpt2.py}
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
 
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
-A more sophisticated way to generate text using GPT-2 can be found in \ref{code-gpt2-logits-demo}.
-The output of \ref{code-gpt2-logits-demo} resembles those shown in \ref{ex-gpt2-output-sample}. 
+A more sophisticated way to generate text using GPT-2 can be found in \autoref{code:gpt2-logits-demo}.
+The output of \autoref{code:gpt2-logits-demo} resembles those shown in \autoref{example:gpt2-output-sample}. 
 This code example shows how we can:
 
 \begin{itemize}
@@ -552,20 +552,20 @@ This code example shows how we can:
 \end{itemize}
 
 
-\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code-gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
 
 
 \begin{example}[Example of GPT-2 model output without sampling]
 	Hello, I'm a language model, not a programming language. I'm a language model. I'm a language model. I'm a language model. I'm a language model. I'm a language model.
-	\label{ex-gpt2-output}
+	\label{example:gpt2-output}
 \end{example}
 
 \begin{example}[Example of GPT-2 model output with sampling]
 	Hello, I'm a language model, I'm a problem solver in languages."
 
 	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
-	\label{ex-gpt2-output-sample}
+	\label{example:gpt2-output-sample}
 \end{example}
 
 \section{Meteor Stegosystem}
