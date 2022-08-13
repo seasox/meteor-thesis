@@ -529,14 +529,11 @@ To generate the next token in the sequence, there are basically two approaches:
 \begin{enumerate*}[label=(\roman*)] \item \label{enum:gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum:gnn-sample} sampling according to the generated distribution \end{enumerate*}.
 While \ref{enum:gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
 On the other hand, approach \ref{enum:gnn-sample} is not deterministic, but usually creates higher quality output.
-For a comparison of GNN model outputs, see examples \autoref{example:gpt2-output} and \autoref{example:gpt2-output-sample}.
+For a comparison of GNN model outputs, see examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample}.
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
 In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
-A Python program which generates the outputs in \autoref{example:gpt2-output} and \autoref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
-
-\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
-
+A Python program which generates the outputs in examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
 A more sophisticated way to generate text using GPT-2 can be found in \autoref{code:gpt2-logits-demo}.
@@ -551,6 +548,8 @@ This code example shows how we can:
 	\item convert a vector of tokens to a string using the tokenizer
 \end{itemize}
 
+
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
 
 \lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
@@ -570,7 +569,111 @@ This code example shows how we can:
 
 \section{Meteor Stegosystem}
 
-TODO 
+In their paper \cite{Meteor2020}, the authors present the Meteor stegosystem, a provably secure steganographic system for realistic distributions (as approximated by ML models).
+The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
+The decoding party Bob receives the tokens from Alice and recovers a prefix of the random value used in sampling.
+While this is easily possible for the encoding party, it is unclear wether or not the decoding party can recover the embedded information.
+For that, the Meteor authors have introduced a property which many generative neural networks, such as GPT-2, possess.
+This property is called Ranged Randomness Recoverable Sampling Scheme, or RRRSS, see \autoref{def:rrrss}.
+
+\begin{definition}
+	(Ranged Randomness Recoverable Sampling Scheme, Meteor) 
+	
+	We call 
+	$(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
+	with a ppt. algorithm 
+	$Sample_{\mathcal{D}}^\beta \colon (\mathcal{H}, r) \rightarrow s$ 
+	and a ppt. algorithm 
+	$Recover_{\mathcal{D}}^\beta \colon (\mathcal{H}, s) \rightarrow \mathcal{R}$ 
+	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$, if:
+	
+	\begin{enumerate}
+		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
+		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample s, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s$ of possible values for $r$
+	\end{enumerate}
+	\label{def:rrrss}
+\end{definition}
+
+Now, with the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model:
+
+\begin{Pseudocode}
+algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
+	Output: Token $t$
+	$\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
+	$cuml \leftarrow 0$
+	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+		$cuml \leftarrow cuml + \mathcal{P}[i]$
+		if $cuml > r$ then
+			Output $t \leftarrow \mathcal{T}[i]$
+	Output $t \leftarrow \mathcal{T}[|\mathcal{T}|-1]$
+\end{Pseudocode}
+
+\begin{Pseudocode}
+algorithm $Recover_{\mathcal{GPT}}^\beta(h, r)$
+	Output: Randomness set $\mathcal{R}$
+	$\mathcal{T}, \mathcal{R} \leftarrow Next_{\mathcal{GPT}}(h)$
+	$cuml \leftarrow 0$
+	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+		if $\mathcal{T}[i] = s$ then
+			Output $\mathcal{R} \leftarrow \{ r \in \{ 0, 1\}^\beta | cuml \leq r < cuml + \mathcal{P}[i] \}$
+		$cuml \leftarrow cuml + \mathcal{P}[i]$
+	Output $\mathcal{R} \leftarrow \emptyset$
+\end{Pseudocode}
+
+Here, $Next_{\mathcal{GPT}}$ is the algorithm which generates the probability distribution for the next token, as shown in \autoref{fig:generative-network}.
+The tokens are denoted by $\mathcal{T}$ and probabilities are denoted by $\mathcal{P}$.
+
+
+
+\begin{Pseudocode}
+algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, \mathcal{H})$
+	Output: Stegotext message $c$
+	$c \leftarrow \epsilon,~ n \leftarrow 0$
+	while $n < |m|$ do
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$r \leftarrow m[n:n+\beta] \oplus mask$
+		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $c$
+\end{Pseudocode}
+
+
+\begin{Pseudocode}
+algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
+	Output: Plaintext message $m$
+	$m \leftarrow \epsilon$
+	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
+	for $i \in \{0, 1, \dots, |c|-1 \}$ do
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
+		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $m$
+\end{Pseudocode}
+
+\begin{Pseudocode}
+algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
+	Output: Length $l$
+	$l \leftarrow 1$
+	while $l < \beta$ do
+		if $\exists i, j \in \{ 1, \dots, n \}$ such that $r_i[0: l] \neq r_j[0:	l]$ then
+			Output $l-1$
+		$l \leftarrow l+1$
+	Output $l$
+\end{Pseudocode}
+
+\begin{Pseudocode}
+algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
+	Output: Bit String $s$
+	Output $r_1[0: LenPrefix^\beta(\mathcal{R})]$
+\end{Pseudocode}
+
+
+
+
 
 \chapter{Correctness}
 
@@ -701,18 +804,18 @@ TODO write a conclusion.
 % Replace following example entries with the ones of your thesis.
 
 \begin{bibtex-entries}
-@article{Simmons83,
+@article{Simmons1983,
    author={Simmons, Gustavus J.},
    title={The Prisoners' Problem And The Subliminal Channel},
    year=1983,
    pages={1-2}
 }
-@inproceedings{Hopper04,
+@inproceedings{Hopper2004,
   title={Toward a theory of Steganography},
   author={Manuel Blum and Nicholas Hopper},
   year={2004}
 }
-@inproceedings{Zhang20,
+@inproceedings{Zhang2020,
     title = "{DIALOGPT} : Large-Scale Generative Pre-training for Conversational Response Generation",
     author = "Zhang, Yizhe  and
       Sun, Siqi  and
@@ -733,10 +836,18 @@ TODO write a conclusion.
     pages = "270--278",
     abstract = "We present a large, tunable neural conversational response generation model, DIALOGPT (dialogue generative pre-trained transformer). Trained on 147M conversation-like exchanges extracted from Reddit comment chains over a period spanning from 2005 through 2017, DialoGPT extends the Hugging Face PyTorch transformer to attain a performance close to human both in terms of automatic and human evaluation in single-turn dialogue settings. We show that conversational systems that leverage DialoGPT generate more relevant, contentful and context-consistent responses than strong baseline systems. The pre-trained model and training pipeline are publicly released to facilitate research into neural response generation and the development of more intelligent open-domain dialogue systems.",
 }
-@inproceedings{OpenAI19,
+@inproceedings{OpenAI2019,
   title={Language Models are Unsupervised Multitask Learners},
   author={Alec Radford and Jeff Wu and Rewon Child and David Luan and Dario Amodei and Ilya Sutskever},
   year={2019}
+}
+@inproceedings{Meteor2021,
+author = {Kaptchuk, Gabriel and Jois, Tushar and Green, Matthew and Rubin, Aviel},
+year = {2021},
+month = {11},
+pages = {1529-1548},
+title = {Meteor: Cryptographically Secure Steganography for Realistic Distributions},
+doi = {10.1145/3460120.3484550}
 }
 \end{bibtex-entries}
 
