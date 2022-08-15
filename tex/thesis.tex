@@ -508,6 +508,7 @@ Lastly, we call a Stegosystem $\mathcal{S}_k$ \emph{universally steganographic s
 
 
 \section{Generative Neural Networks}
+\label{sec:generative-neural-networks}
 
 Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
@@ -747,12 +748,17 @@ We will also discuss how an attacker can distinguish Meteor's output from a rand
 \chapter{Correctness}
 \label{chap:correctness}
 
-The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. There, they state that ``Note that, due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme.''.
-During experimentation, I have concluded that the cause of this is
+The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. There, they state that ``Note that, due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
+During experimentation, I have concluded that the cause of this is due to the way sub-word based GNNs, such as GPT-2, represent text and not due to issues with the algorithm interface.
+
+After describing the issue at hand, I will show that the Meteor Stegosystem is actually incorrect with respect to Hopper's definition as defined in \autoref{def:correctness-hopper} by providing a counterexample.
+To restore correctness, I then present a change to Meteor's $Recover$ algorithm to successfully reconstruct the original hiddentext message while inducing overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
 
-TODO
+In \autoref{sec:generative-neural-networks}, we have discussed that GPT-2 uses a token dictionary to represent text.
+
+\section{Correctness Of The Meteor Stegosystem}
 
 \section{Algorithmic Reconstruction Of Token Candidates}
 
