@@ -1,6 +1,5 @@
 \documentclass[english,version-2020-11]{uzl-thesis}
 
-
 % Copy this file as a template for your thesis. You will have to take
 % action at all places marked by
 %
@@ -196,6 +195,7 @@
 }
 
 
+\addbibresource{thesis.bib}
 
 
 %%%%%%%%%%%%%%%%%%%%
@@ -400,7 +400,7 @@ Afterwards, I will present algorithms which ensure correctness of Meteor on the 
 Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
 
 In chapter 4, I present a small modification to the Meteor stegosystem which allows two-way communication.
-There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang20} to generate dialog-like messages.
+There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang2020} to generate dialog-like messages.
 This modification makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is negligible for shorter messages.
 
 In chapter 5, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
@@ -417,7 +417,7 @@ Finally, in chapter 6, I will discuss the results in a conclusion and give ideas
 Steganography extends the concepts of cryptography to hide the mere existence of a message.
 This makes it robust against censorship and prohibition.
 While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
-Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons83}.
+Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons1983}.
 There, two prisoners Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a Warden.
 Alice and Bob now want to craft and exchange escape plans.
@@ -428,7 +428,7 @@ In steganography, a message is represented by a sequence of documents from an un
 Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
 If the original photograph is unknown to Warden, Alice can encode hidden text in the original photograph
 
-In his doctoral thesis ``Toward a theory of Steganography'', \cite{Hopper04} establishes a cryptographic point of view on steganography. 
+In his doctoral thesis ``Toward a theory of Steganography'', \cite{Hopper2004} establishes a cryptographic point of view on steganography. 
 This allows us to do cryptanalysis on steganographic protocols.
 In section 3, he defines a stegosystem as follows:
 
@@ -512,7 +512,7 @@ Lastly, we call a Stegosystem $\mathcal{S}_k$ \emph{universally steganographic s
 Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
 The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
-GPT-2 has been introduced in \cite{OpenAI19}.
+GPT-2 has been introduced in \cite{OpenAI2019}.
 This model works on a set of tokens, which are words or sub-words of the approximated distribution.
 To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \autoref{fig:generative-network}.
 
@@ -591,7 +591,7 @@ This code example shows how we can:
 
 \section{Meteor Stegosystem}
 asdasd
-In their paper \cite{Meteor2020} Kaptchuk et al. present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
+In their paper \cite{Meteor2021} Kaptchuk et al. present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
 The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
 The decoding party Bob receives the tokens from Alice and recovers a prefix of the random value used in sampling.
 
@@ -747,7 +747,7 @@ We will also discuss how an attacker can distinguish Meteor's output from a rand
 \chapter{Correctness}
 \label{chap:correctness}
 
-The Meteor authors have released a demo of Meteor at \cite{MeteorLiveDemo2021}. There, they state that ``Note that, due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme.''.
+The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. There, they state that ``Note that, due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme.''.
 During experimentation, I have concluded that the cause of this is
 
 \section{Ambiguous Tokenization}
@@ -784,162 +784,6 @@ TODO
 % Replace the following with your conclusion
 
 TODO write a conclusion.
-
-% Normally, the bibliography comes next at this point. Do *not* (try
-% to) include further indices and tables like an index or
-% a list of figures or a list of tables or such things. Nobody
-% actually uses them and they just use up space. 
-%
-% You *can* however include a glossary, if this seems appropriate. It
-% goes here as an unnumbered chapter. Most thesis will *not* need a
-% glossary: a well-written text (re)explains strange words and
-% concepts as necessary. However, there are situations where a
-% glossary may be helpful.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%%%
-% 
-% Bibliographies
-%
-%%%
-%
-% The uzl-thesis class will load biblatex for the bibliography
-% management. This is a powerful package, see its documentation for
-% details. The styles will be setup correctly and automatically by
-% choosing one of the two style keys as described earlier.
-%
-% In order for the bibliography to work, run latex in the following
-% order (which is the standard order):
-% 
-% > lualatex thesis-example
-% > bibtex thesis-example
-%e > lualatex thesis-example
-% 
-% Add BibTeX files using \addbibresource or use the {bibtex entries}
-% environment (see below).
-%
-%%%
-%
-% Although everyting is normally setup automatically, you can change
-% the options passed to biblatex using the key 'biblatex';
-% for instance,
-%
-%   \UzLThesisSetup{biblatex={firstinits=false}}
-%
-% will switch off shortened first names. Normally, you will not need
-% this key in your preamble. 
-% 
-% Note that the bibtex program is used as the 'backend' of biblatex
-% by default (rather than biber, which is the preferred program of
-% biblatex). This means that you can (and must) run *bibtex* after you
-% have run lualatex on your thesis. If you wish to use biber instead
-% of bibtex, say 'biblatex={backend=biber}'. 
-% 
-%%%
-%
-% The following environment is optional. It allows you to keep the
-% bibtex entries for your thesis right here in the thesis file. What
-% happens is that each time this tex file is processed, the contents
-% of the following environment gets written to the file
-% \jobname-bibtex-entries.bib (this file gets overwritten each
-% time). Independently, \addbibresource{\jobname-bibtex-entries.bib}
-% is always called if the file \jobname-bibtex-entries.bib
-% exists. 
-%
-% In result, you can edit and keep the bibliography's bibtex entries
-% right here. If you change something here, run latex, then bibtex,
-% then latex once more.
-%
-% If you would like to manage the bibtex entries in a separate file,
-% remove the below environment, delete the \jobname-bibtex-entries.bib
-% file and instead write
-%
-% \addbibresource{filename-of-your-bibtex-file.bib}
-%
-% in the preamble.
-%
-%%%
-
-
-% If you need to have an appendix (I advise against it), insert it
-% here using, first, \appendix and then \chapter and then,
-% possibly, \section. 
-%
-% \appendix
-%
-% \chapter{Technical Appendix}
-%
-% \section{Experimental Parameters} % possibly
-%
-% Again, I advise against using an appendix.
-\begin{bibtex-entries}
-@article{Simmons1983,
-   author={Simmons, Gustavus J.},
-   title={The Prisoners' Problem And The Subliminal Channel},
-   year=1983,
-   pages={1-2}
-}
-@inproceedings{Hopper2004,
-  title={Toward a theory of Steganography},
-  author={Manuel Blum and Nicholas Hopper},
-  year={2004}
-}
-@inproceedings{Zhang2020,
-    title = "{DIALOGPT} : Large-Scale Generative Pre-training for Conversational Response Generation",
-    author = "Zhang, Yizhe  and
-      Sun, Siqi  and
-      Galley, Michel  and
-      Chen, Yen-Chun  and
-      Brockett, Chris  and
-      Gao, Xiang  and
-      Gao, Jianfeng  and
-      Liu, Jingjing  and
-      Dolan, Bill",
-    booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
-    month = jul,
-    year = "2020",
-    address = "Online",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2020.acl-demos.30",
-    doi = "10.18653/v1/2020.acl-demos.30",
-    pages = "270--278",
-    abstract = "We present a large, tunable neural conversational response generation model, DIALOGPT (dialogue generative pre-trained transformer). Trained on 147M conversation-like exchanges extracted from Reddit comment chains over a period spanning from 2005 through 2017, DialoGPT extends the Hugging Face PyTorch transformer to attain a performance close to human both in terms of automatic and human evaluation in single-turn dialogue settings. We show that conversational systems that leverage DialoGPT generate more relevant, contentful and context-consistent responses than strong baseline systems. The pre-trained model and training pipeline are publicly released to facilitate research into neural response generation and the development of more intelligent open-domain dialogue systems.",
-}
-@inproceedings{OpenAI2019,
-  title={Language Models are Unsupervised Multitask Learners},
-  author={Alec Radford and Jeff Wu and Rewon Child and David Luan and Dario Amodei and Ilya Sutskever},
-  year={2019}
-}
-@inproceedings{Meteor2021,
-	author = {Kaptchuk, Gabriel and Jois, Tushar and Green, Matthew and Rubin, Aviel},
-	year = {2021},
-	month = {11},
-	pages = {1529-1548},
-	title = {Meteor: Cryptographically Secure Steganography for Realistic Distributions},
-	doi = {10.1145/3460120.3484550}
-}
-@misc{MeteorDemo2021,
-	author = {Kaptchuk, Gabriel and Jois, Tushar and Green, Matthew and Rubin, Aviel},
-	year = {2021},
-	month = {08},
-	day = {24},
-	howpublished = {\hyperlink{https://colab.research.google.com/gist/tusharjois/ec8603b711ff61e09167d8fef37c9b86}},
-	note = {[Online; accessed 2022-08-24]}
-}
-\end{bibtex-entries}
-
 \end{document}
 
 %  LocalWords:  LaTeX tex moretexcs Lübeck pdf uzl lualatex bibtex th
