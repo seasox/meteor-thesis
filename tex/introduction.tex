@@ -1,0 +1,32 @@
+\chapter{Introduction}
+
+When governmental and private-sector adversaries try to breach the confidentiality of private communication, civil society requires means to defend their privacy.
+Especially in authoritorian states, law enforcement continuously attempts to break or prohibit effective means of cryptography, especially when used for censorship-resistant communication.
+
+\section{Motivation}
+
+TODO
+
+\section{Structure Of This Thesis}
+
+Chapter 2 discusses previous works.
+First, we will discuss steganography and provably secure steganography, introduced in \cite{Hopper04}.
+Afterwards, we discuss how generative neural networks (GNNs) such as GPT-2 produce high-quality text iteratively.
+Concluding, I will present the Meteor stegosystem, a provably secure steganographic system over ML-based channels as introduced by XYZ.
+
+Chapter 3 provides an analysis of the correctness of the Meteor stegosystem. 
+We will see that the Meteor stegosystem is not correct because of the way tokenization in GNNs work.
+Afterwards, I will present algorithms which ensure correctness of Meteor on the receiver site.
+Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
+
+\todo{calculate introduced overhead}
+
+In chapter 4, I present a small modification to the Meteor stegosystem which allows two-way communication.
+There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang2020} to generate dialog-like messages.
+This modification makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is negligible for shorter messages.
+
+In chapter 5, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
+We will compare the definition of security used by the Meteor authors with the definition of security by Hopper.
+We then will show that the Meteor stegosystem is not universally secure in Hopper's definition.
+
+Finally, in chapter 6, I will discuss the results in a conclusion and give ideas for further research.

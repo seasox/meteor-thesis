@@ -1,0 +1,332 @@
+\chapter{Previous Work}
+
+\section{Provably Secure Steganography}
+\label{sec:prov-sec-steg}
+
+Steganography extends the concepts of cryptography to hide the mere existence of a message.
+This makes it robust against censorship and prohibition.
+While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
+Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons1983}.
+There, two prisoners Alice and Bob are imprisoned.
+While they can exchange messages, their contents are surveilled by a Warden.
+Alice and Bob now want to craft and exchange escape plans.
+Warden observes messages exchanged between Alice and Bob.
+He tries to distinguish the exchange of the escape plan from innocous messages.
+
+In steganography, a message is represented by a sequence of documents from an underlying distribution.
+Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
+If the original photograph is unknown to Warden, Alice can encode hidden text in the original photograph
+
+In his doctoral thesis ``Toward a theory of Steganography'', \cite{Hopper2004} establishes a cryptographic point of view on steganography. 
+This allows us to do cryptanalysis on steganographic protocols.
+In section 3, he defines a stegosystem as follows:
+
+\begin{definition}[Stegosystem, Hopper]
+A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, is a pair of probabilistic algorithms:
+
+\begin{itemize}
+	\item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $K \in \{0,1\}*$, a string $m \in \{0,1\}*$ (the hiddentext), and a message history $h$.
+		SE(K, m, h) returns a sequence of documents $s_1||s_2||\dots||s_l$ (the stegotext) from the support of $\mathcal{C})h^l$.
+	\item $\mathcal{S}$.Decode (abbreviated $SD$) takes as input a key $K$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h$.
+		SD(K, s, h) returns a hiddentext $m \in \{0,1\}*$
+\end{itemize}
+\end{definition}
+
+We want our stegosystem to be correct.
+To achieve that, the decoding of a given stegotext $s$, given the correct key $k$ and history $h$, should yield the original hiddentext $m$.
+Hopper defines the correctness of a stegosystem as follows:
+
+\begin{definition}[Correctness, Hopper]
+\label{def:correctness-hopper}
+A stegosystem $\mathcal{S}$ is \emph{correct} if for every polynomial $p(k)$, there exists a negligible function $\mu(k)$ such that $SE$ and $SD$ also satisfy the relationship:
+
+$$\forall m \in \{0,1\}^{p(k)}, h \in D^* \colon Pr(SD(K, SE(K, m, h), h) = m) \geq 1 - \mu(k)$$
+
+where the randomization is over the key $K$ and any coin tosses of $SE$, $SD$, and the oracles accessed by $SE$, $SD$.
+\end{definition}
+
+The introduction of a \emph{negligible} polynomial $\mu(k)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in $k$.
+While stegosystem with $\mu(k) = 0$ can exist, the introduction of negligible polynomials proves helpful for reductions on established cryptographic primitives. 
+
+Since we want our stegosystem to be prone to analysis by warden, we also need a definition of security.
+We want any warden to be unable to efficiently decode our stegotext $s$ to the original message $m$ without knowledge of our secret key $k$.
+As described above in the Prisoners' Game, we don't want any warden to be able to distinguish a stegotext $s := SE(K, m, h)$ from a covertext $c$ randomly sampled from the underlying distribution $\mathcal{C}$.
+If the warden is allowed to choose the hiddentext $m$ used to generate $s$, we call warden a \emph{chosen hiddentext attacker}. 
+
+If the warden can distinguish the stegotext from a covertext, they have an advantage against the stegosystem in the distingushing game.
+The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
+The attackers are limited by running time $t(k)$, number of queries $q(k)$ and total length $l(k)$ of hiddentexts.
+Formally, Hopper defined a chosen hiddentext attack as follows:
+
+\begin{definition}[Chosen Hiddentext Attack, Hopper]
+In a chosen hiddentext attack, $W$ is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
+
+\begin{enumerate}
+\item $ST$: The oracle $ST$ has a uniformly chosen key $K \leftarrow U_k$ and responds to queries $(m, h)$ with a StegoText drawn from $SE(K, m, h)$.
+\item $CT$: The oracle $CT$ has a uniformly chosen $K$ as well, and responds to queries $(m, h)$ with a CoverText of length $\mathcal{l} = |SE(K, m, h)|$ drawn from $\mathcal{C}_h^{\mathcal{l}}$
+\end{enumerate}
+
+$W^M(1^k)$ outputs a bit which represents its guess about the type of $M$.
+
+We define $W$'s advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$ by
+
+$$Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) = |Pr[W^{ST}(1^k)=1] - Pr[W^{CT}(1^k)=1]|$$
+
+where the probability is taken over the randomness of $ST$, $CT$, and $W$. 
+
+Define the insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$ by
+
+$$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t, q, l) \left\{ Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) \right\}$$
+
+where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totaling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
+\end{definition}
+
+After defining what insecurity (or $InSec$) of a stegosystem is, Hopper establishes a definition for steganographic secrecy.
+
+\begin{definition}[Steganographic Secrecy, Hopper]
+A Stegosystem $\mathcal{S}_k$ is ca	lled $(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$ ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,k) \leq \epsilon$
+\end{definition}
+
+Ideally, we would like to achieve \emph{universal} steganographic secrecy, i.e. steganographic secrecy over any always-informative channel $\mathcal{C}$.
+
+\begin{definition}[Universal Steganographic Secrecy, Hopper]
+A Stegosystem $\mathcal{S}$ is called $(t, q, l, \epsilon)$-universally steganographic secret agains chosen hiddentext attack ($(t,q,l,k,\epsilon)$-SS-CHA if it is $(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$ for every always-informative channel $\mathcal{C}$
+\end{definition}
+
+Lastly, we call a Stegosystem $\mathcal{S}_k$ \emph{universally steganographic secret against chosen hiddentext attacks} (USS-CHA) if for every channel $\mathcal{C}$ and for every PPT $W \in \mathcal{W}(t,q,l,k)$, $Adv_{\mathcal{S},\mathcal{C},W}(k)$ is negligible in k.
+
+
+\section{Generative Neural Networks}
+\label{sec:generative-neural-networks}
+
+Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
+In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
+The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
+GPT-2 has been introduced in \cite{OpenAI2019}.
+This model works on a set of tokens, which are words or sub-words of the approximated distribution.
+To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \autoref{fig:generative-network}.
+
+On a high level, we can understand the ML model as a black box.
+When given a history, the ML model first generates a logits vector for tokens $t_i$, more formally a list of 2-tuples $((z_1, t_1), (z_2, t_2), \dots, (z_n, t_n)),~ z_i \in ( -\infty, \infty )$.
+In the next step, we convert the logits vector $z := (z_i)^{1 \leq i \leq n}$ to a probability distribution $(p_i)^{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function $\sigma$:
+
+$$\sigma \colon \mathbb{R}^n \rightarrow (0,1)^n,$$
+$$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}}\right)^{1 \leq i \leq n}$$
+
+When combined, we get the black box for our ML model in \autoref{fig:generative-network}.
+
+\begin{figure}[htpb]
+	\centering
+	\begin{tikzpicture}
+            \node[rectangle, draw=black, minimum width=4cm, minimum height=4cm] (oracle) {ML Model};
+            \node[left=of oracle] (history) {history};
+            \node[above right=-5mm and 1cm of oracle] (t1) {$t_1$};
+            \node[below=5mm of t1] (t2) {$t_2$};
+            \node[below=5mm of t2] (t3) {$t_3$};
+            \node[below=5mm of t3] (t4) {$\dots$};
+            \node[below=5mm of t4] (tn) {$t_n$};
+            \draw[->] (history) -- (oracle);
+            \draw[->] (oracle) -- node[midway,below] {$p_1$} (t1);
+            \draw[->] (oracle) -- node[midway,below] {$p_2$} (t2);
+            \draw[->] (oracle) -- node[midway,below] {$p_3$} (t3);
+            %\draw[->] (oracle) -- (t4);
+            \draw[->] (oracle) -- node[midway,below] {$p_n$} (tn);
+	\end{tikzpicture}
+	\caption{Generative ML Model as black box function, taking a history as input.}
+	\label{fig:generative-network}
+\end{figure}
+To generate the next token in the sequence, there are basically two approaches:
+\begin{enumerate*}[label=(\roman*)] \item \label{enum:gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum:gnn-sample} sampling according to the generated distribution \end{enumerate*}.
+While \ref{enum:gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
+On the other hand, approach \ref{enum:gnn-sample} is not deterministic, but usually creates higher quality output.
+For a comparison of GNN model outputs, see examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample}.
+
+To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
+In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
+A Python program which generates the outputs in examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
+
+While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
+A more sophisticated way to generate text using GPT-2 can be found in \autoref{code:gpt2-logits-demo}.
+The output of \autoref{code:gpt2-logits-demo} resembles those shown in \autoref{example:gpt2-output-sample}. 
+This code example shows how we can:
+
+\begin{itemize}
+	\item use a tokenizer to convert strings to a vector of tokens
+	\item use the model to get a logits vector
+	\item transform the logits vector into a probability distribution using the softmax function
+	\item sample the next token from the distribution
+	\item convert a vector of tokens to a string using the tokenizer
+\end{itemize}
+
+
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
+
+\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+
+
+
+\begin{example}[Example of GPT-2 model output without sampling]
+	Hello, I'm a language model, not a programming language. I'm a language model. I'm a language model. I'm a language model. I'm a language model. I'm a language model.
+	\label{example:gpt2-output}
+\end{example}
+
+\begin{example}[Example of GPT-2 model output with sampling]
+	Hello, I'm a language model, I'm a problem solver in languages."
+
+	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
+	\label{example:gpt2-output-sample}
+\end{example}
+
+\todo{write about BPE, sub-word tokens etc.}
+
+\section{Meteor Stegosystem}
+\label{sec:meteor}
+In their paper \cite{Meteor2021} Kaptchuk et al. present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
+The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
+The decoding party Bob receives the tokens from Alice and recovers a prefix of the random value used in sampling.
+
+While this is easily possible for the encoding party (because they control the randomness used in sampling), it is unclear wether or not the decoding party can extract (a prefix of) the randomness in the decoding process to recover parts of the hiddentext message.
+Luckily, many generative neural networks, such as GPT-2, possess this property. 
+The Meteor authors have introduced the concept of a Ranged Randomness Recoverable Sampling Scheme, or RRRSS, see \autoref{def:rrrss}.
+This formally models the behaviour described above.
+
+\begin{definition}[Ranged Randomness Recoverable Sampling Scheme, Kaptchuk et al.]
+	\label{def:rrrss}
+	We call 
+	$(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
+	with a ppt. algorithm 
+	$Sample_{\mathcal{D}}^\beta \colon (\mathcal{H}, r) \rightarrow s$ 
+	and a ppt. algorithm 
+	$Recover_{\mathcal{D}}^\beta \colon (\mathcal{H}, s) \rightarrow \mathcal{R}$ 
+	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$, if:
+	
+	\begin{enumerate}
+		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
+		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample s, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s$ of possible values for $r$
+	\end{enumerate}
+\end{definition}
+
+Now, with the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model:
+
+\begin{Pseudocode}[float]
+algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
+	Output: Token $t$
+	$\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
+	$cuml \leftarrow 0$
+	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+		$cuml \leftarrow cuml + \mathcal{P}[i]$
+		if $cuml > r$ then
+			Output $t \leftarrow \mathcal{T}[i]$
+	Output $t \leftarrow \mathcal{T}[|\mathcal{T}|-1]$
+\end{Pseudocode}
+
+\begin{Pseudocode}[float]
+algorithm $Recover_{\mathcal{GPT}}^\beta(h, r)$
+	Output: Randomness set $\mathcal{R}$
+	$\mathcal{T}, \mathcal{R} \leftarrow Next_{\mathcal{GPT}}(h)$
+	$cuml \leftarrow 0$
+	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+		if $\mathcal{T}[i] = s$ then
+			Output $\mathcal{R} \leftarrow \{ r \in \{ 0, 1\}^\beta | cuml \leq r < cuml + \mathcal{P}[i] \}$
+		$cuml \leftarrow cuml + \mathcal{P}[i]$
+	Output $\mathcal{R} \leftarrow \emptyset$
+\end{Pseudocode}
+
+Here, $Next_{\mathcal{GPT}}$ is the algorithm which generates the probability distribution for the next token, as shown in \autoref{fig:generative-network}.
+The tokens are denoted by $\mathcal{T}$ and probabilities are denoted by $\mathcal{P}$.
+The $Sample_{\mathcal{GPT}}^\beta$ algorithm cumulates the token probabilities $p_i$ into $cuml$ until the threshold $r$ has been reached.
+Then the current token $t_i$ is the token to be sampled from the distribution.
+We can see that the order of tokens is relevant for the recovery to succeed, so we expect $Next_{\mathcal{GPT}}^\beta$ to return token probabilities in a somehow ordered fashion.
+
+Now that a RRRSS scheme for GPT-2 is established, we can commence with the definition of the stegosystem $\mathcal{S} = \left( Encode_{\mathcal{M}}^\beta, Decode_{\mathcal{M}}^\beta \right)$.
+Kaptchuk et al. described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
+
+
+\begin{Pseudocode}[float, caption={Meteor Encode Algorithm}, label={alg:encode}]
+algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, \mathcal{H})$
+	Output: Stegotext message $c$
+	$c \leftarrow \epsilon,~ n \leftarrow 0$
+	while $n < |m|$ do
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$r \leftarrow m[n:n+\beta] \oplus mask$
+		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $c$
+\end{Pseudocode}
+
+$Encode$ uses the PRG to sample a pseudorandom mask and applies that mask to the next $\beta$ bits of $m$ into $r$.
+Since $mask$ is pseudorandom, this makes $r$ pseudorandom as well.
+We then use $r$ to sample from the RRRSS distribution to get the next token $c_i$.
+Afterwards, $Recover_{\mathcal{M}}^\beta$ and $LenPrefix^\beta$ are queried to get the number of bits $n_i$ recoverable from $r$.
+This procedure is repeated until $|m|$ bits of hiddentext are encoded.
+Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}$ and $\mathcal{H}$, the same stegotext $c$ will be generated.
+
+
+\begin{Pseudocode}[float, caption={Meteor Decode Algorithm}, label={alg:decode}]
+algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
+	Output: Plaintext message $m$
+	$m \leftarrow \epsilon$
+	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
+	for $i \in \{0, 1, \dots, |c|-1 \}$ do
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
+		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $m$
+\end{Pseudocode}
+
+$Decode$ decodes the stegotext to the hiddentext message left-to-right. 
+It repeatedly uses $Recover_{\mathcal{M}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distribution.
+It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
+
+\begin{Pseudocode}[float, caption={Meteor LenPrefix Algorithm}]
+algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
+	Output: Length $l$
+	$l \leftarrow 1$
+	while $l < \beta$ do
+		if $\exists i, j \in \{ 1, \dots, n \}$ such that $r_i[0: l] \neq r_j[0:	l]$ then
+			Output $l-1$
+		$l \leftarrow l+1$
+	Output $l$
+\end{Pseudocode}
+
+\begin{Pseudocode}[float, caption={Meteor Prefix Algorithm}]
+algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
+	Output: Bit String $s$
+	Output $r_1[0: LenPrefix^\beta(\mathcal{R})]$
+\end{Pseudocode}
+
+\begin{Pseudocode}[float, caption={Meteor KeyGen Algorithm}]
+algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
+	Output: Key $k_{prg}$
+	Output $k_{prg} = PRG.Setup(1^\lambda)$
+\end{Pseudocode}
+
+For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for negligible in key length.
+They introduce another formal definition, see Definition \ref{def:correctness-kaptchuk}.
+In \autoref{chap:correctness}, we will argue how correctness is actually not achieved using GPT-2 and how we can modify the stegosystem described here to achieve correctness while introducing exponential overhead.
+
+\begin{definition}[Correctness, Kaptchuk et al.]
+\label{def:correctness-kaptchuk}
+A steganographic protocol must be correct, i.e. except with negligible probability an encoded message can be recovered using the decode algorithm. Formally, for any $k \leftarrow KeyGen(1^\lambda)$,
+
+$$\mathop{Pr}[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k, m, \mathcal{H}), \mathcal{H}) = m] \geq 1 - \mathop{negl}(\lambda)$$
+\end{definition}
+
+Meteor's security proof is also outlined by the authors.
+They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a covertext distribution, i.e. an oracle $\mathcal{O}$ sampling from the distribution. 
+More formally, they define security in \autoref{def:sec-kaptchuk}. 
+Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
+In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of universally steganographic secrecy introduced in \autoref{sec:prov-sec-steg}.
+We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using polynomial queries, time and message length.
+
+\begin{definition}[Steganographic Secrecy, Kaptchuk et al.]
+	\label{def:sec-kaptchuk}
+	We say that a steganographic scheme $\Sigma_{\mathcal{D}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$,
+	
+	$$k \leftarrow KeyGen_{\mathcal{D}}(1^\lambda)$$
+	$$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{Encode_{\mathcal{D}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{D}}(\cdot, \cdot)}=1 \right] \right| < \mathop{negl}(\lambda)$$
+\end{definition}
