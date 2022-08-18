@@ -355,9 +355,12 @@
 
 \usepackage[inline]{enumitem}
 \usepackage{todonotes}
+\usepackage{pgfplots}
 
+\usepgfplotslibrary{groupplots}
 
 \newcommand{\definitionautorefname}{Definition}
+\newcommand{\lstlistingautorefname}{Algorithm}
 
 
 
@@ -456,7 +459,7 @@ $$\forall m \in \{0,1\}^{p(k)}, h \in D^* \colon Pr(SD(K, SE(K, m, h), h) = m) \
 where the randomization is over the key $K$ and any coin tosses of $SE$, $SD$, and the oracles accessed by $SE$, $SD$.
 \end{definition}
 
-The introduction of a \emph{negligible} polynomial $\mu(k)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the length $m$.
+The introduction of a \emph{negligible} polynomial $\mu(k)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in $k$.
 While stegosystem with $\mu(k) = 0$ can exist, the introduction of negligible polynomials proves helpful for reductions on established cryptographic primitives. 
 
 Since we want our stegosystem to be prone to analysis by warden, we also need a definition of security.
@@ -591,6 +594,7 @@ This code example shows how we can:
 \todo{write about BPE, sub-word tokens etc.}
 
 \section{Meteor Stegosystem}
+\label{sec:meteor}
 In their paper \cite{Meteor2021} Kaptchuk et al. present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
 The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
 The decoding party Bob receives the tokens from Alice and recovers a prefix of the random value used in sampling.
@@ -652,7 +656,7 @@ Now that a RRRSS scheme for GPT-2 is established, we can commence with the defin
 Kaptchuk et al. described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
 
 
-\begin{Pseudocode}
+\begin{Pseudocode}[caption={Meteor Encode Algorithm}, label={alg:encode}]
 algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, \mathcal{H})$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
@@ -674,7 +678,7 @@ This procedure is repeated until $|m|$ bits of hiddentext are encoded.
 Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}$ and $\mathcal{H}$, the same stegotext $c$ will be generated.
 
 
-\begin{Pseudocode}
+\begin{Pseudocode}[caption={Meteor Decode Algorithm}, label={alg:decode}]
 algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
@@ -692,7 +696,7 @@ $Decode$ decodes the stegotext to the hiddentext message left-to-right.
 It repeatedly uses $Recover_{\mathcal{M}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distribution.
 It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
 
-\begin{Pseudocode}
+\begin{Pseudocode}[caption={Meteor LenPrefix Algorithm}]
 algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
 	Output: Length $l$
 	$l \leftarrow 1$
@@ -703,13 +707,13 @@ algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
 	Output $l$
 \end{Pseudocode}
 
-\begin{Pseudocode}
+\begin{Pseudocode}[caption={Meteor Prefix Algorithm}]
 algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
 	Output: Bit String $s$
 	Output $r_1[0: LenPrefix^\beta(\mathcal{R})]$
 \end{Pseudocode}
 
-\begin{Pseudocode}
+\begin{Pseudocode}[caption={Meteor KeyGen Algorithm}]
 algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 	Output: Key $k_{prg}$
 	Output $k_{prg} = PRG.Setup(1^\lambda)$
@@ -731,7 +735,7 @@ They argue that a steganographic protocol is secure if no ppt. adversary $\mathc
 More formally, they define security in \autoref{def:sec-kaptchuk}. 
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
 In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of universally steganographic secrecy introduced in \autoref{sec:prov-sec-steg}.
-We will also discuss how an attacker can distinguish Meteor's output from a random oracle $/mathcal{O}$ using polynomial queries, time and message length.
+We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using polynomial queries, time and message length.
 
 \begin{definition}[Steganographic Secrecy, Kaptchuk et al.]
 	\label{def:sec-kaptchuk}
@@ -745,7 +749,7 @@ We will also discuss how an attacker can distinguish Meteor's output from a rand
 \chapter{Correctness}
 \label{chap:correctness}
 
-The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. There, they state that ``Note that, due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
+The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. There, they state that ``due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
 During experimentation, I have concluded that the cause of this is due to the way sub-word based GNNs, such as GPT-2, represent text and not due to issues with the algorithm interface.
 
 After describing the issue at hand, I will show that the Meteor Stegosystem is actually incorrect with respect to Hopper's definition as defined in \autoref{def:correctness-hopper} by providing a counterexample.
@@ -753,17 +757,202 @@ To restore correctness, I then present a change to Meteor's $Recover$ algorithm 
 
 \section{Ambiguous Tokenization}
 
-In \autoref{sec:generative-neural-networks}, we have discussed that GPT-2 uses a token dictionary to represent text.
+In \autoref{sec:generative-neural-networks}, we discuss that GPT-2 uses a token dictionary to represent text.
+To improve text generation and better recognize relations between words, sub-word tokenization might can words into sub-words.
+Sub-word tokenization is opposed to word tokenization, which splits a text by spaces, and character-based tokenization, which tokenizes text character by character.
+Sub-word tokenization allows for more flexible deep learning, as the framework can easier connect related words to each other. 
+The model might learn that, by adding the suffix ``n't'' to a verb, one can invert the meaning of that verb, e.g. ``haven't'' is the opposite of ``have'' and those words are in close relation to each other.
+This technique proves to be very effective in enhancing GNN performance.
+
+On the other hand, this allows for one word to have multiple representations in the ML model.
+For example, the word ``doesn't'' might be tokenized by a tokenizer $\mathcal{T}$ as $\mathcal{T}(\textrm{``doesn't''}) = ( \textrm{``do''}, \textrm{``es''}, \textrm{``n't''} )$. It could also be tokenized as $\mathcal{T}(\textrm{``doesn't''}) = ( \textrm{``does''}, \textrm{``n't''} )$ or even $\mathcal{T}(\textrm{``doesn't''}) = ( \textrm{``d''}, \textrm{``o''}, \textrm{``e''}, \textrm{``s''}, \textrm{``n''}, \textrm{``'t''})$.
+This effect is what we call ambiguous tokenization.
+
+\begin{definition}[Ambiguous Tokenization]
+	Let $\mathcal{M}$ be a GNN with tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_n \}$.
+	We say that $\mathcal{M}$ has an ambiguous tokenizations, if there exists at least two ordered list of indices $I = (i, j, k, \dots), J = (q, r, s, \dots), I \neq J$ with $T_1 = t_i || t_j || t_k || \dots$ and $T_2 = t_q || t_r || t_s || \dots$ such that $t_I = t_J$.
+\end{definition}
 
 \section{Correctness Of The Meteor Stegosystem}
 
+In \autoref{alg:decode}, we see that during decoding, the stegotext $c$ generated by \autoref{alg:encode} should be parsed as $c = \{c_0,c_1, \dots, c_{|c|-1|}\}$.
+This task is performed by a tokenizer $\mathcal{T}$ associated with the underlying model.
+Here, the $Decode$ algorithm expects that the parsing of $c$ can recover the originally generated $c_i$.
+This unfortunately is, at least for the GPT-2 model, not the case for some combinations of stegotext, key and history.
+In \autoref{sec:alg-rec-tok-candidates}, I show how to fix these correctness issues.
+
+\begin{theorem}
+The Meteor Stegosystem is not correct.
+\end{theorem}
+
+\begin{proof}
+For Meteor to be correct, it must fulfil \autoref{def:correctness-kaptchuk}, i.e. for any $k \leftarrow KeyGen(1^\lambda)$ and hiddentext $m$:
+
+$$\mathop{Pr}[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k, m, \mathcal{H}), \mathcal{H}) = m] \geq 1 - \mathop{negl}(\lambda)$$
+
+We proof incorrectness by providing a counterexample. 
+Let
+
+\begin{lstlisting}[breaklines]
+k = 0xb95e03a1d01b304f11dcf2bc844e5fd3cbed41253b0506876004207b2c2a10e
+    2d89c1a40e93530bfcfaaee54e66ae048d2d2a536615b0a81afe792883877d5b6
+m = 'Hello world'
+H = 'Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n'
+\end{lstlisting}
+
+The stegotext for these inputs when using the Meteor demo code is
+
+\begin{lstlisting}
+c = '\nZeus communication system, controlled by anÆ2 desktop mic with'
+\end{lstlisting}
+
+When passed to the GPT-2 Tokenizer, the substring ``Zeus'' of $c$ is parsed as \lstinline{['Z', 'eus']}, while the encoding process has generated ``Zeus'' with token sequence \lstinline{['Ze', 'us']}.
+Therefore, the stegotext $c$ cannot be successfully decoded to the original hiddentext ``Hello world'', which violates correctness.
+\end{proof}
+
+After we have seen that this problem appears at least once by finding a counterexample, another question arises:
+How often does this happen?
+To approach this question, I have conducted an experiment which attempts to estimate the rate at which these incorrect decodings occur.
+For that, I have encoded the entire book of Hamlet in chunks of 1024 characters with random keys and histories of length 128 picked at random from Hamlet as well using a modified version of the Meteor demo code from \cite{MeteorDemo2021}.
+
+The experiment shows that most stegotexts have at least one mismatch if they are of significant length.
+Therefore, we have to find a way to deal with these failed decodings.
+In \autoref{sec:alg-rec-tok-candidates}, I present approaches to recover from decoding errors while introducing exponential computational overhead.
+
+
+\begin{figure}[htbp]
+	\centering
+	\input{fig_meteor_stats_mismatch_count_arithmetic.tikz}
+	\caption{Binned mismatch count statistics. The x-axis shows the number of tokenization mismatches between the encoding and the decoding party}
+	\label{fig:meteor-stats-mismatch-count}
+\end{figure}
+\todo{improve plot to increase readability}
+
+
+
 \section{Algorithmic Reconstruction Of Token Candidates}
+\label{sec:alg-rec-tok-candidates}
+
+Unfortunately, with sub-word tokenization, the decoding party cannot decide how the stegotext has been tokenized by the encoder.
+To allow successful decoding of ambiguously tokenized stegotexts, I will in this section introduce algorithms to detect and fix wrong tokenizations. 
+
+
+For that we have to modify the encoding step of Meteor to allow detection of wrong tokenization.
+Before encoding, add a recurring marker $q$ into the hiddentext every $\gamma$ bits.
+This marker helps the decoder to decide if the decoding is still correct up to this point.
+By using markers, we introduce $|q| \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
+We modify \autoref{alg:encode} as follows:
+
+\begin{Pseudocode}[caption={Marked Encode Algorithm}, label={alg:marked-encode}]
+algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, q, \mathcal{H})$
+	Output: Stegotext message $c$
+	$c \leftarrow \epsilon,~ n \leftarrow 0$
+	$m^* \leftarrow \epsilon,~ j \leftarrow 0$
+	while $j < |m|$ do
+		$m^* \leftarrow m^* || m_j$
+		$j \leftarrow j + 1$
+		if $j \equiv 0~ \pmod \gamma$
+			$m^* \leftarrow m^* || q$
+	while $n < |m|$ do
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$r \leftarrow m[n:n+\beta] \oplus mask$
+		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $c$
+\end{Pseudocode}
+
+Now the decoding party has to verify that every $\lambda$ bits, the marker $q$ appears.
+If not, a decoding error has occured in the stegotext.
+We modify \autoref{alg:decode} as follows:
+
+
+\begin{Pseudocode}[caption={Marked Decode Algorithm}, label={alg:marked-decode}]
+algorithm $MarkedDecode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
+	Output: Plaintext message $m$
+	$m \leftarrow \epsilon$
+	!!TODO!!
+	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
+	for $i \in \{0, 1, \dots, |c|-1 \}$ do
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
+		$mask \leftarrow PRG.Next(k_{prg})$
+		$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
+		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
+	Output $m$
+\end{Pseudocode}
+\todo{Modify Decode to MarkedDecode}
+
+For the modification above, we need a helper algorithm which generates all possible tokenizations for a given stegotext.
+We can represent these tokenization candidates in a graph using the ML models's tokens $\mathcal{T}$.
+When passed a string $c$, the algorithm $TokenizeCandidates$ generates a directed, acyclic graph $G = (V, E)$.
+
+
+\begin{figure}[htbp]
+	\centering
+	\begin{tikzpicture}
+		\node[block] (hello) {hello};
+		\node[block, right=15mm of hello] (lo) {lo};
+		\node[block, above=15mm of lo] (llo) {llo};
+		\node[block, above=15mm of llo] (ello) {ello};
+		\node[block, below=15mm of lo] (o) {o};
+		\node[block, right=15mm of lo] (bot) {$\epsilon$};
+		\draw[->] (hello) to node[above] {h} (ello);
+		\draw[->] (hello) to node[above] {he} (llo);
+		\draw[->] (hello) to node[above] {hel} (lo);
+		\draw[->] (hello) to node[above] {hell} (o);
+		\draw[->] (ello)  to node[above] {e} (llo);
+		\draw[->] (ello)  edge[bend left=30,->] (lo) node[midway,above] {el};
+%		\draw[->] (ello)  edge[bend left=30,->] (o)  node[above] {ell};
+		\draw[->] (ello)  to node[above] {ello} (bot);
+		\draw[->] (llo)   to node[above] {l} (lo);
+%		\draw[->] (llo)   edge[bend right=30,->] to node[above] {ll} (o);
+		\draw[->] (llo)   to node[above] {llo} (bot);
+		\draw[->] (lo)    to node[above] {l} (o);
+		\draw[->] (lo)    to node[above] {lo} (bot);
+		\draw[->] (o)     to node[above] {o} (bot);
+%		\draw[->] (hello) edge[bend right=120,->] to node[above] {hello} (bot);
+	\end{tikzpicture}
+	\caption{Example graph generated by TokenizeCandidates(``hello'')}
+	\label{fig:ex-graph-tokenize-candidates}
+\end{figure}
+
+\begin{lstlisting}[language=Python]
+def tokenize_candidates(self, text):
+    tokens = bucketize_tokens(self.encoder.items())
+    tokenize_edges = {}
+    for i in range(len(text)):
+        _do_tokenize_candidates(self, text[-(i + 1):], tokens, tokenize_edges)
+    return tokenize_edges
+def _do_tokenize_candidates(self, text, tokens, tokenize_edges):  # parent: Union[str, Node]
+    if text in tokenize_edges or text == '':
+        return
+    # for token, id in self.encoder.items():
+    for token, id in tokens[text[0]]:
+        if text.startswith(token):
+            remainder = text[len(token):]
+            if text not in tokenize_edges:
+                tokenize_edges[text] = []
+            if remainder not in tokenize_edges[text]:
+                tokenize_edges[text] += [(remainder, token, id, -len(token))]
+def bucketize_tokens(tokens):
+    bins = {}
+    ignored_token_ids = [
+        220  # 'space' token
+    ]
+    for token, id in (t for t in tokens if t[1] not in ignored_token_ids):
+        bins[token[0]] = bins.setdefault(token[0], []) + [(token, id)]
+    return bins
+\end{lstlisting}
+\todo{rewrite as pseudocode}
+
 
 
 
 \chapter{Two-Way-Communication}
 
-TODO
+As discussed in \autoref{sec:alg-rec-tok-candidates}, it is possible 
 
 \chapter{Security Analysis}
 \label{chap:security}
