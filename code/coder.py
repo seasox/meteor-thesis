@@ -1218,11 +1218,12 @@ class MeteorCoder:
     Returns: text, tokens, stats
     """
 
-    def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[
+    def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8', context_tokens: list[int] = None) -> Tuple[
         str, List[str], Dict]:
         # First encode message to uniform bits, without any context
         # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
-        context_tokens = encode_context(context_str, self.enc)
+        if context_tokens is None:
+            context_tokens = encode_context(context_str, self.enc)
         message_str += '<eos>'
         if coding == 'utf-8':
             message = bitarray.bitarray()
