@@ -1,9 +1,43 @@
 \chapter{Security Analysis}
 \label{chap:security}
 
-TODO
+When we communicate using a steganographic protocol, secrecy is of upmost importance.
+We probably communicate in an environment which is very hostile against its communication participants.
+Therefore, we should satisfy the most rigorous security requirements we can possibly satisfy.
+
+In \autoref{chap:previous-work}, we have discussed two different definitions of steganographic secrecy.
+In \autoref{def:sec-kaptchuk}, we have seen a rigorous definition of steganographic secrecy when we defined \emph{steganographic secrecy against chosen hiddentext attacks}, or SS-CHA.
+Later, in \autoref{sec:meteor}, we have introduced the Meteor stegosystem and its definition of security.
+In this chapter, we will
+\begin{itemize}
+	\item compare Meteor's security definition with Hopper's security game,
+	\item show that the Meteor stegosystem does not satisfy Hopper's security game,
+	\item modify Meteor to achieve SS-CHA.
+\end{itemize}
 
 \section{Comparison Of Meteor's And Hopper's Security Game}
 
-TODO
+In \autoref{sec:prov-sec-steg} and \autoref{sec:meteor}, we have discussed Hopper's and Meteor's definition of steganographic secrecy against chosen hiddentext attackers. In this section, I will compare the security definition of the Meteor stegosystem with Hopper's definition of SS-CHA.
 
+In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack, if for all $k \leftarrow KeyGen(1^\lambda)$, the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
+
+Let $\mathcal{A}$ be an attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish outputs of $Encode$ from those of a random oracle $\mathcal{O}$.
+The attacker only sees the outputs $c = c_1 ||c_2 || \dots || c_{|c|}$ of $Encode$ and $\mathcal{O}$, respectively. 
+How could they possibly do that?
+When we take a look at the implementation of $Encode$, we observe that the only difference to $\mathcal{O}$ in the view of the attacker is the randomness $r$ used to sample $c_i$ from the underlying distribution.
+
+How is $r$ constructed? 
+It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
+Since $\mathcal{A}$ is an attacker for all messages $m$ in the chosen hiddentext game, we can freely chose a message $m'$ to encode.
+With $m' = 0^\beta$ we get $r = 0^\beta \oplus mask = mask = PRG.Next(k_{prg})$.
+To distinguish $c_i$ from a randomly sampled token, the attacker is able to distinguish $r$ from a truly random value $r'$.
+Therefore, $\mathcal{A}$ can attack the PRG.
+Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
+
+But is this sufficient to satisfy Hopper's security game?
+Unfortunately not.
+In Hopper's $(t,q,l)$-SS-CHA game, an attacker may perform up to $q(k)$ queries.
+The aforementioned security proof only considers security against one query.
+
+If the above attacker $\mathcal{A}$ repeats the attack with the same query $m$ and a fixed key $k$, the Meteor system will return the same output, while $\mathcal{O}$ will -- with overwhelming probability~ -- sample an entirely different value from the distribution.
+After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs from those of a random oracle with high probability.
