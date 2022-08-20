@@ -1,4 +1,5 @@
 \chapter{Previous Work}
+\label{chap:previous-work}
 
 \section{Provably Secure Steganography}
 \label{sec:prov-sec-steg}
@@ -159,9 +160,9 @@ This code example shows how we can:
 \end{itemize}
 
 
-\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
+\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
 
-\lstinputlisting[language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
 
 
@@ -202,7 +203,7 @@ This formally models the behaviour described above.
 	
 	\begin{enumerate}
 		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
-		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample s, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s$ of possible values for $r$
+		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample s, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$
 	\end{enumerate}
 \end{definition}
 

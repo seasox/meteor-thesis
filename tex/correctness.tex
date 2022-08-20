@@ -90,13 +90,13 @@ To allow successful decoding of ambiguously tokenized stegotexts, I will in this
 
 For that we have to modify the encoding step of Meteor to detect and fix wrong tokenization.
 Before encoding, split the message $m$ into blocks $m_i$ of length $\gamma$.
-After each block $m_i$, add a marker $q_i = q(m_i)$ into the hiddentext where $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$, i.e. $q$ generates bitstrings of fixed length $\delta$.
+After each block $m_i$, add a marker or checksum $q_i = q(m_i)$ into the hiddentext where $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$, i.e. $q$ generates bitstrings of fixed length $\delta$.
 This marker helps the decoder to decide if the decoding is still correct up to this point.
 The marker $q_i$ can be a checksum of $m_i$ or a fixed marker.
 By using markers, we introduce $\delta \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
 We modify \autoref{alg:encode} as follows:
 
-\begin{Pseudocode}[caption={Marked Encode Algorithm}, label={alg:marked-encode}]
+\begin{Pseudocode}[float, caption={Marked Encode Algorithm}, label={alg:marked-encode}]
 algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, q, \mathcal{H})$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
@@ -121,7 +121,7 @@ If not, a decoding error has occured in the stegotext.
 We modify \autoref{alg:decode} as follows:
 
 
-\begin{Pseudocode}[caption={Marked Decode Algorithm}, label={alg:marked-decode}]
+\begin{Pseudocode}[float, caption={Marked Decode Algorithm}, label={alg:marked-decode}]
 algorithm $MarkedDecode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
@@ -189,7 +189,7 @@ A DFS-based implementation for AllPaths can be found at \autoref{alg:all-paths}.
 \end{figure}
 \todo{improve tikz graph}
 
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}[float, language=Python]
 def tokenize_candidates(self, text):
     tokens = bucketize_tokens(self.encoder.items())
     tokenize_edges = {}
@@ -219,7 +219,7 @@ def bucketize_tokens(tokens):
 \todo{rewrite as pseudocode}
 
 
-\begin{lstlisting}[language={Python},caption={DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG},label={alg:all-paths}]
+\begin{lstlisting}[float, language={Python},caption={DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG},label={alg:all-paths}]
 # TODO the performance of this is really bad
 def all_paths(graph, root: tuple[str, str, int, int]) -> [[Optional[tuple[str, str, int, int]]]]:
     if root[0] == '':
