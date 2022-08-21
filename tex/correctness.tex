@@ -90,7 +90,7 @@ To allow successful decoding of ambiguously tokenized stegotexts, I will in this
 
 For that we have to modify the encoding step of Meteor to detect and fix wrong tokenization.
 Before encoding, split the message $m$ into blocks $m_i$ of length $\gamma$.
-After each block $m_i$, add a marker or checksum $q_i = q(m_i)$ into the hiddentext where $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$, i.e. $q$ generates bitstrings of fixed length $\delta$.
+After each block $m_i$, add a marker or checksum $q_i = q(m_i)$ of length $\delta$ into the hiddentext, i.e. $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$.
 This marker helps the decoder to decide if the decoding is still correct up to this point.
 The marker $q_i$ can be a checksum of $m_i$ or a fixed marker.
 By using markers, we introduce $\delta \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
@@ -105,10 +105,10 @@ algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, q, \mathcal{H}
 		$m^* \leftarrow m^* || m_j$
 		$j \leftarrow j + 1$
 		if $j \equiv 0~ \pmod \gamma$
-			$m^* \leftarrow m^* || q$
-	while $n < |m|$ do
+			$m^* \leftarrow m^* || q(m_j)$
+	while $n < |m^*|$ do
 		$mask \leftarrow PRG.Next(k_{prg})$
-		$r \leftarrow m[n:n+\beta] \oplus mask$
+		$r \leftarrow m^*[n:n+\beta] \oplus mask$
 		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
 		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
@@ -218,20 +218,19 @@ def bucketize_tokens(tokens):
 \end{lstlisting}
 \todo{rewrite as pseudocode}
 
-
-\begin{lstlisting}[float, language={Python},caption={DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG},label={alg:all-paths}]
-# TODO the performance of this is really bad
-def all_paths(graph, root: tuple[str, str, int, int]) -> [[Optional[tuple[str, str, int, int]]]]:
-    if root[0] == '':
-        return [[None]]
-    queue = []
-    hops = graph[root[0]]
-    queue += hops
-    paths = []
-    for hop in hops:
-        subpaths = all_paths(graph, hop)
-        for subpath in subpaths:
-            paths += [[root] + subpath]
-    return paths
-\end{lstlisting}
-\todo{rewrite as pseudocode, implement using dynamic programming}
+\begin{Pseudocode}[float,caption={DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG},label={alg:all-paths}]
+algorithm $AllPaths(G, root)	$
+	Output: List of paths $paths$
+	if $root = \epsilon$ do
+		return $[[\bot]]$
+	$queue \leftarrow \epsilon$
+	$paths \leftarrow []$
+	$hops \leftarrow OutEdges(G, root)$
+	$queue \leftarrow queue + hops$
+	for $hop \in hops$ do
+		$subpaths \leftarrow AllPaths(G, hop)$
+		for $subpath \in subpaths$ do
+			$paths \leftarrow [[root] + subpath]$
+	return $paths$
+\end{Pseudocode}
+\todo{improve performance using dynamic programming}
