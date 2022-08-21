@@ -68,18 +68,31 @@ To approach this question, I have conducted an experiment which attempts to esti
 For that, I have repeatedly encoded the entire book of Hamlet in chunks of 1024 characters with random keys and histories of length 128 picked at random from Hamlet as well using a modified version of the Meteor demo code from \cite{MeteorDemo2021}.
 
 The experiment shows that most stegotexts have at least one mismatch if they are of significant length.
-Therefore, we have to find a way to deal with these failed decodings.
-In \autoref{sec:alg-rec-tok-candidates}, I present approaches to recover from decoding errors while introducing computational overhead exponential in stegotext length.
+When encoding 128 byte blocks, the probability to have no mismatched token sequences is about 0.55.
+But when encoding larger blocks, that probability decreases to about 0.18.
+Therefore, we have to find a way to deal with these failed decodings, especially if we plan to encode hiddentext messages of significant length.
+In \autoref{sec:alg-rec-tok-candidates}, I present approaches to recover from decoding errors while introducing computational overhead exponential in stegotext length. 
+In \autoref{chap:twowaycommunication}, I show how we can split the hiddentext message and use Microsoft's DialoGPT -- a derivation of GPT-2 -- to generate chat-like stegotext.
+Splitting the hiddentext results in shorter stegotext, thus decreases the probability of tokenization mismatches.
 
-\begin{figure}[htbp]
-	\centering
-	\input{fig_meteor_stats_mismatch_count_arithmetic.tikz}
-	\caption{Binned mismatch count statistics. The x-axis shows the number of tokenization mismatches between the encoding and the decoding party}
-	\label{fig:meteor-stats-mismatch-count}
+\begin{figure}[htbp]%
+	\begin{subfigure}{.5\textwidth}%
+		\centering%
+	    \resizebox{0.8\linewidth}{!}{%
+			\input{fig_meteor_stats_mismatch_count_128.tikz}%
+		}%
+		\caption{128 bytes ($Pr[X=0] \approx 0.55$)}%
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}%
+		\centering%
+	    \resizebox{0.8\linewidth}{!}{%
+			\input{fig_meteor_stats_mismatch_count_1024.tikz}%
+		}%
+		\caption{1024 bytes ($Pr[X=0] \approx 0.18$)}%
+	\end{subfigure}%
+	\caption{Token mismatch statistic when using Meteor to encode Shakespear's Hamlet blockwise. The x-axis shows the number of tokenization mismatches between the encoding and the decoding party for hiddentext blocks with size...}
+	\label{fig:meteor-stats-mismatch-count}	
 \end{figure}
-\todo{improve plot to increase readability}
-
-
 
 \section{Algorithmic Reconstruction Of Token Candidates}
 \label{sec:alg-rec-tok-candidates}
@@ -94,10 +107,14 @@ After each block $m_i$, add a marker or checksum $q_i = q(m_i)$ of length $\delt
 This marker helps the decoder to decide if the decoding is still correct up to this point.
 The marker $q_i$ can be a checksum of $m_i$ or a fixed marker.
 By using markers, we introduce $\delta \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
-We modify \autoref{alg:encode} as follows:
+The modified $Encode$ algorithm can be found at \autoref{alg:marked-encode}.
+
+Now the decoding party has to verify that after each block $m_i$ of $\gamma$ bits, the marker $q(m_i)$ appears and is valid.
+If not, a decoding error has occured in the stegotext.
+The modified $Decode$ algorithm can be seen at \autoref{alg:marked-decode}.
 
 \begin{Pseudocode}[float, caption={Marked Encode Algorithm}, label={alg:marked-encode}]
-algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, q, \mathcal{H})$
+algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, \mathcal{H}, q)$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
 	$m^* \leftarrow \epsilon,~ j \leftarrow 0$
@@ -116,19 +133,23 @@ algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, q, \mathcal{H}
 	Output $c$
 \end{Pseudocode}
 
-Now the decoding party has to verify that every $\lambda$ bits, the marker $q$ appears.
-If not, a decoding error has occured in the stegotext.
-We modify \autoref{alg:decode} as follows:
 
 
 \begin{Pseudocode}[float, caption={Marked Decode Algorithm}, label={alg:marked-decode}]
-algorithm $MarkedDecode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
+algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H}, q)$
 	Output: Plaintext message $m$
-	$m \leftarrow \epsilon$
-	!!TODO!!
+	$m \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0$
 	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
 	for $i \in \{0, 1, \dots, |c|-1 \}$ do
 		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+		$n \leftarrow n + n_i$
+		$j \leftarrow j + n_i$
+		if $j \geq \gamma$
+			$j \leftarrow j - \gamma$
+			!!TODO!! fixme n is wrong here, need to track current index
+			if $m[n:n+\gamma] \neq q(m_i)$ do
+				rollback()
 		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
 		$mask \leftarrow PRG.Next(k_{prg})$
 		$m \leftarrow m || (m_i \oplus mask[0: |m_i|])$
@@ -143,16 +164,30 @@ We can represent these tokenization candidates in a graph using the ML models's 
 When passed a string $c$, the algorithm \emph{TokenizeCandidates} generates a directed, acyclic graph (DAG) $G = (V, E)$.
 The nodes $v \in V$ represent all possible suffix strings of $c$ with $|V| = |c| + 1$.
 The edges $e \in E$ represent possible tokens to use to transition between suffixes.
-For example, the suffix string ``ello'' can be transformed to ``lo'' by removing the token ``el''.
 An example graph for input ``hello'' can be found at \ref{fig:ex-graph-tokenize-candidates}.
+For example, the suffix string ``ello'' can be transformed to ``lo'' by removing the token ``el''.
 
 Now that we have a graph for $c$, we can generate every possible sequence of tokens which $c$ can be parsed as.
-For that, we use the algorithm $AllPaths$, which takes as input a graph $G = (V, E)$, a start node $v_i \in V$, a target node $v_j \in V$ and returns a set of all possible paths between $v_i$ and $v_j$.
+For that, we use the algorithm $AllPaths$, which takes as input a graph $G = (V, E)$ and a start node $v_i \in V$ and returns a set of all possible paths between $v_i$ and a sink node $v_j = \epsilon$.
 
-But how many paths between $v_i$ and $v_j$ exist? A path between $v_i$ and $v_j$ is a subset of $E$ which contains both $v_i$ and $v_j$.
-In the worst case, $G$ is a complete DAG with $v_i = max_{topological}(V)$ and $v_j = min_{topological}(V)$.
-There are at most $2^{|V|-2} = 2^{|c|-1}$ subsets of $E$ which contain both $v_i$ and $v_j$, since $|V| = |c|+1$.
+But how many paths exist between $v_i$ and $v_j$? A path between $v_i$ and $v_j$ is a subset of $E$ which contains both $v_i$ and $v_j$.
+In the worst case, $G$ is a DAG with $\frac{n(n-1)}{2}$ edges and $v_i = max_{topological}(V)$ and $v_j = min_{topological}(V)$.
+There are at most $2^{|V|-2} = 2^{|c|-1}$ subsets of $E$ which contain both $v_i$ and $v_j$.
+The output of $AllPaths$ is exponential in input length.
 A DFS-based implementation for AllPaths can be found at \autoref{alg:all-paths}.
+
+\begin{Pseudocode}[float,caption={TokenizeCandidates algorithm},label={alg:tokenize-candidates}]
+	algorithm $TokenizeCandidates_{\mathcal{T}}(s)$
+		Output: Graph $G = (V, E)$
+		if $s = \epsilon$
+			return $\epsilon$
+		for $t \in \mathcal{T}$ do
+			if $s[0{:}|t|] = t$ do
+				$V \leftarrow V \cup \{ s[|t|{:}] \}$
+				$E \leftarrow E \cup \{ (s, s[|t|{:}]) \}$
+				$G \leftarrow G \cup TokenizeCandidates_{\mathcal{T}}(s[|t|{:}])$
+		return $G$
+\end{Pseudocode}
 
 \begin{figure}[htbp]
 	\centering
@@ -184,51 +219,22 @@ A DFS-based implementation for AllPaths can be found at \autoref{alg:all-paths}.
 
 		\draw[->] (o)     to node[above] {o} (bot);
 	\end{tikzpicture}
-	\caption{Graph generated by TokenizeCandidates(``hello'')}
+	\caption{Graph generated by $TokenizeCandidates_{\mathcal{T}}(``hello'')$ with $\mathcal{T} = \{ h, e, l, l, o, el, he, ll, lo, ell, hel, llo, hell, ello, hello \}$}
 	\label{fig:ex-graph-tokenize-candidates}
 \end{figure}
 \todo{improve tikz graph}
 
-\begin{lstlisting}[float, language=Python]
-def tokenize_candidates(self, text):
-    tokens = bucketize_tokens(self.encoder.items())
-    tokenize_edges = {}
-    for i in range(len(text)):
-        _do_tokenize_candidates(self, text[-(i + 1):], tokens, tokenize_edges)
-    return tokenize_edges
-def _do_tokenize_candidates(self, text, tokens, tokenize_edges):  # parent: Union[str, Node]
-    if text in tokenize_edges or text == '':
-        return
-    # for token, id in self.encoder.items():
-    for token, id in tokens[text[0]]:
-        if text.startswith(token):
-            remainder = text[len(token):]
-            if text not in tokenize_edges:
-                tokenize_edges[text] = []
-            if remainder not in tokenize_edges[text]:
-                tokenize_edges[text] += [(remainder, token, id, -len(token))]
-def bucketize_tokens(tokens):
-    bins = {}
-    ignored_token_ids = [
-        220  # 'space' token
-    ]
-    for token, id in (t for t in tokens if t[1] not in ignored_token_ids):
-        bins[token[0]] = bins.setdefault(token[0], []) + [(token, id)]
-    return bins
-\end{lstlisting}
-\todo{rewrite as pseudocode}
-
 \begin{Pseudocode}[float,caption={DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG},label={alg:all-paths}]
-algorithm $AllPaths(G, root)	$
-	Output: List of paths $paths$
-	if $root = \epsilon$ do
+algorithm $AllPaths(G, root, sink)	$
+	Output: List of paths between $root$ and $sink$
+	if $root = sink$ do
 		return $[[\bot]]$
 	$queue \leftarrow \epsilon$
 	$paths \leftarrow []$
 	$hops \leftarrow OutEdges(G, root)$
 	$queue \leftarrow queue + hops$
 	for $hop \in hops$ do
-		$subpaths \leftarrow AllPaths(G, hop)$
+		$subpaths \leftarrow AllPaths(G, hop, sink)$
 		for $subpath \in subpaths$ do
 			$paths \leftarrow [[root] + subpath]$
 	return $paths$
