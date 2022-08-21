@@ -8,19 +8,19 @@ from meteor_analysis import compare_tokens
 from util import get_model
 
 
-def write_mismatches(mismatches):
+def write_mismatches(step_size, mismatches):
     print("write mismatches...")
-    f = open("meteor_statistics.pickle", "wb+")
+    f = open(f"meteor_statistics_{step_size}.pickle", "wb+")
     pickle.dump(mismatches, f)
     f.close()
     print("done")
 
 
-def load_mismatches():
+def load_mismatches(step_size):
     print("load mismatches...")
     from os.path import exists
-    if exists("meteor_statistics.pickle"):
-        f = open("meteor_statistics.pickle", "rb")
+    if exists(f"meteor_statistics_{step_size}.pickle"):
+        f = open(f"meteor_statistics_{step_size}.pickle", "rb")
         o = pickle.load(f)
         f.close()
         return o
@@ -59,10 +59,9 @@ def main():
         message = pickle.load(hamlet_f)
         hamlet_f.close()"""
 
-    comparisons = load_mismatches()
     hamlet_len = len(message_text)
-    step_size = 1024
-    for coding in ['arithmetic']:
+    for step_size in [128]:
+        comparisons = load_mismatches(step_size)
         i = 0
         while i < hamlet_len:
             key = os.urandom(64)
@@ -72,7 +71,7 @@ def main():
             context_start_idx = random.randrange(0, hamlet_len - 128)
             context_str = message_text[context_start_idx: context_start_idx + 128] + '\n\n'
             text, enc_toks, stats = coder.encode_message(message_text[i:i + step_size], context_str, key, nonce,
-                                                         coding=coding)
+                                                         coding='arithmetic')
             end = time.time()
             print("Encode took {:.02f} s".format(end - start))
             start = time.time()
@@ -84,11 +83,11 @@ def main():
             num_decoded_tokens = len(dec_toks)
             # log comparison statistics
             comparison = compare_tokens(message_text[i:i + step_size].encode('utf-8'), chosen_context, key, nonce,
-                                        coding,
+                                        'arithmetic',
                                         enc_toks, dec_toks, stats)
             comparisons += [comparison]
             num_mismatch = len(comparison.mismatches)
-            write_mismatches(comparisons)
+            write_mismatches(step_size, comparisons)
             print(comparison)
             print("encode: ", enc_toks)
             print("decode: ", dec_toks)

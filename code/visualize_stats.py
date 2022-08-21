@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import tikzplotlib
 
 
 def ld(fname):
@@ -12,20 +13,23 @@ def ld(fname):
 
 if __name__ == '__main__':
     flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
-    fname = 'meteor_statistics.pickle'
-    data = ld(fname)
 
+    tikzexport = True
 
     plt.figure(dpi=1200)
-    for coding in ['arithmetic']:
-        print(f'generating {coding} stats')
-        data_w_coding = list(filter(lambda x: x.coding == coding, data))
+    for step_size in [128, 1024]:
+        fname = f'meteor_statistics_{step_size}.pickle'
+        data = ld(fname)
+        print(f'generating {step_size} bytes stats')
+        data_w_coding = list(filter(lambda x: x.coding == 'arithmetic', data))
         if not data_w_coding:
             continue
         # print(data)
         mismatched_codings = list(filter(lambda x: len(x.mismatches) > 0, data_w_coding))
         encoded_tokens = list(map(lambda x: len(x.encoded_tokens), data_w_coding))
         mismatch_count = list(map(lambda x: len(x.mismatches), data_w_coding))
+        mismatch_prob = len(list(filter(lambda x: x == 0, mismatch_count))) / len(mismatch_count)
+        print(mismatch_prob)
         mismatch_rate = list(filter(lambda x: x != float('inf'), map(lambda x: x[0] / x[1] if x[1] != 0 else 0,
                                                                      zip(encoded_tokens, mismatch_count))))
         avg_mismatch_rate = [sum(encoded_tokens) / sum(mismatch_count) for _ in range(len(encoded_tokens))]
@@ -66,8 +70,10 @@ if __name__ == '__main__':
         plt.hist(mismatch_count, bins=histbins, label="mismatch count", align='mid')
         plt.tight_layout()
         plt.legend()
-        plt.show()
-        # tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_count_{coding}.tikz')
+        if tikzexport:
+            tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_count_{step_size}.tikz')
+        else:
+            plt.show()
         plt.clf()
 
         # plt.annotate('%E' % avg_mismatch_rate[-1], (len(avg_mismatch_rate), avg_mismatch_rate[-1]))
@@ -78,6 +84,9 @@ if __name__ == '__main__':
                  label='encoded tokens')
         plt.tight_layout()
         plt.legend()
-        plt.show()
-        # tikzplotlib.save(f'../tex/fig_meteor_stats_encoded_tokens_{coding}.tikz')
+        if tikzexport:
+            tikzplotlib.save(f'../tex/fig_meteor_stats_encoded_tokens_{step_size}.tikz')
+        else:
+            plt.show()
+        plt.clf()
 # plt.savefig('plot.eps', format='eps')
