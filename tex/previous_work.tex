@@ -101,7 +101,7 @@ Lastly, we call a Stegosystem $\mathcal{S}_k$ \emph{universally steganographic s
 \label{sec:generative-neural-networks}
 
 Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
-In the last few years, the artificial intelligence community achieved tremendous progress in building powerful machine learning based models.
+In the last few years, the artificial intelligence community achieved tremendous progress in building powerful deep learning based models.
 The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
 GPT-2 has been introduced in \cite{OpenAI2019}.
 This model works on a set of tokens, which are words or sub-words of the approximated distribution.
@@ -184,22 +184,22 @@ This code example shows how we can:
 \label{sec:meteor}
 In their paper \cite{Meteor2021} Kaptchuk et al. present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
 The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
-The decoding party Bob receives the tokens from Alice and recovers a prefix of the random value used in sampling.
+The decoding party Bob receives the generated stegotext from Alice and recovers a prefix of the random value used in sampling for each token.
 
-While this is easily possible for the encoding party (because they control the randomness used in sampling), it is unclear wether or not the decoding party can extract (a prefix of) the randomness in the decoding process to recover parts of the hiddentext message.
-Luckily, many generative neural networks, such as GPT-2, possess this property. 
+While this is easily possible for the encoding party (because they control the randomness used in sampling), it is intuitively unclear whether the decoding party can extract (a prefix of) the randomness in the decoding process to recover parts of the hiddentext message.
+Luckily, many generative neural networks, such as GPT-2, possess this property.
 The Meteor authors have introduced the concept of a Ranged Randomness Recoverable Sampling Scheme, or RRRSS, see \autoref{def:rrrss}.
-This formally models the behaviour described above.
+This definition formally models the desired behaviour described above.
 
 \begin{definition}[Ranged Randomness Recoverable Sampling Scheme, Kaptchuk et al.]
 	\label{def:rrrss}
 	We call 
 	$(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
-	with a ppt. algorithm 
+	with ppt. algorithms
 	$Sample_{\mathcal{D}}^\beta \colon (\mathcal{H}, r) \rightarrow s$ 
-	and a ppt. algorithm 
+	and 
 	$Recover_{\mathcal{D}}^\beta \colon (\mathcal{H}, s) \rightarrow \mathcal{R}$ 
-	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$, if:
+	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$ and initial history $\mathcal{H}$, if:
 	
 	\begin{enumerate}
 		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
@@ -318,15 +318,15 @@ $$\mathop{Pr}[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k, m, \mathcal{H}), \
 \end{definition}
 
 Meteor's security proof is also outlined by the authors.
-They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a covertext distribution, i.e. an oracle $\mathcal{O}$ sampling from the distribution. 
-More formally, they define security in \autoref{def:sec-kaptchuk}. 
+They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ sampling from the distribution.
+More formally, they define security in \autoref{def:sec-kaptchuk}.
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
 In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of universally steganographic secrecy introduced in \autoref{sec:prov-sec-steg}.
 We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using polynomial queries, time and message length.
 
-\begin{definition}[Steganographic Secrecy, Kaptchuk et al.]
-	\label{def:sec-kaptchuk}
-	We say that a steganographic scheme $\Sigma_{\mathcal{D}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$,
+\begin{definition}[Steganographic Secrecy, Kaptchuk et al.]%
+	\label{def:sec-kaptchuk}%
+	We say that a steganographic scheme $\Sigma_{\mathcal{D}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$
 	
 	$$k \leftarrow KeyGen_{\mathcal{D}}(1^\lambda)$$
 	$$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{Encode_{\mathcal{D}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{D}}(\cdot, \cdot)}=1 \right] \right| < \mathop{negl}(\lambda)$$
