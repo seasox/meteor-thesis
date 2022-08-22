@@ -1,4 +1,61 @@
-\chapter{Two-Way-Communication}
+\chapter{Two-Way Communication}
 \label{chap:twowaycommunication}
 
-As discussed in \autoref{sec:alg-rec-tok-candidates}, it is possible 
+The Meteor Stegosystem is meant to generate text messages to send via an unsecure channel.
+Usually, when two parties communicate, the communication consists of a back and forth between participants.
+In the original Meteor project we are presented with a unidirectional communication.
+The sending party generates a stegotext message and sends it to the receiving party.
+
+Wouldn't it be great if we could adapt the Meteor stegosystem to generate messages as they would appear in an ordinary chat?
+Since the Meteor stegosystem is constructed to be very adaptable to different underlying distributions (as long as they are a RRRSS scheme), this certainly is possible.
+To achieve the task at hand, we can use Microsoft's DialoGPT \cite{Zhang2020} to generate stegotext messages using a GNN optimized for chat-like text generation.
+
+\section{Protocol For Two-Way Communication}
+
+In \autoref{fig:twowaycommunication}, I introduce a simple chat protocol between two participants Alice and Bob.
+Here, Alice and Bob send messages back and forth.
+Alice sends stegotext blocks, while Bob generates a sequence of responses, which can be stegotexts too or handwritten messages.
+After each message from Alice, Bob uses the Meteor stegosystem to decode $s_i$ to a message block $m_i$.
+After $\ell$ iterations, the entire stegotext has been sent.
+Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i$.
+
+
+\begin{figure}[htbp]
+	\centering
+	\begin{msc}[instance distance=4cm,action width=5cm]{Two-Way Steganographic Chat Protocol}
+		\declinst{alice}{}{Alice}
+		\declinst{bob}{}{Bob}
+		\condition{exchange $k,~ \mathcal{H}$}{alice,bob}
+		\nextlevel[2]
+		\action{split hiddentext $m$ in $\ell$ blocks $m_i$ of size $b$}{alice}
+		\nextlevel[3]
+		\condition{for $i \in \{ 1, 2, \dots, \ell \}$ do}{alice,bob}
+		\nextlevel[2]
+		\action{$s_i = Encode_{\mathcal{M}}^\beta(m_i, k, \mathcal{H})$}{alice}
+		\nextlevel[3]
+		\mess{$s_i$}{alice}{bob}
+		\nextlevel
+		\action{$m_i = Decode_{\mathcal{M}}^\beta(s_i, k, \mathcal{H})$}{bob}
+		\nextlevel[2]
+		\action{Generate response $r$}{bob}
+		\nextlevel[3]
+		\mess{$r$}{bob}{alice}
+		\nextlevel
+		\action{$\mathcal{H} \leftarrow \mathcal{H} || r$}{alice}
+		\action{$\mathcal{H} \leftarrow \mathcal{H} || r$}{bob}
+		\nextlevel[2]
+		\condition{endfor}{alice,bob}
+		\nextlevel[3]
+		\action{$m = m_1 || m_2 || \dots || m_{\ell}$}{bob}
+		\nextlevel
+	\end{msc}
+	\caption{
+	A simple Two-Way Communication Protocol for participants Alice and Bob.
+	In this scheme, Alice encodes blocks of their hiddentext message $m$ into stegotexts $s_i$ and sends them to Bob, who decodes the blocks using the Meteor stegosystem.
+	Bob then generates their response $r$ and sends it back.
+	The response can be generated using a GNN, be (parts of) a stegotext themselves or handwritten chat messages.
+	After $\ell$ iterations, Bob can reconstruct the hiddentext $m$ by concatenating the $m_i$.
+	}
+	\label{fig:twowaycommunication}
+\end{figure}
+
