@@ -12,20 +12,22 @@ TODO
 Chapter 2 discusses previous works.
 First, we will discuss steganography and provably secure steganography, introduced in \cite{Hopper04}.
 Afterwards, we discuss how generative neural networks (GNNs) such as GPT-2 produce high-quality text iteratively.
-Concluding, I will present the Meteor stegosystem, a provably secure steganographic system over ML-based channels as introduced by XYZ.
+Concluding, I will present the Meteor stegosystem, a provably secure steganographic system over ML-based channels as introduced by \cite{Meteor2021}.
 
 Chapter 3 provides an analysis of the correctness of the Meteor stegosystem. 
+This chapter relies on the material presented in chapter 2, especially the definitions of steganographic correctness established in \autoref{def:correctness-hopper} and \autoref{def:correctness-kaptchuk} and the discussion of generative neural networks in \autoref{sec:generative-neural-networks}.
 We will see that the Meteor stegosystem is not correct because of the way tokenization in GNNs work.
 Afterwards, I will present algorithms which ensure correctness of Meteor on the receiver site.
 Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
 
-\todo{calculate introduced overhead}
-
 In chapter 4, I present a small modification to the Meteor stegosystem which allows two-way communication.
+This chapter relies on the material presented in \autoref{sec:meteor} and \autoref{sec:generative-neural-networks}.
 There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang2020} to generate dialog-like messages.
-This modification makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is negligible for shorter messages.
+This modification allows users of the Meteor stegosystem to communicate more naturally in the context of instant messaging.
+It also makes sure that the algorithms from chapter 3 can be applied more conveniently, since the exponential overhead is still manageable for shorter messages.
 
 In chapter 5, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
+This chapter relies heavily on the material presented in chapter 2, especially the security definitions in \autoref{def:sec-kaptchuk} and \autoref{def:sec-hopper}.
 We will compare the definition of security used by the Meteor authors with the definition of security by Hopper.
 We then will show that the Meteor stegosystem is not universally secure in Hopper's definition.
 
