@@ -25,66 +25,86 @@ In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against
 	Meteor is secure (as of \autoref{def:sec-kaptchuk}) against ppt. adversaries. 
 \end{theorem}
 \begin{proof}
-	Let $\mathcal{A}$ be an attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish outputs of $Encode$ from those of a random oracle $\mathcal{O}$. We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
+	Let $\mathcal{A}$ be an attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish outputs of $Encode$ from those of a random oracle $\mathcal{O}$. 
+	We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
 	The attacker only sees the outputs $c = c_1 ||c_2 || \dots || c_{|c|}$ of $Encode$ and $\mathcal{O}$, respectively. 
-	How could they possibly do that?
 	When we take a look at the implementation of $Encode$, we observe that the only output difference to $\mathcal{O}$ in the view of the attacker is the randomness $r$ used to sample $c_i$ from the underlying distribution.
 	
 	How is $r$ constructed? 
 	It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
-	Since $\mathcal{A}$ is an attacker for all messages $m$ in the chosen hiddentext game, we can freely chose a message $m'$ to encode.
-	With $m' = 0^\beta$ we get $r = 0^\beta \oplus mask = mask = PRG.Next(k_{prg})$.
+	Since $\mathcal{A}$ is an attacker for all messages $m$ in the chosen hiddentext game, they can freely chose a message $m'$ to encode.
+	With $m' = 0^\beta$ they get $r = 0^\beta \oplus mask = mask = PRG.Next(k_{prg})$.
 	To distinguish $c_i$ from a randomly sampled token, the attacker is able to distinguish $r$ from a truly random value $r'$.
 	Therefore, $\mathcal{A}$ can attack the PRG.
 	Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
 
-But is this sufficient to satisfy Hopper's security game?
+But is this sufficient to satisfy Hopper's definition of steganographic secrecy?
 Unfortunately not.
 In Hopper's $(t,q,l)$-SS-CHA game, an attacker may perform up to $q(k)$ queries.
 The aforementioned security proof only considers security against one query.
-
-If $\mathcal{A}$ repeats the same query $m$ and a fixed key $k$, the Meteor system will return the same output, while $\mathcal{O}$ will -- with overwhelming probability~ -- sample an entirely different sequence from the distribution.
+If $\mathcal{A}$ repeats the same query $m$, the Meteor system will return the same output, while $\mathcal{O}$ will -- with overwhelming probability~ -- sample an entirely different sequence from the distribution.
 After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs from those of a random oracle with high likelyhood.
 
 \section{Improve Meteor's Security}
 
-To improve Meteor's security, we have to make the output of $Encode$ non-deterministic. To do that, we take inspiration from symmetric encryption schemes derived from PRG and modify the $Encode$ and $Decode$ algorithms from \autoref{sec:meteor}:
+To improve Meteor's security, we have to make the output of $Encode$ non-deterministic while retaining indistinguishability from random sampling.
+To do that, we take inspiration from symmetric encryption schemes derived from pseudorandom function families (PRF) and modify the $Encode$ and $Decode$ algorithms from \autoref{sec:meteor}. 
 
-\begin{Pseudocode}[float, caption={Meteor EncodeNonDeterministic Algorithm}, label={alg:encode}]
+In \autoref{alg:encode-nd}, we prepend the bits encoded in the covert distribution with an initialization vector IV randomly sampled from bitstrings of length $\gamma$.
+This IV is then used as randomness input for our PRF.
+Since IV is pseudorandom, an attacker cannot distinguish the sampled tokens from those sampled by a random oracle $\mathcal{O}$.
+PRFs can be constructed from PRGs, first shown in \cite{PRF1986}, while maintaining indistinguishability from randomness.
+
+The modifications in \autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
+Now, an attacker $\mathcal{A}$ can only distinguish the outputs with the attack described above if they encounter the same IV $\in \{ 0,1\}^\gamma$ twice.
+With the balls-into-bins problem, it can be shown that the advantage against this encryption scheme is negligible in $\gamma$.
+\todo{security proof}
+
+\begin{Pseudocode}[float, caption={
+Meteor EncodeNonDeterministic Algorithm.
+This algorithm differs from the original Encode algorithm by sampling a random IV before encoding.
+That IV is later used as randomness in a PRF used to generated the random masked.
+The IV is incremented after each iteration of the encoding process.
+The first $\gamma$ bits of the hiddentext are the IV. 
+The introduction of an IV does not negatively affect secrecy, since IV is indistinguishable from randomness.}, label={alg:encode-nd}]
 algorithm $EncodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \mathcal{H})$
 	Output: Stegotext message $c$
 	$IV \leftarrow\$ \{0,1\}^\gamma$
 	$c \leftarrow \epsilon,~ j \leftarrow 0,~ n \leftarrow 0$
-	while $j < |IV|$ do
-		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, IV[j: j+\beta])$
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
-		$j_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i,~ j \leftarrow j + j_i,~ \mathcal{H} \leftarrow \mathcal{H}||c_i$
+	$m \leftarrow IV || m$
 	while $n < |m|$ do
-		$mask \leftarrow PRG.Next(k_{prg}||IV)$
-		$r \leftarrow m[n:n+\beta] \oplus mask$
+		if $n \geq \gamma$ do
+			$mask \leftarrow PRF.Eval(k_{prg}, IV)$
+			$r \leftarrow m[n:n+\beta] \oplus mask$
+		else
+			$r \leftarrow m[n:\gamma]$
 		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
 		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i,~ IV \leftarrow IV+1$
 	Output $c$
 \end{Pseudocode}
 
-\begin{Pseudocode}[float, caption={Meteor DecodeNonDeterministic Algorithm}, label={alg:decode}]
+\begin{Pseudocode}[float, caption={
+Meteor DecodeNonDeterministic Algorithm.
+This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.
+After decoding $\gamma$ bits of hiddentext, a PRF is initialized with IV for generation of pseudorandom masks.}, label={alg:decode-nd}]
 algorithm $DecodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H})$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon,~ IV \leftarrow \epsilon$
 	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
 	for $i \in \{0, 1, \dots, |c|-1 \}$ do
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
 		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
 		if $n < \gamma$ do
 			$IV \leftarrow IV || m_i$
 		else
-			$mask \leftarrow PRG.Next(k_{prg} || IV)$
+			$mask \leftarrow PRF.Eval(k_{prg}, IV)$
 			$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
-			$\mathcal{H} \leftarrow \mathcal{H}||c_i,~ IV \leftarrow IV + 1$
+			$IV \leftarrow IV + 1$
+		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
 	Output $m$
 \end{Pseudocode}
+
 
