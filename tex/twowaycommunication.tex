@@ -59,3 +59,51 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 	\label{fig:twowaycommunication}
 \end{figure}
 
+\section{Implementation Of Two-Way Communication}
+While we can generate stegotexts using the GPT-2 model, as the original Meteor stegosystem does, the texts generated with GPT-2 are not really convincing as chat messages. 
+In the following example we see a conversations between Alice, the encoding party, and Bob, the decoding party using the protocol described in \autoref{fig:twowaycommunication}.
+The initial history consists of a short sequence of messages where both participants greet and ask each other how their day was.
+Alice's messages encode the hiddentext ``Hi there!'' in blocks auf 32 bits. 
+Bob's responses are handwritten.
+
+\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using GPT-2]
+\leavevmode
+\begin{itemize}
+\item Alice: I have a secret. I was working on an app for our Google
+\item Bob:   Oh interesting! But are you really supposed to tell me? hah
+\item Alice: "We're on the verge of a major shift in the way people think about climate change," says Steve McIntyre, an environmental economist and
+\item Bob:   That's right, climate change is a huge problem
+\item Alice: Description \\
+\\
+       This
+\item Bob:   What?
+\end{itemize}
+\end{example}
+
+As we can see, the generated text does not really read as if it were an actual conversation between two participants.
+The generated text appears to lack context.
+Also, Alice's texts don't seem to take Bob's responses into account and cover different topics in each iteration.
+
+This effect is due to the nature of GPT's training dataset, which is a large collection of newspaper reports, books, articles and thelike.
+Therefore, it is very likely that GPT generates probability distributions for article-like texts.
+When sampling from this distribution, it is thus likely to generate text that reads like a newspaper article.
+
+Luckily, the NLP community is very active in developing different models for many use cases.
+In 2020, Microsoft has developed and released the DialoGPT \cite{Zhang2020}, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads.
+When repeating the same experiment as above, but with the DialoGPT model, the results read differently.
+Again, Alice's text messages encode the hiddentext ``Hi there!'', 32 bits of encoded data per chat message.
+Bob's responses are handwritten.
+
+\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using DialoGPT]
+\leavevmode
+\begin{itemize}
+\item Alice: I suppose it is . I'm a bit jealous of the weather today , though . It's nice , but it's nice to be in a nicer
+\item Bob:   I don't know, it's too hot for me today to be honest :D
+\item Alice: Yeah it is . I wish it was cooler though . I love it here . I wish I had another place to live though . We're all pretty cool here . Lol
+\item Bob:   haha you're cool for sure
+\item Alice: I love it here as
+\item Bob:   Where are you currently?
+\end{itemize}
+
+
+\end{example}
