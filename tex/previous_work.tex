@@ -7,22 +7,25 @@
 Steganography extends the concepts of cryptography to hide the mere existence of a message.
 This makes it robust against censorship and prohibition.
 While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
+
+
 Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons1983}.
 There, two prisoners Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a Warden.
 Alice and Bob now want to craft and exchange escape plans.
-Warden observes messages exchanged between Alice and Bob.
-He tries to distinguish the exchange of the escape plan from innocous messages.
+Warden observes the messages exchanged between Alice and Bob.
+He tries to distinguish the exchange of the escape plan from innocuous messages.
 
 In steganography, a message is represented by a sequence of documents from an underlying distribution.
 Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
 If the original photograph is unknown to Warden, Alice can encode hidden text in the original photograph
 
-In his doctoral thesis ``Toward a theory of Steganography'', \cite{Hopper2004} establishes a cryptographic point of view on steganography. 
+In his dissertation ``Toward a theory of Steganography'', \cite{Hopper2004} establishes a cryptographic point of view on steganography. 
 This allows us to do cryptanalysis on steganographic protocols.
-In section 3, he defines a stegosystem as follows:
+In section 3 of his thesis, he defines a stegosystem as follows:
 
 \begin{definition}[Stegosystem, Hopper]
+\label{def:stegosystem}
 A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, is a pair of probabilistic algorithms:
 
 \begin{itemize}
@@ -82,13 +85,10 @@ $$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t
 where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totaling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
 \end{definition}
 
-After defining what insecurity (or $InSec$) of a stegosystem is, Hopper establishes a definition for steganographic secrecy.
-
 \begin{definition}[Steganographic Secrecy, Hopper]
+\label{def:sec-hopper}
 A Stegosystem $\mathcal{S}_k$ is ca	lled $(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$ ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,k) \leq \epsilon$
 \end{definition}
-
-Ideally, we would like to achieve \emph{universal} steganographic secrecy, i.e. steganographic secrecy over any always-informative channel $\mathcal{C}$.
 
 \begin{definition}[Universal Steganographic Secrecy, Hopper]
 A Stegosystem $\mathcal{S}$ is called $(t, q, l, \epsilon)$-universally steganographic secret agains chosen hiddentext attack ($(t,q,l,k,\epsilon)$-SS-CHA if it is $(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$ for every always-informative channel $\mathcal{C}$
@@ -96,20 +96,41 @@ A Stegosystem $\mathcal{S}$ is called $(t, q, l, \epsilon)$-universally steganog
 
 Lastly, we call a Stegosystem $\mathcal{S}_k$ \emph{universally steganographic secret against chosen hiddentext attacks} (USS-CHA) if for every channel $\mathcal{C}$ and for every PPT $W \in \mathcal{W}(t,q,l,k)$, $Adv_{\mathcal{S},\mathcal{C},W}(k)$ is negligible in k.
 
-
 \section{Generative Neural Networks}
 \label{sec:generative-neural-networks}
 
 Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful deep learning based models.
-The Generative Pretrained Transformer 2 (GPT-2) by OpenAPI is one of the industry-standard approaches to (not only) text generation.
-GPT-2 has been introduced in \cite{OpenAI2019}.
-This model works on a set of tokens, which are words or sub-words of the approximated distribution.
-To generate a sentence, i.e. a sequence of tokens, the model requires a history as input and outputs a probability distribution for the next token, see \autoref{fig:generative-network}.
 
-On a high level, we can understand the ML model as a black box.
-When given a history, the ML model first generates a logits vector for tokens $t_i$, more formally a list of 2-tuples $((z_1, t_1), (z_2, t_2), \dots, (z_n, t_n)),~ z_i \in ( -\infty, \infty )$.
-In the next step, we convert the logits vector $z := (z_i)^{1 \leq i \leq n}$ to a probability distribution $(p_i)^{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function $\sigma$:
+One of the milestones in deep learning based generative neural networks certainly is the development of the Generative Pretrained Transformer, or GPT, by OpenAI.
+The second iteration of GPT, called GPT-2, has been introduced in \cite{OpenAI2019} and became one of the industry-standard approaches to text generation.
+While it is mostly known for its capabilities in text generation, it is not specifically designed for that use case.
+It can also be used for a variety of other tasks in natural language processing, such as question answering, translation or summarizing texts.
+
+We can think of GPT-2 as a function $\mathcal{M} \colon \mathbb{N}^k \rightarrow \mathbb{N}^\ell$. 
+It takes as input a vector of dimension $k$ and transforms it into another vector of dimension $\ell$. 
+The input vector is a numeric representation of a history $h$, which is a string.
+The output vector is the probabilities of the next token, which might be a character or word.
+
+Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
+To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
+In the simplest case, the token set can be the characters or words of the english language.
+We can then encode a string $s$ with $|s| \leq k$ into a vector $v = \left(s_i\right)^T_{1 \leq i \leq |s|}$, fill the remaining $k - |s|$ entries in the vector with a special padding token $\bot$ and pass it to $\mathcal{M}$.
+	
+While this works, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
+Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
+Probably yes.
+But from the model's perspective, the vectors $(d, o, \bot, \bot, \bot)^T$ and $(t, o, \bot, \bot, \bot)^T$ are very close to each other (the only differ in one dimension), while $(d, o, \bot, \bot, \bot)^T$ and $(d, o, n, ', t)^T$ differ in all but two dimensions.
+
+To tackle this challenge, most modern text generation models establish subword tokenization.
+This allows them to better predict relationships between words.
+For example, the words ``do'' and ``don't'' are probably closely related.
+With subword tokens, we might tokenize ``do'' as $(do, \bot)^T$ and ``don't'' as $(do, n't)^T$.
+While this approach makes it easier for the model to learn relationships between different words, there might exist multiple tokenizations for one given word.
+The GPT-2 model is trained on a tokenizer which contains roughly 51000 words, characters and subwords.
+
+The model's output is a logits vector $z := (z_i)_{1 \leq i \leq n}$.
+We can transform the logits vector to a probability distribution $p = (p_i)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function $\sigma$:
 
 $$\sigma \colon \mathbb{R}^n \rightarrow (0,1)^n,$$
 $$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}}\right)^{1 \leq i \leq n}$$
@@ -120,31 +141,46 @@ When combined, we get the black box for our ML model in \autoref{fig:generative-
 	\centering
 	\begin{tikzpicture}
             \node[rectangle, draw=black, minimum width=4cm, minimum height=4cm] (oracle) {ML Model};
-            \node[left=of oracle] (history) {history};
-            \node[above right=-5mm and 1cm of oracle] (t1) {$t_1$};
+            \node[right=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=4cm] (sigmoid) {$\sigma$};
+            \node[left=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=2cm] (transform) {Tokenizer};
+            \node[left=of transform] (history) {$h$};
+            \node[above right=-5mm and 1cm of sigmoid] (t1) {$t_1$};
             \node[below=5mm of t1] (t2) {$t_2$};
             \node[below=5mm of t2] (t3) {$t_3$};
             \node[below=5mm of t3] (t4) {$\dots$};
             \node[below=5mm of t4] (tn) {$t_n$};
-            \draw[->] (history) -- (oracle);
-            \draw[->] (oracle) -- node[midway,below] {$p_1$} (t1);
-            \draw[->] (oracle) -- node[midway,below] {$p_2$} (t2);
-            \draw[->] (oracle) -- node[midway,below] {$p_3$} (t3);
+            \draw[->] (transform) -- (oracle);
+            \draw[->] (history) -- (transform);
+            \draw[->] (oracle) -- (sigmoid);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_1$} (t1);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_2$} (t2);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_3$} (t3);
             %\draw[->] (oracle) -- (t4);
-            \draw[->] (oracle) -- node[midway,below] {$p_n$} (tn);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_n$} (tn);
 	\end{tikzpicture}
-	\caption{Generative ML Model as black box function, taking a history as input.}
+	\caption{
+Generative ML Model as black box function, taking a history as input.
+The history $h$ is a string of text which is transformed to a vector $v \in \mathbb{N}^k$ (with a model-specific $k$) of token indices.
+The model returns a logits vector with unscaled outputs.
+The logits vector is then transformed to a probability distribution $p = \left(p_i\right)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function.
+Each probability $p_i$ represents the probability of token $t_i$ to be the next token in $h$ given a history $h$: $Pr[h_{k+1}=t_i|H]$.
+}
 	\label{fig:generative-network}
 \end{figure}
-To generate the next token in the sequence, there are basically two approaches:
-\begin{enumerate*}[label=(\roman*)] \item \label{enum:gnn-most-likely} selecting the most likely token from the distribution or \item \label{enum:gnn-sample} sampling according to the generated distribution \end{enumerate*}.
-While \ref{enum:gnn-most-likely} creates deterministic output, the generated sequences tend to be repetitive.
-On the other hand, approach \ref{enum:gnn-sample} is not deterministic, but usually creates higher quality output.
-For a comparison of GNN model outputs, see examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample}.
+To generate the next token in the sequence, we can sample according to the generated distribution.
+For an example of GNN model outputs using sampling, see \ref{example:gpt2-output-sample}.
+
+\begin{example}[Example of GPT-2 model output with random sampling]
+	Hello, I'm a language model, I'm a problem solver in languages."
+
+	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
+	\label{example:gpt2-output-sample}
+\end{example}
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
 In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
-A Python program which generates the outputs in examples \ref{example:gpt2-output} and \ref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
+A Python program which generates the outputs in example \ref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
+
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
 A more sophisticated way to generate text using GPT-2 can be found in \autoref{code:gpt2-logits-demo}.
@@ -164,21 +200,6 @@ This code example shows how we can:
 
 \lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
-
-
-\begin{example}[Example of GPT-2 model output without sampling]
-	Hello, I'm a language model, not a programming language. I'm a language model. I'm a language model. I'm a language model. I'm a language model. I'm a language model.
-	\label{example:gpt2-output}
-\end{example}
-
-\begin{example}[Example of GPT-2 model output with sampling]
-	Hello, I'm a language model, I'm a problem solver in languages."
-
-	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
-	\label{example:gpt2-output-sample}
-\end{example}
-
-\todo{write about BPE, sub-word tokens etc.}
 
 \section{Meteor Stegosystem}
 \label{sec:meteor}
@@ -319,9 +340,9 @@ $$\mathop{Pr}[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k, m, \mathcal{H}), \
 
 Meteor's security proof is also outlined by the authors.
 They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ sampling from the distribution.
-More formally, they define security in \autoref{def:sec-kaptchuk}.
+More formally, they define steganographic secrecy as in \autoref{def:sec-kaptchuk}.
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
-In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of universally steganographic secrecy introduced in \autoref{sec:prov-sec-steg}.
+In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of steganographic secrecy against chosen hiddentext attackers introduced in \autoref{sec:prov-sec-steg}.
 We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using polynomial queries, time and message length.
 
 \begin{definition}[Steganographic Secrecy, Kaptchuk et al.]%
