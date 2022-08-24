@@ -6,8 +6,8 @@ from util import get_model
 
 
 def main():
-    # model_name = 'gpt2-medium'
-    model_name = 'microsoft/DialoGPT-large'
+    model_name = 'gpt2-medium'
+    #model_name = 'microsoft/DialoGPT-large'
     device = 'cpu'
 
     print('get model')
@@ -32,7 +32,11 @@ def main():
         "That would be great!",  # Bob
         "Hey! What's your plan for today?",  # Alice
     ]"""
-    history = [
+    history = [ "Hi! How are you?",
+                "Fine, you?",
+                "I'm alright. It's pretty hot outside today haha",
+                "Yeah, here too"]
+    """history = [
         "Hi! What's your favorite movie?",  # Bob
         "Hey there :) my favorite movie is Harry Potter. I like the second part the most, but the fourth is also good. And yours?",
         "Hmm, I like Lord Of The Rings. I've also watched and read Harry Potter, but the story didn't quite work for me. Not that much of a wizard fan",
@@ -41,9 +45,9 @@ def main():
         "Yes, it's about the wizarding world, but the things they do are actually about companionship and love",
         "How that?",
         "Well, just take Harry for example: he's an orphan who was raised without love, but when he came to Hogwarts, he was loved everywhere.",
-    ]
-    history = []
-    # message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
+    ]"""
+    #history = []
+    #message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
     message_text = "Hi there!"
     # message_ctx = [enc.encoder['<|endoftext|>']]
     # message = codr.decode_arithmetic(
@@ -61,16 +65,16 @@ def main():
     while True:
         if not remainder:
             break
-        bob_says = input('Please enter your message: ')
-        # bob_says = "But who is your favorite character?"
-        print("Bob: " + bob_says)
-        history += [bob_says]
-        chunk_length = 20
+        chunk_length = 32
         stegotext, remainder = coder.encode_conversation(remainder, history, key, nonce, max_length=chunk_length)
         print('Alice: ' + stegotext)
         recovered, tokens = coder.decode_conversation(stegotext, history, key, nonce)
         reconst += recovered[:chunk_length]
         history += [stegotext]
+        bob_says = input('Please enter your message: ')
+        # bob_says = "But who is your favorite character?"
+        print("Bob: " + bob_says)
+        history += [bob_says]
         print(f'{len(remainder)} bits left')
         print("history: %s" % ' -- '.join(history))
     reconst = bitarray.bitarray(reconst)
