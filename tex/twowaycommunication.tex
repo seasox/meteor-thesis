@@ -66,7 +66,7 @@ The initial history consists of a short sequence of messages where both particip
 Alice's messages encode the hiddentext ``Hi there!'' in blocks auf 32 bits. 
 Bob's responses are handwritten.
 
-\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using GPT-2]
+\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using GPT-2 with 32 bit blocksize]
 \leavevmode
 \begin{itemize}
 \item Alice: I have a secret. I was working on an app for our Google
@@ -86,7 +86,7 @@ Also, Alice's texts don't seem to take Bob's responses into account and cover di
 
 This effect is due to the nature of GPT's training dataset, which is a large collection of newspaper reports, books, articles and thelike.
 Therefore, it is very likely that GPT generates probability distributions for article-like texts.
-When sampling from this distribution, it is thus likely to generate text that reads like a newspaper article.
+When sampling from this distribution, it is likely to generate text that reads like a newspaper article.
 
 Luckily, the NLP community is very active in developing different models for many use cases.
 In 2020, Microsoft has developed and released the DialoGPT \cite{Zhang2020}, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads.
@@ -94,7 +94,7 @@ When repeating the same experiment as above, but with the DialoGPT model, the re
 Again, Alice's text messages encode the hiddentext ``Hi there!'', 32 bits of encoded data per chat message.
 Bob's responses are handwritten.
 
-\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using DialoGPT]
+\begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using DialoGPT with 32 bit blocksize]
 \leavevmode
 \begin{itemize}
 \item Alice: I suppose it is . I'm a bit jealous of the weather today , though . It's nice , but it's nice to be in a nicer
