@@ -184,16 +184,16 @@ The output of $AllPaths$ is exponential in input length.
 A DFS-based implementation for AllPaths can be found at \autoref{alg:all-paths}.
 
 \begin{Pseudocode}[float,caption={TokenizeCandidates algorithm},label={alg:tokenize-candidates}]
-	algorithm $TokenizeCandidates_{\mathcal{T}}(s)$
-		Output: Graph $G = (V, E)$
-		if $s = \epsilon$
-			return $\epsilon$
-		for $t \in \mathcal{T}$ do
-			if $s[0{:}|t|] = t$ do
-				$V \leftarrow V \cup \{ s[|t|{:}] \}$
-				$E \leftarrow E \cup \{ (s, s[|t|{:}]) \}$
-				$G \leftarrow G \cup TokenizeCandidates_{\mathcal{T}}(s[|t|{:}])$
-		return $G$
+algorithm $TokenizeCandidates_{\mathcal{T}}(s)$
+	Output: Graph $G = (V, E)$
+	if $s = \epsilon$
+		return $\epsilon$
+	for $t \in \mathcal{T}$ do
+		if $s[0{:}|t|] = t$ do
+			$V \leftarrow V \cup \{ s[|t|{:}] \}$
+			$E \leftarrow E \cup \{ (s, s[|t|{:}]) \}$
+			$G \leftarrow G \cup TokenizeCandidates_{\mathcal{T}}(s[|t|{:}])$
+	return $G$
 \end{Pseudocode}
 
 \begin{figure}[htbp]
