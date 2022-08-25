@@ -9,12 +9,54 @@ This makes it robust against censorship and prohibition.
 While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
 
 
-Steganography is usually modelled using the Prisoner's Problem, as introduced by \cite{Simmons1983}.
+Steganography is usually modelled using the Prisoners' Problem, as introduced by \cite{Simmons1983}.
 There, two prisoners Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a Warden.
 Alice and Bob now want to craft and exchange escape plans.
 Warden observes the messages exchanged between Alice and Bob.
 He tries to distinguish the exchange of the escape plan from innocuous messages.
+An illustration of the Prisoners' Problem can be found at \autoref{fig:prisonersgame}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+	\node[block] (alice) {Alice};
+	\node[block, right=3cm of alice] (warden) {Warden};
+	\node[block, right=3cm of warden] (bob) {Bob};
+	\node[left=of alice] (m) {m};
+	\node[above=of alice] (k) {k};
+	\node[below=of alice] (h) {$\mathcal{H}$};
+	\node[right=of bob] (mb) {m};
+	\node[above=of bob] (kb) {k};
+	\node[below=of bob] (hb) {$\mathcal{H}$};
+	\node[block, below=of warden] (steganalysis) {Steganalysis: is $d$ stegotext?};
+	\node[below left=of steganalysis] (isstego) {suppress message};
+	\node[below right=of steganalysis] (notstego) {forward message to recipient};
+	\draw[->] (alice) -- node[above] {$c$} (warden);
+	\draw[->] (warden) -- node[above] {$c$} (bob);
+	\draw[->] (m) -- (alice);
+	\draw[->] (k) -- (alice);
+	\draw[->] (h) -- (alice);
+	\draw[->] (bob) -- (mb);
+	\draw[->] (kb) -- (bob);
+	\draw[->] (hb) -- (bob);
+	\draw[->] (warden) -- (steganalysis);
+	\draw[->] (steganalysis) -- node[right] {Yes} (isstego);
+	\draw[->] (steganalysis) -- node[left] {No} (notstego);
+\end{tikzpicture}
+\caption{
+An illustration of The Prisoners' Problem, as described in \cite{Simmons1983}.
+Two accomplices in a crime (Alice and Bob) are locked in widely separated cells.
+The try to forge escape plans.
+They are surveilled by a warden, who allows them to communicate with each other, but monitors their communication.
+Alice and Bob try to coordinate their plans using the surveilled channel by establishing a subliminal channel which is undetectable by Warden.
+The messages sent over the surveilled channel are called stegotext.
+Warden tries to detect the subliminal channel by analysing the stegotexts.
+If Warden detects a stegotext, they suppress the message.
+Otherwise, the message is forwarded.
+}
+\label{fig:prisonersgame}
+\end{figure}
 
 In steganography, a message is represented by a sequence of documents from an underlying distribution.
 Most approaches to steganography use photographs as underlying distribution and hide information in the images' noise.
