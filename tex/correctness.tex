@@ -97,7 +97,9 @@ Splitting the hiddentext results in shorter stegotext, thus decreases the probab
 		}%
 		\caption{1024 bytes ($Pr[X=0] \approx 0.18$)}%
 	\end{subfigure}%
-	\caption{Token mismatch statistic when using Meteor to encode Shakespear's Hamlet blockwise. The x-axis shows the number of tokenization mismatches between the encoding and the decoding party for hiddentext blocks of size...}
+	\caption{
+	Token mismatch statistics when using Meteor to encode Shakespear's Hamlet blockwise for different block sizes.
+	The x-axis shows the number of tokenization mismatches between the encoding and the decoding party for hiddentext blocks of size...}
 	\label{fig:meteor-stats-mismatch-count}	
 \end{figure}
 
@@ -120,7 +122,12 @@ Now the decoding party has to verify that after each block $m_i$ of $\gamma$ bit
 If not, a decoding error has occured in the stegotext, i.e. a tokenization mismatch has been occured.
 The modified $Decode$ algorithm can be seen at \autoref{alg:marked-decode}.
 
-\begin{Pseudocode}[float, caption={Marked Encode Algorithm}, label={alg:marked-encode}]
+\begin{Pseudocode}[float, caption={
+Marked Encode Algorithm. 
+The modification this algorithm introduces is that after every $j$ bits a checksum $q(m_i)$ is inserted into the hiddentext.
+This allows the recipient to check for decoding errors due to wrong tokenization.
+$q$ is a function which generates a checksum of fixed length $\delta$.
+}, label={alg:marked-encode}]
 algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, \mathcal{H}, q)$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
