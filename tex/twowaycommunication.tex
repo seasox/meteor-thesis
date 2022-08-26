@@ -12,7 +12,7 @@ To achieve the task at hand, we can use Microsoft's DialoGPT \cite{Zhang2020} to
 
 \section{Protocol For Two-Way Communication}
 
-In \autoref{fig:twowaycommunication}, I introduce a simple chat protocol between two participants Alice and Bob.
+In \autoref{fig:twowaycommunication}, we introduce a simple chat protocol between two participants Alice and Bob.
 Here, Alice and Bob send messages back and forth.
 Alice sends stegotext blocks, while Bob generates a sequence of responses, which can be stegotexts too or handwritten messages.
 After each message from Alice, Bob uses the Meteor stegosystem to decode $s_i$ to a message block $m_i$.
@@ -22,7 +22,7 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 
 \begin{figure}[htbp]
 	\centering
-	\begin{msc}[instance distance=4cm,action width=5cm]{Two-Way Steganographic Chat Protocol}
+	\begin{msc}[instance distance=4cm,action width=5cm]{Two-Way Steganographic Communication Protocol}
 		\declinst{alice}{}{Alice}
 		\declinst{bob}{}{Bob}
 		\condition{exchange $k,~ \mathcal{H}$}{alice,bob}
@@ -50,7 +50,7 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 		\nextlevel
 	\end{msc}
 	\caption{
-	A simple Two-Way Communication Protocol for participants Alice and Bob.
+	A Two-Way Steganographic Communication Protocol for participants Alice and Bob.
 	In this scheme, Alice encodes blocks of their hiddentext message $m$ into stegotexts $s_i$ and sends them to Bob, who decodes the blocks using the Meteor stegosystem.
 	Bob then generates their response $r$ and sends it back.
 	The response can be generated using a GNN, be (parts of) a stegotext themselves or handwritten chat messages.
@@ -90,7 +90,7 @@ When sampling from this distribution, it is likely to generate text that reads l
 
 Luckily, the NLP community is very active in developing different models for many use cases.
 In 2020, Microsoft has developed and released the DialoGPT \cite{Zhang2020}, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads.
-When repeating the same experiment as above, but with the DialoGPT model, the results read differently.
+When repeating the same experiment as above, but with the DialoGPT model, the results read more closely to what we would expect from a chat conversation between two friends.
 Again, Alice's text messages encode the hiddentext ``Hi there!'', 32 bits of encoded data per chat message.
 Bob's responses are handwritten.
 
