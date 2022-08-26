@@ -14,10 +14,10 @@ def ld(fname):
 if __name__ == '__main__':
     flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
 
-    tikzexport = True
+    tikzexport = False
 
     plt.figure(dpi=1200)
-    for step_size in [128, 1024]:
+    for step_size in [32, 128, 1024]:
         fname = f'meteor_statistics_{step_size}.pickle'
         data = ld(fname)
         print(f'generating {step_size} bytes stats')

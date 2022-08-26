@@ -40,7 +40,7 @@ def main():
     coder = MeteorCoder(enc, model, device)
 
     # Constants for HMAC-DRBG -- MUST CHANGE FOR SECURE IMPLEMENTATION
-    chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
+    #chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
     # message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
     # context_tokens = codr.encode_context(chosen_context, enc)
     message_text = open('hamlet.txt', 'r').read()
@@ -60,7 +60,7 @@ def main():
         hamlet_f.close()"""
 
     hamlet_len = len(message_text)
-    for step_size in [128]:
+    for step_size in [32]:
         comparisons = load_mismatches(step_size)
         i = 0
         while i < hamlet_len:
@@ -82,7 +82,7 @@ def main():
             num_encoded_tokens = len(enc_toks)
             num_decoded_tokens = len(dec_toks)
             # log comparison statistics
-            comparison = compare_tokens(message_text[i:i + step_size].encode('utf-8'), chosen_context, key, nonce,
+            comparison = compare_tokens(message_text[i:i + step_size].encode('utf-8'), context_str, key, nonce,
                                         'arithmetic',
                                         enc_toks, dec_toks, stats)
             comparisons += [comparison]
