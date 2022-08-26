@@ -242,9 +242,9 @@ There, the sending party will replace the randomness with a crafted value to emb
 While that value seems random to an observer, a recipient who possesses a secret key is able to recover the hidden message.
 
 
-\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
+\lstinputlisting[float, style=code, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
 
-\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+\lstinputlisting[float, style=code, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
 
 \section{Meteor Stegosystem}
@@ -255,7 +255,7 @@ The decoding party Bob receives the generated stegotext from Alice and recovers 
 
 While this is easily possible for the encoding party because they control the randomness used in sampling, it is intuitively unclear whether the decoding party can extract a prefix of the randomness in the decoding process to recover parts of the hiddentext message.
 Luckily, many generative neural networks, such as GPT-2, possess this property.
-The Meteor authors have introduced the concept of a Ranged Randomness Recoverable Sampling Scheme, or RRRSS, see \autoref{def:rrrss}.
+The Meteor authors have introduced the concept of Ranged Randomness Recoverable Sampling Schemes, or RRRSS, see \autoref{def:rrrss}.
 This definition formally models the desired behaviour described above.
 
 \begin{definition}[Ranged Randomness Recoverable Sampling Scheme, Kaptchuk et al.]
@@ -266,7 +266,7 @@ This definition formally models the desired behaviour described above.
 	$Sample_{\mathcal{D}}^\beta \colon (\mathcal{H}, r) \rightarrow s$ 
 	and 
 	$Recover_{\mathcal{D}}^\beta \colon (\mathcal{H}, s) \rightarrow \mathcal{R}$ 
-	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$ and initial history $\mathcal{H}$, if:
+	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta$ and histories $\mathcal{H}$, if:
 	
 	\begin{enumerate}
 		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
