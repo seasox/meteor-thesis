@@ -38,6 +38,7 @@ In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against
 	Therefore, $\mathcal{A}$ can attack the PRG.
 	Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
+\todo{improve security proof}
 
 But is this sufficient to satisfy Hopper's definition of steganographic secrecy?
 Unfortunately not.
@@ -59,8 +60,7 @@ PRFs can be constructed from PRGs, first shown in \cite{PRF1986}, while maintain
 The modifications in \autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
 Now, an attacker $\mathcal{A}$ can only distinguish the outputs with the attack described above if they encounter the same IV $\in \{ 0,1\}^\gamma$ twice.
 With the balls-into-bins problem, it can be shown that the advantage against this encryption scheme is negligible in $\gamma$.
-\todo{security proof}
-
+\todo{add security proof}
 \begin{Pseudocode}[float, caption={
 Meteor EncodeNonDeterministic Algorithm.
 This algorithm differs from the original Encode algorithm by sampling a random IV before encoding.
@@ -85,7 +85,6 @@ algorithm $EncodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \math
 		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i,~ IV \leftarrow IV+1$
 	Output $c$
 \end{Pseudocode}
-
 \begin{Pseudocode}[float, caption={
 Meteor DecodeNonDeterministic Algorithm.
 This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.
@@ -106,5 +105,3 @@ algorithm $DecodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \math
 		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
 	Output $m$
 \end{Pseudocode}
-
-
