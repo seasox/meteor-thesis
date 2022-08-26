@@ -2,12 +2,12 @@
 \label{chap:correctness}
 
 The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. On the website, they state that ``due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
-During experimentation, I have concluded that the cause of this is due to the way sub-word based GNNs, such as GPT-2, encode text and not due to issues with the algorithm interface.
+During experimentation,  it has been concluded that the cause of this is due to the way subword based GNNs, such as GPT-2, encode text and not due to issues with the algorithm interface.
 
-In this chapter, I will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's definition as defined in \autoref{def:correctness-hopper} by providing a counterexample.
-Afterwards, I will present an experiment which I have performed to approximate the probability of incorrect decodings.
+In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's definition as defined in \autoref{def:correctness-hopper} by providing a counterexample.
+Afterwards, an experiment will be presented which has been performed to approximate the probability of incorrect decodings.
 The experiment shows that for sufficiently long hiddentexts the probability of incorrect decoding increases to about 82 \%.
-To restore correctness, I concludingly present a change to Meteor's $Recover$ algorithm to successfully reconstruct the original hiddentext message while inducing overhead exponential in stegotext length.
+To restore correctness, we concludingly present a change to Meteor's $Recover$ algorithm to successfully reconstruct the original hiddentext message while inducing overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
 
@@ -35,7 +35,7 @@ In \autoref{alg:decode}, we see that during decoding, the stegotext $c$ generate
 This task is performed by a tokenizer $T$ over tokens $\mathcal{T}$ associated with the underlying model.
 Here, the $Decode$ algorithm expects that the parsing of $c$ can recover the originally generated $c_i$.
 This unfortunately is, at least for models with subword tokenizations such as GPT-2, not the case for some combinations of stegotext, key and history due to ambiguous tokenization as defined in \autoref{def:amb-tok}.
-In \autoref{sec:alg-rec-tok-candidates}, I show how to fix these correctness issues.
+In \autoref{sec:alg-rec-tok-candidates}, we show how to fix these correctness issues.
 
 \begin{theorem}
 The Meteor Stegosystem is not correct.
@@ -70,8 +70,8 @@ After we have seen that this problem appears at least once by finding a countere
 How often does this happen?
 If this happens only for a negligible amount of combinations of message, key, and history (or maybe even only for this exact combination), this might be a non-issue.
 
-To approach an answer to this question, I have conducted an experiment which attempts to estimate the rate at which these incorrect decodings occur.
-For that, I have encoded the entire book of Hamlet in chunks of 128 and 1024 characters with random keys and histories with a fixed length of 128 characters picked at random from Hamlet as well using a modified version of the Meteor demo code from \cite{MeteorDemo2021}.
+To approach an answer to this question, an experiment has been conducted which attempts to estimate the rate at which these incorrect decodings occur.
+For that, we have encoded the entire book of Hamlet in chunks of 128 and 1024 characters with random keys and histories with a fixed length of 128 characters picked at random from Hamlet as well using a modified version of the Meteor demo code from \cite{MeteorDemo2021}.
 
 The experiment shows that most stegotexts have at least one mismatch if they are of significant length (\autoref{fig:meteor-stats-mismatch-count}).
 When encoding 128 byte blocks, the probability to have no mismatched token sequences is about 0.55.
@@ -142,26 +142,41 @@ algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma}(k_{prg}, m, \mathcal{H}, q
 
 
 
-\begin{Pseudocode}[float, caption={Marked Decode Algorithm}, label={alg:marked-decode}]
+\begin{Pseudocode}[float, caption={
+Marked Decode Algorithm.
+In comparison to the original algorithm \autoref{alg:decode}, MarkedDecode checks the checksum every $\gamma$ bits. 
+If the checksum does not match, a decoding error happened.
+We then perform a lookbehind on the stegotext and generate all possible tokenizations $paths$ for a substring of $c$.
+Afterwards, rewind the internal state retry decoding with a path $p$ selected from $paths$.
+}, label={alg:marked-decode}]
 algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H}, q)$
 	Output: Plaintext message $m$
-	$m \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0$
+	$m \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0,~ s \leftarrow 0$
 	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
 	for $i \in \{0, 1, \dots, |c|-1 \}$ do
 		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
 		$n \leftarrow n + n_i$
 		$j \leftarrow j + n_i$
-		if $j \geq \gamma$
-			$j \leftarrow j - \gamma$
-			!!TODO!! fixme n is wrong here, need to track current index
-			if $m[n:n+\gamma] \neq q(m_i)$ do
-				rollback()
 		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
 		$mask \leftarrow PRG.Next(k_{prg})$
 		$m \leftarrow m || (m_i \oplus mask[0: |m_i|])$
 		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
-	Output $m$
+		if $j \geq \gamma$
+			# calculate checksum
+			$j \leftarrow j \mod \gamma$
+			if $m[s:s+\gamma] \neq q(m_i)$  # checksum failed
+				$paths \leftarrow AllPaths(TokenizeCandidates_{\mathcal{T}}(m[n:n+\beta]))$
+				$p \leftarrow SelectFrom(paths)$  # random or systematically
+				rewind state and retry decoding of failed substring with $p$
+			else  # checksum ok, expect first n bits to be okay
+				$s \leftarrow n$
+	$j \leftarrow 0$
+	$m^* \leftarrow \epsilon$
+	while $j < |m|$ do
+		$m^* \leftarrow m || m[j \cdot (\gamma+\delta): j \cdot (\gamma+\delta) + \gamma]$
+		$j \leftarrow j + \gamma+\delta$
+	Output $m^*$
 \end{Pseudocode}
 \todo{fix MarkedDecode}
 
@@ -183,7 +198,12 @@ There are at most $2^{|V|-2} = 2^{|c|-1}$ subsets of $E$ which contain both $v_i
 The output of $AllPaths$ is exponential in input length.
 A DFS-based implementation for AllPaths can be found at \autoref{alg:all-paths}.
 
-\begin{Pseudocode}[float,caption={TokenizeCandidates algorithm},label={alg:tokenize-candidates}]
+\begin{Pseudocode}[float,caption={
+TokenizeCandidates Algorithm.
+This constructs a graph $G = (V, E)$ from a string. The resulting graph has up to $|s|$ nodes.
+It also has up to $\frac{n(n-1)}{2}$ edges because $G$ is a DAG.
+Dynamic Programming can be used to increase the algorithm's performance.
+}, label={alg:tokenize-candidates}]
 algorithm $TokenizeCandidates_{\mathcal{T}}(s)$
 	Output: Graph $G = (V, E)$
 	if $s = \epsilon$
