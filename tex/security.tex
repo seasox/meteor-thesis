@@ -34,7 +34,7 @@ In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against
 	It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
 	Since $\mathcal{A}$ is an attacker for all messages $m$ in the chosen hiddentext game, they can freely chose a message $m'$ to encode.
 	With $m' = 0^\beta$ they get $r = 0^\beta \oplus mask = mask = PRG.Next(k_{prg})$.
-	To distinguish $c_i$ from a randomly sampled token, the attacker is able to distinguish $r$ from a truly random value $r'$.
+	To distinguish $r$ from a randomly sampled token, the attacker has to distinguish $r$ from a truly random value $r'$.
 	Therefore, $\mathcal{A}$ can attack the PRG.
 	Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
