@@ -25,11 +25,11 @@ An illustration of the Prisoners' Problem can be found at \autoref{fig:prisoners
 	\node[block, right=3cm of warden] (bob) {Bob};
 	\node[left=of alice] (m) {m};
 	\node[above=of alice] (k) {k};
-	\node[below=of alice] (h) {$\mathcal{H}$};
+	\node[below=of alice] (h) {history $h$};
 	\node[right=of bob] (mb) {m};
 	\node[above=of bob] (kb) {k};
-	\node[below=of bob] (hb) {$\mathcal{H}$};
-	\node[block, below=of warden] (steganalysis) {Steganalysis: is $d$ stegotext?};
+	\node[below=of bob] (hb) {history $h$};
+	\node[block, below=of warden] (steganalysis) {Steganalysis: is $c$ stegotext?};
 	\node[below left=of steganalysis] (isstego) {suppress message};
 	\node[below right=of steganalysis] (notstego) {forward message to recipient};
 	\draw[->] (alice) -- node[above] {$c$} (warden);
@@ -41,19 +41,18 @@ An illustration of the Prisoners' Problem can be found at \autoref{fig:prisoners
 	\draw[->] (kb) -- (bob);
 	\draw[->] (hb) -- (bob);
 	\draw[->] (warden) -- (steganalysis);
-	\draw[->] (steganalysis) -- node[right] {Yes} (isstego);
-	\draw[->] (steganalysis) -- node[left] {No} (notstego);
+	\draw[->] (steganalysis) -- node[below] {Yes} (isstego);
+	\draw[->] (steganalysis) -- node[below] {No} (notstego);
 \end{tikzpicture}
 \caption{
 An illustration of The Prisoners' Problem, as described in \cite{Simmons1983}.
-Two accomplices in a crime (Alice and Bob) are locked in widely separated cells.
-The try to forge escape plans.
-They are surveilled by a warden, who allows them to communicate with each other, but monitors their communication.
-Alice and Bob try to coordinate their plans using the surveilled channel by establishing a subliminal channel which is undetectable by Warden.
-The messages sent over the surveilled channel are called stegotext.
-Warden tries to detect the subliminal channel by analysing the stegotexts.
-If Warden detects a stegotext, they suppress the message.
+Two accomplices in a crime (Alice and Bob) are imprisoned in widely separated cells.
+They want to escape and try to coordinate their escape plans.
+They are surveilled by a warden who monitors their communication.
+If Warden detects a hidden message by successfully distinguishing it from an innocuous message, they suppress the message.
 Otherwise, the message is forwarded.
+It is expected that Alice and Bob have been able to exchange a common secret key $k$.
+They also have access to the same initial history $h$, which can be public.
 }
 \label{fig:prisonersgame}
 \end{figure}
@@ -202,10 +201,10 @@ When combined, we get the black box for our ML model in \autoref{fig:generative-
 	\end{tikzpicture}
 	\caption{
 Generative ML Model as black box function, taking a history as input.
-The history $h$ is a string of text which is transformed to a vector $v \in \mathbb{N}^k$ (with a model-specific $k$) of token indices.
-The model returns a logits vector with unscaled outputs.
+The history $h$ is a string of text which is transformed to a vector $v \in \mathbb{N}^k$ (with model-specific $k$) of token indices.
+The model returns a logits vector $z \in \mathbb{N}^n$ with unscaled outputs.
 The logits vector is then transformed to a probability distribution $p = \left(p_i\right)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function.
-Each probability $p_i$ represents the probability of token $t_i$ to be the next token in $h$ given a history $h$: $Pr[h_{k+1}=t_i|H]$.
+	The $p_i$ represent the probability of token $t_i$ to be the next token in the sequence given a history $h$: $Pr[s_{k+1}=t_i|s=h]$.
 }
 	\label{fig:generative-network}
 \end{figure}
@@ -225,8 +224,8 @@ A Python program which generates the outputs in example \ref{example:gpt2-output
 
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
-A more sophisticated way to generate text using GPT-2 can be found in \autoref{code:gpt2-logits-demo}.
-The output of \autoref{code:gpt2-logits-demo} resembles those shown in \autoref{example:gpt2-output-sample}. 
+A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}.
+The output of \autoref{alg:gpt2-logits-demo} resembles those shown in \autoref{example:gpt2-output-sample}. 
 This code example shows how we can:
 
 \begin{itemize}
@@ -237,10 +236,15 @@ This code example shows how we can:
 	\item convert a vector of tokens to a string using the tokenizer
 \end{itemize}
 
+As we can see in \autoref{alg:gpt2-logits-demo}, a pseudorandom value \emph{sample} is generated to select the next token \emph{selection} from the distribution.
+This is what the Meteor stegosystem will abuse.
+There, the sending party will replace the randomness with a crafted value to embed a hidden message.
+While that value seems random to an observer, a recipient who possesses a secret key is able to recover the hidden message.
 
-\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={code:gpt2-demo}]{code/pipeline_gpt2.py}
 
-\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={code:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
+
+\lstinputlisting[float, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
 
 \section{Meteor Stegosystem}
@@ -249,7 +253,7 @@ In their paper \cite{Meteor2021} Kaptchuk et al. present the Meteor stegosystem,
 The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
 The decoding party Bob receives the generated stegotext from Alice and recovers a prefix of the random value used in sampling for each token.
 
-While this is easily possible for the encoding party (because they control the randomness used in sampling), it is intuitively unclear whether the decoding party can extract (a prefix of) the randomness in the decoding process to recover parts of the hiddentext message.
+While this is easily possible for the encoding party because they control the randomness used in sampling, it is intuitively unclear whether the decoding party can extract a prefix of the randomness in the decoding process to recover parts of the hiddentext message.
 Luckily, many generative neural networks, such as GPT-2, possess this property.
 The Meteor authors have introduced the concept of a Ranged Randomness Recoverable Sampling Scheme, or RRRSS, see \autoref{def:rrrss}.
 This definition formally models the desired behaviour described above.
