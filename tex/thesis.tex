@@ -76,10 +76,10 @@
   % The titles:
   %
   Titel auf Deutsch     = {
-     Sichere Steganographie auf ML-Basierten Kanälen
+     Sichere Steganographie auf ML-Basierten Kanälen (Draft v0)
   }, 
   Titel auf Englisch    = {
-    Secure Steganography on ML-Based Channels
+    Secure Steganography on ML-Based Channels (Draft v0)
   },
   %
   % Author and supervisor:
@@ -138,25 +138,30 @@
   % and in English. 
   %
   Abstract              = {
-    Governmental and commercial adversaries increasingly threaten the confidentiality of encrypted communication.
-    Steganography alllows confidential communication even in environments where cryptography is actively prohibited.
-    The Meteor Stegosystem extends classical steganographic primitives for the use on channels based on generative models, such as GPT-2.
-    Here, the secret text is embedded in the model's sampling scheme.
-    In this thesis, I perform a statistical analysis of Meteor's performance and compare it with the results presented in the original paper.
-    Subsequently, I present and evaluate different strategies for embedding secret text.
-    The strategies optimize the length of generated messages against reliability and computational ressources required to generate and decrypt stegotexts.
-    The strategies improve the reliability significantly while keeping achievable information density and required computational ressources justifiable.
+    Steganography enables confidential communication even when the use of classical cryptography is prevented or impeded.
+    The Meteor stegosystem extends classical steganographic primitives for use on channels based on generative models, such as GPT-2.
+    Here, the hiddentext is embedded in the randomness used for sampling from the generative model.
+    
+    In this thesis, we analyze correctness and security against Chosen-Hiddentext-Attackers of the Meteor stegosystem. 
+    We will find that correctness is violated especially for longer hiddentexts ($|m| \geq 1024$ bytes).
+    This correctness violation occurs due to ambiguous tokenization of text.
+	This can occur when using subword tokens, which are used in modern generative models such as GPT-2.
+    In addition, the Meteor stegosystem is vulnerable to chosen-hidden-text attackers with polynomially many queries.
+    We present optimizations that improve the correctness and chosen-hiddentext attack security of the Meteor stegosystem.
+    We also discuss a modification that allows Meteor to be used for more compelling use in the context of instant messaging.
   },
   Zusammenfassung       = {
-    Staatliche und privatwirtschaftliche Akteure bedrohen zunehmend die Vertraulichkeit verschlüsselter Kommunikation.
-    Steganographie ermöglicht vertrauliche Kommunikation auch dann, wenn die Nutzung klassischer Kryptographie verhindert wird.
-    Das Meteor-Stegosystem erweitert klassische steganographischer Primitive für die Verwendung auf Kanälen, die auf generativen Modellen basieren, wie etwa GPT-2.
-    Hierbei wird der Geheimtext in das Sampling des generativen Modells eingebettet.
-    In dieser Thesis führe ich eine statistische Analyse der Performance des Meteor-Stegosystems durch und vergleiche diese mit den im Paper präsentierten Ergebnissen.
-    Anschließend präsentiere und evaluiere ich unterschiedliche optimierte Strategien zur Einbettung des Geheimtexts.
-    Die Strategien optimieren die Länge der erzeugten Nachrichten gegen Zuverlässigkeit und Berechnungsaufwand beim Erzeugen sowie Entschlüsseln von Stegotexten.
-    Die Strategien verbessern die Zuverlässigkeit signifikant, während die erzielbare Informationsdichte und benötigter Rechenaufwand vertretbar bleiben.
-
+    Steganographie ermöglicht vertrauliche Kommunikation auch dann, wenn die Nutzung klassischer Kryptographie verhindert oder erschwert wird.
+    Das Meteor-Stegosystem erweitert klassische steganographische Primitive für die Verwendung auf Kanälen, die auf generativen Modellen basieren, wie etwa GPT-2.
+    Hierbei wird der Geheimtext in den verwendeten Zufall im Sampling des generativen Modells eingebettet.
+    
+    In dieser Thesis werden Korrektheit und Sicherheit gegen Chosen-Hiddentext-Angreifer des Meteor-Stegosystems analysiert. 
+    Wir werden feststellen, dass die Korrektheit insbesondere bei längeren Geheimtexten ($|m| \geq 1024$ Bytes) verletzt ist.
+    Diese Korrektheitsverletzung tritt aufgrund uneindeutiger Tokenisierung von Text auf.
+    Diese kann bei Verwendung von Subword-Tokens, welche in modernen Generativen Modellen wie etwa GPT-2, auftreten.
+    Zudem ist das Meteor-Stegosystem verwundbar gegen Chosen-Hiddentext-Angreifer mit polynomiell vielen Queries.
+    Wir präsentieren Optimierungen, die die Korrektheit und Chosen-Hiddentext-Attack-Sicherheit des Meteor-Stegosystems verbessern.
+    Außerdem wird eine Modifikation diskutiert, mit welcher Meteor zur überzeugenderen Verwendung im Kontext von Instant Messaging verwendet werden kann.
   },
   %
   % Optional: 'Danksagungen' (German) or 'Acknowledgements'
