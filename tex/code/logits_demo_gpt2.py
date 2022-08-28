@@ -1,12 +1,3 @@
-import numpy as np
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
-import torch
-import torch.nn.functional as F
-
-# set seed used in PRG
-seed = 42
-np.random.seed(seed)
-
 # initialize tokenizer and model for GPT-2
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained('gpt2')

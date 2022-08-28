@@ -10,7 +10,7 @@ While cryptography can be used to hide the contents of a confidential message, i
 
 
 Steganography is usually modelled using the Prisoners' Problem, as introduced by \cite{Simmons1983}.
-There, two prisoners Alice and Bob are imprisoned.
+The participants Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a Warden.
 Alice and Bob now want to craft and exchange escape plans.
 Warden observes the messages exchanged between Alice and Bob.
@@ -98,7 +98,7 @@ We want any warden to be unable to efficiently decode our stegotext $s$ to the o
 As described above in the Prisoners' Game, we don't want any warden to be able to distinguish a stegotext $s := SE(K, m, h)$ from a covertext $c$ randomly sampled from the underlying distribution $\mathcal{C}$.
 If the warden is allowed to choose the hiddentext $m$ used to generate $s$, we call warden a \emph{chosen hiddentext attacker}. 
 
-If the warden can distinguish the stegotext from a covertext, they have an advantage against the stegosystem in the distingushing game.
+If the warden can distinguish the stegotext from a covertext, they have an advantage against the stegosystem in the distinguishing game.
 The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
 The attackers are limited by running time $t(k)$, number of queries $q(k)$ and total length $l(k)$ of hiddentexts.
 Formally, Hopper defined a chosen hiddentext attack as follows:
@@ -123,7 +123,7 @@ Define the insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$ by
 
 $$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, k) = \max_{W \in \mathcal{W}}(t, q, l) \left\{ Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(k) \right\}$$
 
-where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totaling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
+where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(k)$ queries totalling at most $l(k)$ bits (of hiddentext) and running in time at most $t(k)$.
 \end{definition}
 
 \begin{definition}[Steganographic Secrecy, Hopper]
@@ -163,20 +163,26 @@ Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
 Probably yes.
 But from the model's perspective, the vectors $(d, o, \bot, \bot, \bot)^T$ and $(t, o, \bot, \bot, \bot)^T$ are very close to each other (the only differ in one dimension), while $(d, o, \bot, \bot, \bot)^T$ and $(d, o, n, ', t)^T$ differ in all but two dimensions.
 
-To tackle this challenge, most modern text generation models establish subword tokenization.
-This allows them to better predict relationships between words.
+To tackle this challenge, most modern text generation models use subword tokenization.
+With subword tokenization, a token may not only be a single character or a full word, but also a substring of a word.
+This allows the models to better predict relationships between words.
 For example, the words ``do'' and ``don't'' are probably closely related.
 With subword tokens, we might tokenize ``do'' as $(do, \bot)^T$ and ``don't'' as $(do, n't)^T$.
-While this approach makes it easier for the model to learn relationships between different words, there might exist multiple tokenizations for one given word.
-The GPT-2 model is trained on a tokenizer which contains roughly 51000 words, characters and subwords.
+These vectors only differ in one dimension.
+A deep learning model might learn that n't is used to negate a word.
+While this approach makes it easier for the model to learn relationships between different words, there exist multiple tokenizations for some words.
 
-The model's output is a logits vector $z := (z_i)_{1 \leq i \leq n}$.
-We can transform the logits vector to a probability distribution $p = (p_i)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function $\sigma$:
+After the tokenizer has encoded the history as a vector of subwords -- with each subword token having a unique numeric identifier -- this vector is passed as input to the generative model.
+
+The model's output is a logits vector $z$.
+The logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value represents a stronger activation.
+Ultimately, we want to have a probability distribution to sample from.
+To transform the logits vector to a probability distribution $p = (p_i)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$, we can use the softmax function $\sigma$:
 
 $$\sigma \colon \mathbb{R}^n \rightarrow (0,1)^n,$$
 $$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}}\right)^{1 \leq i \leq n}$$
 
-When combined, we get the black box for our ML model in \autoref{fig:generative-network}.
+When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
 
 \begin{figure}[htpb]
 	\centering
@@ -204,14 +210,17 @@ Generative ML Model as black box function, taking a history as input.
 The history $h$ is a string of text which is transformed to a vector $v \in \mathbb{N}^k$ (with model-specific $k$) of token indices.
 The model returns a logits vector $z \in \mathbb{N}^n$ with unscaled outputs.
 The logits vector is then transformed to a probability distribution $p = \left(p_i\right)_{1 \leq i \leq n}$ with $\sum_{i=1}^n p_i = 1$ using the softmax function.
-	The $p_i$ represent the probability of token $t_i$ to be the next token in the sequence given a history $h$: $Pr[s_{k+1}=t_i|s=h]$.
+	The $p_i$ represent the probability of token $t_i$ to be the next token in the sequence $s$ given a history $h$: $Pr[s_{k+1}=t_i|s=h]$.
 }
 	\label{fig:generative-network}
 \end{figure}
-To generate the next token in the sequence, we can sample according to the generated distribution.
-For an example of GNN model outputs using sampling, see \exampleref{example:gpt2-output-sample}.
 
-\begin{example}[Example of GPT-2 model output with random sampling]
+To generate the next token in the sequence, we can sample according to the generated distribution.
+After sampling from the distribution, we append the sampled token to the history and repeat the whole process until sufficiently many tokens have been generated.
+We then convert the vector to a string to get the generated text.
+For an example of GNN model outputs, see \exampleref{example:gpt2-output-sample}.
+
+\begin{example}[Example of GPT-2 model output]
 	Hello, I'm a language model, I'm a problem solver in languages."
 
 	At the same time, she said we can understand an idea like "reactive programming," because programming is what you create
@@ -220,7 +229,7 @@ For an example of GNN model outputs using sampling, see \exampleref{example:gpt2
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
 In the most simple form, the pipeline API generates texts using not only GPT-2 but many other text generation models.
-A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found at \autoref{code:gpt2-demo}.
+A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found at \autoref{alg:gpt2-demo}.
 
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
@@ -293,7 +302,7 @@ algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
 
 \begin{Pseudocode}[caption={
 RRRSS Recover Algorithm for GPT
-Recover produces, given a history $h$ and a value $r$, 
+Given a history $h$ and a sample $s$, return a set of possible random values used to generated $s$ according to $h$
 }]
 algorithm $Recover_{\mathcal{GPT}}^\beta(h, r)$
 	Output: Randomness set $\mathcal{R}$
@@ -310,13 +319,13 @@ Here, $Next_{\mathcal{GPT}}$ is the algorithm which generates the probability di
 The tokens are denoted by $\mathcal{T}$ and probabilities are denoted by $\mathcal{P}$.
 The $Sample_{\mathcal{GPT}}^\beta$ algorithm cumulates the token probabilities $p_i$ into $cuml$ until the threshold $r$ has been reached.
 Then the current token $t_i$ is the token to be sampled from the distribution.
-We can see that the order of tokens is relevant for the recovery to succeed, so we expect $Next_{\mathcal{GPT}}^\beta$ to return token probabilities in a somehow ordered fashion.
+We can see that the order of tokens is relevant for the recovery to succeed, so we expect $Next_{\mathcal{GPT}}^\beta$ to return probabilities in a somehow ordered fashion.
 
 Now that a RRRSS scheme for GPT-2 is established, we can commence with the definition of the stegosystem $\mathcal{S} = \left( Encode_{\mathcal{M}}^\beta, Decode_{\mathcal{M}}^\beta \right)$.
-Kaptchuk et al. described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
+The authors described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
 
 
-\begin{Pseudocode}[float, caption={Meteor Encode Algorithm}, label={alg:encode}]
+\begin{Pseudocode}[caption={Meteor Encode Algorithm}, label={alg:encode}]
 algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, \mathcal{H})$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
@@ -335,7 +344,7 @@ Since $mask$ is pseudorandom, this makes $r$ pseudorandom as well.
 We then use $r$ to sample from the RRRSS distribution to get the next token $c_i$.
 Afterwards, $Recover_{\mathcal{M}}^\beta$ and $LenPrefix^\beta$ are queried to get the number of bits $n_i$ recoverable from $r$.
 This procedure is repeated until $|m|$ bits of hiddentext are encoded.
-Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}$ and $\mathcal{H}$, the same stegotext $c$ will be generated.
+Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}$ and $\mathcal{H}$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}.
 
 
 \begin{Pseudocode}[float, caption={Meteor Decode Algorithm}, label={alg:decode}]
@@ -356,7 +365,7 @@ $Decode$ decodes the stegotext to the hiddentext message left-to-right.
 It repeatedly uses $Recover_{\mathcal{M}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distribution.
 It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
 
-\begin{Pseudocode}[float, caption={Meteor LenPrefix Algorithm}]
+\begin{Pseudocode}[caption={Meteor LenPrefix Algorithm}]
 algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
 	Output: Length $l$
 	$l \leftarrow 1$
@@ -365,15 +374,15 @@ algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
 			Output $l-1$
 		$l \leftarrow l+1$
 	Output $l$
-\end{Pseudocode}
-
-\begin{Pseudocode}[float, caption={Meteor Prefix Algorithm}]
+\end{Pseudocode}%
+%
+\begin{Pseudocode}[caption={Meteor Prefix Algorithm}]
 algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
 	Output: Bit String $s$
 	Output $r_1[0: LenPrefix^\beta(\mathcal{R})]$
-\end{Pseudocode}
-
-\begin{Pseudocode}[float, caption={Meteor KeyGen Algorithm}]
+\end{Pseudocode}%
+%
+\begin{Pseudocode}[caption={Meteor KeyGen Algorithm}]
 algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 	Output: Key $k_{prg}$
 	Output $k_{prg} = PRG.Setup(1^\lambda)$
@@ -381,7 +390,7 @@ algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 
 For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for negligible in key length.
 They introduce another formal definition, see Definition \autoref{def:correctness-kaptchuk}.
-In \autoref{chap:correctness}, we will argue how correctness is actually not achieved using GPT-2 and how we can modify the stegosystem described here to achieve correctness while introducing exponential overhead.
+In \autoref{chap:correctness}, we will argue how correctness is actually not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing exponential overhead.
 
 \begin{definition}[Correctness, Kaptchuk et al.]
 \label{def:correctness-kaptchuk}
@@ -395,7 +404,7 @@ They argue that a steganographic protocol is secure if no ppt. adversary $\mathc
 More formally, they define steganographic secrecy as in \autoref{def:sec-kaptchuk}.
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
 In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of steganographic secrecy against chosen hiddentext attackers introduced in \autoref{sec:prov-sec-steg}.
-We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using polynomial queries, time and message length.
+We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using two queries, polynomial time and message length.
 
 \begin{definition}[Steganographic Secrecy, Kaptchuk et al.]%
 	\label{def:sec-kaptchuk}%
