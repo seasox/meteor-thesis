@@ -14,10 +14,10 @@ def ld(fname):
 if __name__ == '__main__':
     flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
 
-    tikzexport = False
+    tikzexport = True
 
     plt.figure(dpi=1200)
-    for step_size in [32, 128, 1024]:
+    for step_size in [128, 1024]:
         fname = f'meteor_statistics_{step_size}.pickle'
         data = ld(fname)
         print(f'generating {step_size} bytes stats')
@@ -34,6 +34,8 @@ if __name__ == '__main__':
                                                                      zip(encoded_tokens, mismatch_count))))
         avg_mismatch_rate = [sum(encoded_tokens) / sum(mismatch_count) for _ in range(len(encoded_tokens))]
         # avg_mismatch_rate = [np.mean(mismatch_stat[:i]) if i > 0 else 0 for i in range(len(mismatch_stat))]
+        mismatches = list(flat_map(lambda x: x.mismatches, data_w_coding))
+        mismatch_len = list(map(lambda x: len(x[3]), mismatches))
         bits_per_word = list(flat_map(lambda x: x.stats['encoded_bits_in_output'], data_w_coding))
         avg_bits = np.mean(bits_per_word)
         # avg_bits_per_word = [np.mean(bits_per_word[:i]) if i > 0 else 0 for i in range(len(bits_per_word))]
@@ -86,6 +88,16 @@ if __name__ == '__main__':
         plt.legend()
         if tikzexport:
             tikzplotlib.save(f'../tex/fig_meteor_stats_encoded_tokens_{step_size}.tikz')
+        else:
+            plt.show()
+        plt.clf()
+
+        plt.hist(mismatch_len, bins=np.arange(min(mismatch_len) - 0.5, max(mismatch_len) + 1.5),
+                 label='mismatch lengths')
+        plt.tight_layout()
+        plt.legend()
+        if tikzexport:
+            tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_length_{step_size}.tikz')
         else:
             plt.show()
         plt.clf()

@@ -17,6 +17,9 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
     # enc.bos_token = None
     # enc.eos_token = None
 
+    # check no token has inner space (which holds for subword tokenizers)
+    assert len(list(filter(lambda x: x.find('Ġ') > 0, enc.encoder.keys()))) == 0
+
     model = GPT2LMHeadModel.from_pretrained(model_name)
     # model.resize_token_embeddings(len(enc))
     model.to(device)
@@ -122,7 +125,7 @@ def _do_tokenize_candidates(text, tokens, tokenize_edges):  # parent: Union[str,
 
 if __name__ == '__main__':
     # text = "I am feeling great. I hope you are fine too?"
-    text = "hello"
+    text = "circumstances"
 
     enc, model = get_model(device='cpu')
 
@@ -147,5 +150,5 @@ if __name__ == '__main__':
     print_graph(graph)
     paths = all_paths(graph, (text, None, None, None))
     print(len(paths))
-    print(paths)
+    #print(paths)
     # print(graph[text])
