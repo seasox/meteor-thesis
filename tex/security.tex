@@ -49,26 +49,26 @@ After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs fr
 
 \section{Improve Meteor's Security}
 
-To improve Meteor's security, we have to make the output of $Encode$ non-deterministic while retaining indistinguishability from random sampling.
+To improve Meteor's security, we have to randomize the output of $Encode$, i.e. on each invocation with the same inputs, $Encode$ should, with high probability, return a different stegotext, while retaining indistinguishability from random sampling.
 To do that, we take inspiration from symmetric encryption schemes derived from pseudorandom function families (PRF) and modify the $Encode$ and $Decode$ algorithms from \autoref{sec:meteor}. 
+PRFs can be constructed from PRGs, first shown in \cite{PRF1986}, while maintaining indistinguishability from randomness.
 
 In \autoref{alg:encode-nd}, we prepend the bits encoded in the covert distribution with an initialization vector IV randomly sampled from bitstrings of length $\gamma$.
 This IV is then used as randomness input for our PRF.
 Since IV is pseudorandom, an attacker cannot distinguish the sampled tokens from those sampled by a random oracle $\mathcal{O}$.
-PRFs can be constructed from PRGs, first shown in \cite{PRF1986}, while maintaining indistinguishability from randomness.
 
 The modifications in \autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
 Now, an attacker $\mathcal{A}$ can only distinguish the outputs with the attack described above if they encounter the same IV $\in \{ 0,1\}^\gamma$ twice.
 With the balls-into-bins problem, it can be shown that the advantage against this encryption scheme is negligible in $\gamma$.
 \todo{add security proof}
 \begin{Pseudocode}[float, caption={
-Meteor EncodeNonDeterministic Algorithm.
+Meteor EncodeRandomized Algorithm.
 This algorithm differs from the original Encode algorithm by sampling a random IV before encoding.
 That IV is later used as randomness in a PRF used to generated the random masked.
 The IV is incremented after each iteration of the encoding process.
 The first $\gamma$ bits of the hiddentext are the IV. 
 The introduction of an IV does not negatively affect secrecy, since IV is indistinguishable from randomness.}, label={alg:encode-nd}]
-algorithm $EncodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \mathcal{H})$
+algorithm $EncodeRandomized_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \mathcal{H})$
 	Output: Stegotext message $c$
 	$IV \leftarrow\$ \{0,1\}^\gamma$
 	$c \leftarrow \epsilon,~ j \leftarrow 0,~ n \leftarrow 0$
@@ -86,10 +86,10 @@ algorithm $EncodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \math
 	Output $c$
 \end{Pseudocode}
 \begin{Pseudocode}[float, caption={
-Meteor DecodeNonDeterministic Algorithm.
+Meteor DecodeRandomized Algorithm.
 This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.
 After decoding $\gamma$ bits of hiddentext, a PRF is initialized with IV for generation of pseudorandom masks.}, label={alg:decode-nd}]
-algorithm $DecodeNonDeterministic_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H})$
+algorithm $DecodeRandomized_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H})$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon,~ IV \leftarrow \epsilon$
 	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
