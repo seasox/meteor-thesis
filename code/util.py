@@ -36,36 +36,6 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
 
     GPT2Tokenizer._convert_token_to_id = _convert_token_to_id
 
-    def bucketize_tokens(tokens):
-        bins = {}
-        ignored_token_ids = [
-            220  # 'space' token
-        ]
-        for token, id in (t for t in tokens if t[1] not in ignored_token_ids):
-            bins[token[0]] = bins.setdefault(token[0], []) + [(token, id)]
-        return bins
-
-    def tokenize_candidates(self, text):
-        tokens = bucketize_tokens(self.encoder.items())
-        tokenize_edges = {}
-        for i in range(len(text)):
-            _do_tokenize_candidates(self, text[-(i + 1):], tokens, tokenize_edges)
-        return tokenize_edges
-
-    def _do_tokenize_candidates(self, text, tokens, tokenize_edges):  # parent: Union[str, Node]
-        if text in tokenize_edges or text == '':
-            return
-        # for token, id in self.encoder.items():
-        for token, id in tokens[text[0]]:
-            if text.startswith(token):
-                remainder = text[len(token):]
-                if text not in tokenize_edges:
-                    tokenize_edges[text] = []
-                if remainder not in tokenize_edges[text]:
-                    tokenize_edges[text] += [(remainder, token, id, -len(token))]
-
-    GPT2Tokenizer.tokenize_candidates = tokenize_candidates
-
     def prepare_model_inputs(self: GPT2LMHeadModel, inputs: torch.Tensor, num_return_sequences=None, bos_token_id=None,
                              output_attentions=None, output_hidden_states=None, use_cache=None, **model_kwargs):
         bos_token_id = bos_token_id if bos_token_id is not None else self.config.bos_token_id
@@ -120,8 +90,38 @@ def all_paths(graph, root: tuple[str, str, int, int]) -> [[Optional[tuple[str, s
     return paths
 
 
+def bucketize_tokens(tokens):
+    bins = {}
+    ignored_token_ids = [
+        220  # 'space' token
+    ]
+    for token, id in (t for t in tokens if t[1] not in ignored_token_ids):
+        bins[token[0]] = bins.setdefault(token[0], []) + [(token, id)]
+    return bins
+
+
+def tokenize_candidates(text, tokens):
+    tokenize_edges = {}
+    for i in range(len(text)):
+        _do_tokenize_candidates(text[-(i + 1):], tokens, tokenize_edges)
+    return tokenize_edges
+
+
+def _do_tokenize_candidates(text, tokens, tokenize_edges):  # parent: Union[str, Node]
+    if text in tokenize_edges or text == '':
+        return
+    # for token, id in self.encoder.items():
+    for token, id in tokens[text[0]]:
+        if text.startswith(token):
+            remainder = text[len(token):]
+            if text not in tokenize_edges:
+                tokenize_edges[text] = []
+            if remainder not in tokenize_edges[text]:
+                tokenize_edges[text] += [(remainder, token, id, -len(token))]
+
+
 if __name__ == '__main__':
-    #text = "I am feeling great. I hope you are fine too?"
+    # text = "I am feeling great. I hope you are fine too?"
     text = "hello"
 
     enc, model = get_model(device='cpu')
@@ -131,7 +131,8 @@ if __name__ == '__main__':
         text = ''.join(enc.byte_encoder[ord(b)] for b in text)
     else:
         text = ''.join([enc.byte_encoder[b] for b in text.encode('utf-8')])
-    graph = enc.tokenize_candidates(text)
+    token_dict = enc.encoder
+    graph = tokenize_candidates(text, bucketize_tokens(token_dict.items()))
 
 
     # import timeit
