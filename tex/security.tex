@@ -68,7 +68,7 @@ Meteor EncodeRandomized Algorithm.
 This algorithm differs from the original Encode algorithm by sampling a random IV before encoding.
 That IV is later used as randomness in a PRF used to generated the random masked.
 The IV is incremented after each iteration of the encoding process.
-The first $\gamma$ bits of the hiddentext are the IV. 
+The first $\gamma$ bits of the hiddentext encode the IV. 
 The introduction of an IV does not negatively affect secrecy, since IV is indistinguishable from randomness.}, label={alg:encode-nd}]
 algorithm $EncodeRandomized_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \mathcal{H})$
 	Output: Stegotext message $c$
@@ -78,15 +78,16 @@ algorithm $EncodeRandomized_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, m, \mathcal{H}
 	while $n < |m|$ do
 		if $n \geq \gamma$ do
 			$mask \leftarrow PRF.Eval(k_{prg}, IV)$
-			$r \leftarrow m[n:n+\beta] \oplus mask$
 		else
-			$r \leftarrow m[n:\gamma]$
+			$mask \leftarrow 0^\beta$
+		$r \leftarrow m[n:n+\beta] \oplus mask$
 		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r)$
 		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
 		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i,~ IV \leftarrow IV+1$
 	Output $c$
 \end{Pseudocode}
+\todo{improve pseudocode, edge case $n+i > \gamma$}
 \begin{Pseudocode}[float, caption={
 Meteor DecodeRandomized Algorithm.
 This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.

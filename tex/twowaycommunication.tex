@@ -84,12 +84,13 @@ As we can see, the generated text does not really read as if it were an actual c
 The generated text appears to lack context.
 Also, Alice's texts don't seem to take Bob's responses into account and cover different topics in each iteration.
 
-This effect is due to the nature of GPT's training dataset, which is a large collection of newspaper reports, books, articles and thelike.
+This effect is due to the nature of GPT's training dataset, which is a large collection of newspaper reports, books, articles and the like.
 Therefore, it is very likely that GPT generates probability distributions for article-like texts.
 When sampling from this distribution, it is likely to generate text that reads like a newspaper article as well.
 
 Luckily, the NLP community is very active in developing different models for many use cases.
 In 2020, Microsoft has developed and released the DialoGPT \cite{Zhang2020}, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads.
+As the name suggests, DialoGPT is a derivation of GPT.
 When repeating the same experiment as above, but with the DialoGPT model, the results read more closely to what we would expect from a chat conversation between two friends.
 Again, Alice's text messages encode the hiddentext ``Hi there!'', 32 bits of encoded data per chat message.
 Bob's responses are handwritten.
