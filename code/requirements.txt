@@ -5,5 +5,4 @@ cryptography == 36.0.2
 scipy
 matplotlib
 tikzplotlib
-anytree
 pytest
