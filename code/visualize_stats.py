@@ -101,4 +101,3 @@ if __name__ == '__main__':
         else:
             plt.show()
         plt.clf()
-# plt.savefig('plot.eps', format='eps')
