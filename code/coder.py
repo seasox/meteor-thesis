@@ -68,38 +68,6 @@ def encode_context(raw_text, enc) -> List[int]:
     return context_tokens
 
 
-enc32_itoc = ['\0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-              'u', 'v', 'w', 'x', 'y', 'z', '.', ',', "'", '!', ' ']
-enc32_ctoi = {k: v for v, k in enumerate(enc32_itoc)}
-
-
-def enc32(text):
-    bits = []
-    for c in text:
-        bits.extend(int2bits(enc32_ctoi[c], 5))
-    return bits
-
-
-def dec32(bits):
-    text = ''
-    for i in range(0, len(bits), 5):
-        c = enc32_itoc[bits2int(bits[i:i + 5])]
-        if c == '\0':
-            break
-        text += c
-    return text
-
-
-# message should be bit string
-# encoded should be text string
-def expansion_ratio(message, encoded):
-    message_bits = len(message)
-    encoded_ba = bitarray.bitarray()
-    encoded_ba.frombytes(encoded.encode('utf-8'))
-    encoded_bits = len(encoded_ba.tolist())
-    return encoded_bits / message_bits
-
-
 def bin_sort(l, token_indices, total, entropy, device):
     # compute entropy for upper bound on the number of bins we need
 
@@ -249,50 +217,6 @@ def bin_sort(l, token_indices, total, entropy, device):
     sorted_tokens = torch.cat(token_bins, 0)
 
     return sorted_tensor, sorted_tokens
-
-
-def compute_ev(t, precision):
-    expected_bits = []
-    cum_probs = t.cumsum(0)
-
-    for selection in range(0, len(cum_probs)):
-        # Calculate new range as ints
-        new_int_bottom = cum_probs[selection - 1] if selection > 0 else 0
-        new_int_top = cum_probs[selection]
-
-        # Convert range to bits
-        new_int_bottom_bits_inc = list(reversed(int2bits(new_int_bottom, precision)))
-        new_int_top_bits_inc = list(
-            reversed(int2bits(new_int_top - 1, precision)))  # -1 here because upper bound is exclusive
-
-        # Consume most significant bits which are now fixed and update interval
-        num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
-        expected_bits.append(t[selection] * num_bits_encoded)
-
-    return (float(sum(expected_bits).item()) / (2 ** precision))
-
-
-def visualize_bins(values_in_bins, bucket_size):
-    out_str = "["
-    for b in values_in_bins:
-        out_str = out_str + "  " + str(round(100 * b / bucket_size, 2)) + "  |"
-    out_str = out_str + "]"
-    print(out_str)
-
-
-def visualize_distribution(l):
-    total = sum(l)
-    out_str = "["
-    for b in l:
-        out_str = out_str + "  " + str(round(100 * b / total, 2)) + "  |"
-    out_str = out_str + "]"
-    print(out_str)
-
-
-def compute_entropy(lists):
-    total = sum(lists)
-    entropy = -1 * sum([(x / total) * math.log2(x / total) for x in lists])
-    return entropy
 
 
 def encode_conversation_meteor(model, enc, message, context: List[int], key, nonce, finish_sent=True, device='cuda',
