@@ -186,7 +186,7 @@ Marked Decode Algorithm.
 In comparison to Meteor's $Decode$ algorithm, MarkedDecode checks the checksum every $\gamma$ bits. 
 If the checksum does not match, a decoding error happened.
 We then perform a lookbehind on the stegotext and generate all possible tokenizations $paths$ for a substring of $c$.
-Afterwards, rewind the internal state retry decoding with a path $p$ selected from $paths$.
+Afterwards, rewind the internal state and retry decoding with a path $p$ selected from $paths$.
 }, label={alg:marked-decode}]
 algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, \mathcal{H}, q)$
 	Output: Plaintext message $m$
@@ -333,8 +333,6 @@ algorithm $AllPaths(G, root, sink)	$
 			$paths \leftarrow paths + (root, subpath)$
 	return $paths$
 \end{Pseudocode}
-
-$$p = p \setminus a$$
 
 \begin{Pseudocode}[float, caption={
 Random Path Selection Strategy.
