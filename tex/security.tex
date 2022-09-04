@@ -103,7 +103,7 @@ Since IV is pseudorandom, an attacker cannot distinguish the sampled tokens from
 
 The modifications in \autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
 The algorithms use the SES scheme defined above, replacing the original One-Time-Pad based encryption scheme.
-Since SES is IND\$-CPA secure we can, with the same reduction as in \autoref{thm:meteor-secure}, show SS-CHA secrecy against polynomial attackers as long as the same $IV$ is not encountered twice, which is -- in practice -- very unlikely for sufficient IV lengths.
+Since SES is IND\$-CPA secure we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA secrecy against polynomial attackers as long as the same $IV$ is not encountered twice, which is -- in practice -- very unlikely for sufficient IV lengths.
 
 
 \begin{Pseudocode}[float, caption={
