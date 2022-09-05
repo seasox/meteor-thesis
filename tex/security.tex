@@ -53,43 +53,43 @@ After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs fr
 
 To improve Meteor's security, we have to randomize the output of $Encode$, i.e. on each invocation with the same inputs, $Encode$ should, with high probability, return a different stegotext, while retaining indistinguishability from random sampling.
 
-To achieve that we have to introduce a new cryptographic primitive, symmetric encryption schemes (SES) in counter (CTR) mode derived from pseudorandom functions (PRF).
-We introduce a definition of a SES in Algorithm \ref{fig:ses} which is a simplified variant of that introduced in \cite{Berndt2017}.
+To achieve that we have to introduce a new cryptographic primitive, symmetric encryption schemes (SES) in counter (CTR) mode based on a pseudorandom function (PRF) $F$.
+We introduce a definition of a SES in Figure \ref{fig:ses} which is a simplified variant of that introduced in \cite{Berndt2017}.
 There, it is argued that SES satisfies the IND\$-CPA property if F is a secure pseudorandom function.
 
 The idea behind encryption in SES-CTR is simple:
-First, split the message $m$ into $n$ blocks of size $F.in(\kappa)$ specific to $F$.
-Secondly, choose an $IV$ of size $F.in(\kappa)$ at random.
+First, split the message $m$ into $n$ blocks of size $F.in(\lambda)$ specific to $F$.
+Secondly, choose an $IV$ of size $F.in(\lambda)$ at random.
 It is important to not reuse an $IV$ with a given key $k$ to retain One-Time-Pad security.
 Now, for each block $m_i$, use $F.Eval$ to generate the pseudorandom value $r = F.Eval(k, IV+i)$.
 Afterwards, calculate the exclusive or of $r$ and $m_i$ to get the next block $c_i$.
-The ciphertext of size $(n+1)\cdot F.in(\kappa)$ is the IV concatenated with ciphertext blocks $c_i$.
+The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is the IV concatenated with ciphertext blocks $c_i$.
 
 Decryption is similar to encryption.
-First, split $c$ in $n+1$ blocks of size $F.in(\kappa)$.
+First, split $c$ in $n+1$ blocks of size $F.in(\lambda)$.
 Interpret the first block of $c$ as $IV$.
 Afterwards, analogously to encryption, for each block $c_i$, calculate $r = F.Eval(k, IV+i)$.
 Now, calculate the exclusive or of $r$~ and $c_i$ to recover the message block $m_i = c_i \oplus r$.
 
-Now that we have established the concept of an SES, we still need to find $F$ which satisfies the PRF
+Now that we have established the concept of an SES, we still need to find $F$ which is a PRF.
 In practice, we can use AES as $F$, which is believed to be a pseudorandom permutation (PRP), with key $k$ and messages $IV+i$.
 
 \begin{figure}[htbp]%
 	\centering%
-	\begin{Pseudocode}[caption={Encryption}]%
-algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\kappa)})$
-	$\kappa = |k|$
-	$IV \leftarrow\$ \{0,1\}^{F.in(\kappa)}$
+	\begin{Pseudocode}%
+algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\lambda)})$
+	$\lambda = |k|$
+	$IV \leftarrow\$ \{0,1\}^{F.in(\lambda)}$
 	for $i \in \{ 1, 2, \dots, n \}$ do
-		$c_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\kappa)}) \oplus m_i$
+		$c_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus m_i$
 	Output $IV||c_1||c_2||\dots||c_n$
 	\end{Pseudocode}%
-	\begin{Pseudocode}[caption={Decryption}]%
-algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\kappa)})$
-	$\kappa = |k|$
+	\begin{Pseudocode}%
+algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\lambda)})$
+	$\lambda = |k|$
 	$IV \leftarrow c_0$
 	for $i \in \{ 1, 2, \dots, n \}$ do
-		$m_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\kappa)}) \oplus c_i$
+		$m_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus c_i$
 	Output $m_1||m_2||\dots||m_n$
 	\end{Pseudocode}%
 	\caption{Symmetric Encryption Scheme (SES) in counter (CTR) mode}%
