@@ -78,6 +78,7 @@ In practice, we can use AES as $F$, which is believed to be a pseudorandom permu
 	\centering%
 	\begin{Pseudocode}%
 algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\lambda)})$
+	Output: Ciphertext $c$
 	$\lambda = |k|$
 	$IV \leftarrow\$ \{0,1\}^{F.in(\lambda)}$
 	for $i \in \{ 1, 2, \dots, n \}$ do
@@ -86,6 +87,7 @@ algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\lambda
 	\end{Pseudocode}%
 	\begin{Pseudocode}%
 algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\lambda)})$
+	Output: cleartext $m$
 	$\lambda = |k|$
 	$IV \leftarrow c_0$
 	for $i \in \{ 1, 2, \dots, n \}$ do
@@ -111,16 +113,15 @@ Meteor EncodeRandomized Algorithm.
 This algorithm differs from the original Encode algorithm by using a SES to encrypt the message.
 The ciphertext (which is indistinguishable from randomness) is then used to sample from $\mathcal{M}$.
 }, label={alg:encode-nd}]
-algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, \mathcal{H})$
+algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
 	Output: Stegotext message $c$
-	$IV \leftarrow\$ \{0,1\}^\gamma$
 	$c \leftarrow \epsilon,~ j \leftarrow 0,~ n \leftarrow 0$
 	$r \leftarrow SES.Encrypt(k, m)$
 	while $n < |r|$ do
-		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(\mathcal{H}, r[n: n+\beta])$
-		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r[n: n+\beta])$
+		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i, n \leftarrow n+n_i, \mathcal{H} \leftarrow \mathcal{H}||c_i$
+		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i$
 	Output $c$
 \end{Pseudocode}
 \begin{Pseudocode}[float, caption={
