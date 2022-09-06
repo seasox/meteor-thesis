@@ -23,7 +23,7 @@ In this section, we will compare the security definition of the Meteor stegosyst
 In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack, if for all $k \leftarrow KeyGen(1^\lambda)$, the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
 
 \begin{theorem}
-	Meteor is secure (as of \autoref{def:sec-kaptchuk}) against ppt. adversaries. 
+	Meteor is secure (\autoref{def:sec-kaptchuk}) against ppt. adversaries. 
 \label{thm:meteor-secure}
 \end{theorem}
 \begin{proof}
@@ -128,17 +128,15 @@ algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
 Meteor DecodeRandomized Algorithm.
 This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.
 After decoding $\gamma$ bits of hiddentext, a PRF is initialized with IV for generation of pseudorandom masks.}, label={alg:decode-nd}]
-algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, \mathcal{H})$
+algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, h)$
 	Output: Plaintext message $m$
-	$m \leftarrow \epsilon,~ IV \leftarrow \epsilon$
-	$n \leftarrow 0$
-	$r \leftarrow \epsilon$
-	Parse $c$ as $\{ c_0, c_1, \dots, c_{|c|-1} \}$
+	$m \leftarrow \epsilon,~ n \leftarrow 0,~ r \leftarrow \epsilon$
+	Parse $c$ as $c_0 || c_1 || \dots || c_{|c|-1}$
 	for $i \in \{0, 1, \dots, |c|-1 \}$ do
-		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$r_i \leftarrow Prefix^\beta(\mathcal{R})$
 		$r \leftarrow r || r_i$
-		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
+		$h \leftarrow h||c_i$
 	$m \leftarrow SES.Decrypt(k, r)$
 	Output $m$
 \end{Pseudocode}
