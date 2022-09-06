@@ -320,21 +320,19 @@ The list of all possible paths between $s$ and $\epsilon$ are the possible token
 \end{figure}
 
 \begin{Pseudocode}[float,caption={
-DFS-based algorithm which generates a list of all possible paths between between two nodes in a DAG.
+DFS-based algorithm which generates a list of all possible paths between between a root and a sink $\epsilon$ in a DAG.
 This algorithm's performance can be sped up by using dynamic programming to cache results of invocations of AllPaths.
 },label={alg:all-paths}]
-algorithm $AllPaths(G, root, sink)	$
-	Output: List of paths between $root$ and $sink$
-	if $root = sink$ do
+algorithm $AllPaths(G, root)	$
+	Output: List of paths between $root$ and sink $\epsilon$
+	if $root = \epsilon$ do
 		return $\epsilon$
-	$queue \leftarrow \epsilon$
-	$paths \leftarrow []$
+	$paths \leftarrow \emptyset$
 	$hops \leftarrow OutEdges(G, root)$
-	$queue \leftarrow queue + hops$
 	for $hop \in hops$ do
 		$subpaths \leftarrow AllPaths(G, hop, sink)$
 		for $subpath \in subpaths$ do
-			$paths \leftarrow paths + (root, subpath)$
+			$paths \leftarrow paths \cup \{ root || subpath \}$
 	return $paths$
 \end{Pseudocode}
 
@@ -344,7 +342,7 @@ Random Path Selection Strategy.
 algorithm $SelectPath_{\mathcal{M}}(paths = \{ p_0, p_1, \dots, p_{|paths|-1} \}, h)$
 	Output: path $p \in paths$
 	$i \leftarrow\$~ \{0, |paths|-1\}$
-	$paths \leftarrow paths \setminus \{ p_i \}$
+	$paths \leftarrow paths \backslash \{ p_i \}$
 	return $p_i$
 \end{Pseudocode}
 
