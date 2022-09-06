@@ -101,7 +101,7 @@ In \autoref{alg:encode-nd}, we prepend the bits encoded in the covert distributi
 This IV is then used as randomness input for our PRF.
 Since IV is pseudorandom, an attacker cannot distinguish the sampled tokens from those sampled by a random oracle $\mathcal{O}$.
 
-The modifications in \autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
+\autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
 The algorithms use the SES scheme defined above, replacing the original One-Time-Pad based encryption scheme.
 Since SES is IND\$-CPA secure we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA secrecy against polynomial attackers as long as the same $IV$ is not encountered twice, which is -- in practice -- very unlikely for sufficient IV lengths.
 

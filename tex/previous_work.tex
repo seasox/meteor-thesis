@@ -23,11 +23,11 @@ An illustration of the Prisoners' Problem can be found at \autoref{fig:prisoners
 	\node[block] (alice) {Alice};
 	\node[block, right=3cm of alice] (warden) {Warden};
 	\node[block, right=3cm of warden] (bob) {Bob};
-	\node[left=of alice] (m) {m};
-	\node[above=of alice] (k) {k};
+	\node[left=of alice] (m) {$m$};
+	\node[above=of alice] (k) {$k$};
 	\node[below=of alice] (h) {history $h$};
-	\node[right=of bob] (mb) {m};
-	\node[above=of bob] (kb) {k};
+	\node[right=of bob] (mb) {$m$};
+	\node[above=of bob] (kb) {$k$};
 	\node[below=of bob] (hb) {history $h$};
 	\node[block, below=of warden] (steganalysis) {Steganalysis: is $s$ stegotext?};
 	\node[below left=of steganalysis] (isstego) {suppress message};
@@ -63,7 +63,8 @@ If the original photograph is unknown to Warden, Alice can encode hidden text in
 
 In his dissertation ``Toward a theory of Steganography'', \cite{Hopper2004} establishes a cryptographic point of view on steganography. 
 This allows us to do cryptanalysis on steganographic protocols.
-Since we work on sequences of documents, Hopper introduces a notion of a channel.
+
+In his work, Hopper introduces a notion of a channel.
 The channel we define our stegosystem on contains all possible sequences of documents which Alice might send to Bob.
 
 \begin{definition}[Channel, \cite{Hopper2004}]
@@ -217,7 +218,7 @@ After the tokenizer has encoded the history as a vector of subwords -- with each
 The model's output is a logits vector.
 A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value represents a stronger activation.
 Ultimately, we want to have a probability distribution to sample from.
-To transform the logits vector to a probability distribution $p = (p_i)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$, we can use the softmax function $\sigma$:
+To transform the logits vector $z \in \mathbb{N}^\ell$ to a probability distribution $p = (p_i)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$, we can use the softmax function $\sigma$:
 
 $$\sigma \colon \mathbb{N}^{\ell} \rightarrow [0,1]^{\ell},$$
 $$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)^{1 \leq i \leq \ell}$$
@@ -235,15 +236,15 @@ When we combine all the previous steps, we get the black box for our ML model as
             \node[below=5mm of t1] (t2) {$t_2$};
             \node[below=5mm of t2] (t3) {$t_3$};
             \node[below=5mm of t3] (t4) {$\dots$};
-            \node[below=5mm of t4] (tn) {$t_n$};
-            \draw[->] (transform) -- (oracle);
+            \node[below=5mm of t4] (tn) {$t_\ell$};
+            \draw[->] (transform) -- node[midway,above] {$v$} (oracle);
             \draw[->] (history) -- (transform);
-            \draw[->] (oracle) -- (sigmoid);
+            \draw[->] (oracle) -- node[midway,above] {$z$} (sigmoid);
             \draw[->] (sigmoid) -- node[midway,below] {$p_1$} (t1);
             \draw[->] (sigmoid) -- node[midway,below] {$p_2$} (t2);
             \draw[->] (sigmoid) -- node[midway,below] {$p_3$} (t3);
             %\draw[->] (oracle) -- (t4);
-            \draw[->] (sigmoid) -- node[midway,below] {$p_n$} (tn);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_\ell$} (tn);
 	\end{tikzpicture}
 	\caption{
 Generative ML Model as black box function, taking a history as input.
@@ -268,14 +269,14 @@ For an example of GNN model outputs, see \exampleref{example:gpt2-output-sample}
 \end{example}
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
-PyTorch is a machine learning framework which implements high performance tensor operations.
+PyTorch is a machine learning framework which implements high performance matrix operations needed for machine learning with hardware acceleration.
 The Huggingface Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learnings models and allows training of machine learning models.
 In the most simple form, the Transformers Pipeline API generates texts using not only GPT-2 but many other text generation models.
 A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found at \autoref{alg:gpt2-demo}.
 
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
-A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}. \todo{replace algorithms refs with listing}
+A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}.
 The output of \autoref{alg:gpt2-logits-demo} resembles those shown in \exampleref{example:gpt2-output-sample}. 
 This code example shows how we can:
 
@@ -314,9 +315,9 @@ This definition formally models the desired behaviour described above.
 	We call 
 	$(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
 	with ppt. algorithms
-	$Sample_{\mathcal{D}}^\beta \colon \mathcal{H} \times [0,1]^\beta \rightarrow S$ 
+	$Sample_{\mathcal{D}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow S$ 
 	and 
-	$Recover_{\mathcal{D}}^\beta \colon \mathcal{H} \times S \rightarrow \mathcal{P}([0,1]^\beta)$ 
+	$Recover_{\mathcal{D}}^\beta \colon \mathcal{H} \times S \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
 	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
 	
 	\begin{enumerate}
@@ -391,16 +392,16 @@ Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}
 
 
 \begin{Pseudocode}[float, caption={Meteor Decode Algorithm, \cite{Meteor2021}}, label={alg:decode}]
-algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, \mathcal{H})$
+algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
 	Parse $c$ as $c_0 || c_1 || \dots || c_{|c|-1}$
 	for $i \in \{0, 1, \dots, |c|-1 \}$ do
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(\mathcal{H}, c_i)$
+		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
 		$mask \leftarrow PRG.Next(k_{prg})$
 		$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
-		$\mathcal{H} \leftarrow \mathcal{H}||c_i$
+		$h \leftarrow h||c_i$
 	Output $m$
 \end{Pseudocode}
 
@@ -437,7 +438,8 @@ In \autoref{chap:correctness}, we will argue how correctness is actually not ach
 
 \begin{definition}[Correctness, \cite{Meteor2021}]
 \label{def:correctness-kaptchuk}
-A steganographic protocol should be correct, i.e. except with negligible probability an encoded message can be recovered using the decode algorithm. Formally, for any $k \leftarrow KeyGen(1^\lambda)$, message $m \in \{0,1\}^*$ and history $h \in \mathcal{H}$,
+We call a steganographic \emph{correct}, if, except with negligible probability, an encoded message can be recovered using the decode algorithm. 
+Formally, for any $k \leftarrow KeyGen(1^\lambda)$, message $m \in \{0,1\}^*$ and history $h \in \mathcal{H}$,
 
 $$\mathop{Pr}[Decode_{\mathcal{D}}^\beta(k, Encode_{\mathcal{D}}^\beta(k, m, h), h) = m] \geq 1 - \mathop{negl}(\lambda)$$
 \end{definition}
