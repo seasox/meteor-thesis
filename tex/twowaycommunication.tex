@@ -25,24 +25,24 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 	\begin{msc}[instance distance=4cm,action width=5cm]{Two-Way Steganographic Communication Protocol}
 		\declinst{alice}{}{Alice}
 		\declinst{bob}{}{Bob}
-		\condition{exchange $k,~ \mathcal{H}$}{alice,bob}
+		\condition{exchange key $k$ and history $h$}{alice,bob}
 		\nextlevel[2]
 		\action{split hiddentext $m$ in $\ell$ blocks $m_i$ of size $b$}{alice}
 		\nextlevel[3]
 		\condition{for $i \in \{ 1, 2, \dots, \ell \}$ do}{alice,bob}
 		\nextlevel[2]
-		\action{$s_i = Encode_{\mathcal{M}}^\beta(m_i, k, \mathcal{H})$}{alice}
+		\action{$s_i = Encode_{\mathcal{M}}^\beta(m_i, k, h)$}{alice}
 		\nextlevel[3]
 		\mess{$s_i$}{alice}{bob}
 		\nextlevel
-		\action{$m_i = Decode_{\mathcal{M}}^\beta(s_i, k, \mathcal{H})$}{bob}
+		\action{$m_i = Decode_{\mathcal{M}}^\beta(s_i, k, h)$}{bob}
 		\nextlevel[2]
 		\action{Generate response $r$}{bob}
 		\nextlevel[3]
 		\mess{$r$}{bob}{alice}
 		\nextlevel
-		\action{$\mathcal{H} \leftarrow \mathcal{H} || r$}{alice}
-		\action{$\mathcal{H} \leftarrow \mathcal{H} || r$}{bob}
+		\action{$h \leftarrow h || r$}{alice}
+		\action{$h \leftarrow h || r$}{bob}
 		\nextlevel[2]
 		\condition{endfor}{alice,bob}
 		\nextlevel[3]
@@ -51,8 +51,8 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 	\end{msc}
 	\caption{
 	A Two-Way Steganographic Communication Protocol for participants Alice and Bob.
-	In this scheme, Alice encodes blocks of their hiddentext message $m$ into stegotexts $s_i$ and sends them to Bob, who decodes the blocks using the Meteor stegosystem.
-	Bob then generates their response $r$ and sends it back.
+	In this scheme, Alice encodes blocks of her hiddentext message $m$ into stegotexts $s_i$ and sends them to Bob, who decodes the blocks using the Meteor stegosystem.
+	Bob then generates his response $r$ and sends it back.
 	The response can be generated using a GNN, be (parts of) a stegotext themselves or handwritten chat messages.
 	After $\ell$ iterations, Bob can reconstruct the hiddentext $m$ by concatenating the $m_i$.
 	}
