@@ -209,7 +209,7 @@ algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma}(k_{prg}, c, h, q)$
 			# calculate checksum
 			$j \leftarrow j \mod (\gamma+\delta)$
 			if $m^*[s+\gamma:s+\gamma+\delta] \neq q(m^*[s:s+\gamma])$  # checksum failed
-				$c^* \leftarrow c_{i^*} || c_{i^*+1} || \dots || c_{i^*+8}$
+				$c^* \leftarrow c_{i^*} || c_{i^*+1} || \dots$  # substring to next word
 				if $paths = \emptyset$
 					$paths \leftarrow AllPaths(TokenizeCandidates_{\mathcal{T}}(c^*), c^*)$
 				$p \leftarrow SelectPath_{\mathcal{M}}(paths, h)$
