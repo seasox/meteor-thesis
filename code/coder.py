@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import os
 from typing import List, Dict, Tuple
 
 import bitarray
@@ -219,8 +220,9 @@ def bin_sort(l, token_indices, total, entropy, device):
     return sorted_tensor, sorted_tokens
 
 
+# TODO implement randomized
 def encode_conversation_meteor(model, enc, message, context: List[int], key, nonce, finish_sent=True, device='cuda',
-                               temp=1.0, precision=16, topk=50000, is_sort=False):
+                               temp=1.0, precision=16, topk=50000, is_sort=False, randomized=False):
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
@@ -362,7 +364,7 @@ def encode_conversation_meteor(model, enc, message, context: List[int], key, non
 
 
 def decode_conversation_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000,
-                               is_sort=False, is_conversation=False) -> Tuple[List[bool], List[str]]:
+                               is_sort=False, randomized=False) -> Tuple[List[bool], List[str]]:
     import torch
     # inp is a list of token indices
     # context is a list of token indices
@@ -505,8 +507,318 @@ def decode_conversation_meteor(model, enc, text, context, key, nonce, device='cu
     return message, enc.decode(inp)[1]
 
 
-def encode_meteor(model, enc, message, context: List[int], key, nonce, finish_sent=False, device='cuda', temp=1.0,
+def encrypt_ctr_aes(key: bytes, message: bytes) -> bytes:
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    iv = os.urandom(16)
+    cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(message) + encryptor.finalize()
+    return iv.zfill(16) + ct
+
+
+def decrypt_ctr_aes(key: bytes, ciphertext: bytes) -> bytes:
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    iv = ciphertext[0:16]
+    cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
+    decryptor = cipher.decryptor()
+    message = decryptor.update(ciphertext[16:]) + decryptor.finalize()
+    return message
+
+
+def encode_meteor_randomized(model, enc, message, context: List[int], key, nonce, finish_sent=False, device='cuda',
+                             temp=1.0,
+                             precision=16, topk=50000, is_sort=False):
+    context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
+
+    max_val = 2 ** precision
+    threshold = 2 ** (-precision)
+    cur_interval = [0, max_val]  # bottom inclusive, top exclusive
+
+    prev = context
+    output = context
+    encoded_bits_in_output = []
+    past = None
+
+    total_num = 0
+    total_num_for_stats = 0
+    total_log_probs = 0
+    total_kl = 0  # in bits
+    total_entropy_ptau = 0
+
+    ciphertext = encrypt_ctr_aes(key, message)  # ciphertext is indistinguishable from random
+    ciphertext_bits = bitarray.bitarray()
+    ciphertext_bits.frombytes(ciphertext)
+    ciphertext_bits = ciphertext_bits.tolist()
+
+    with torch.no_grad():
+        i = 0
+        sent_finish = False
+        while (i < len(ciphertext_bits) or (finish_sent and not sent_finish)):
+            result = model(prev.unsqueeze(0), past_key_values=past)
+            logits = result.logits
+            past = result.past_key_values
+            past = limit_past(past)
+            logits[0, -1, -1] = -1e20  # endoftext token can't happen
+            logits[0, -1, 628] = -1e20  # 2 newlines token can't happen
+            logits, indices = logits[0, -1, :].sort(descending=True)
+            logits = logits.double()
+            logits_temp = logits / temp
+            probs_temp = F.softmax(logits_temp, dim=0)
+            log_probs_temp = F.log_softmax(logits_temp, dim=0)
+            log_probs = F.log_softmax(logits, dim=0)
+
+            # conditions for having reached the end of the message
+            if i >= len(ciphertext_bits):
+                selection = 0
+                sent_finish = is_sent_finish(indices[selection].item(), enc)
+            else:
+                # Cutoff low probabilities that would be rounded to 0
+                cur_int_range = cur_interval[1] - cur_interval[0]
+                cur_threshold = 1 / cur_int_range
+                k = min(max(2, (probs_temp < cur_threshold).nonzero()[0].item()), topk)
+                probs_temp_int = probs_temp[:k]  # Cutoff all but top k
+                old_indices = indices
+                indices = indices[:k]
+
+                # Rescale to correct range
+                probs_temp_int = probs_temp_int / probs_temp_int.sum() * cur_int_range
+
+                entropy_in_this_distribution = entropy(probs_temp, log_probs_temp)
+                print('%d: %.02f, H(D)=%.02f' % (i, i / float(len(ciphertext_bits)), entropy_in_this_distribution))
+
+                # Round probabilities to integers given precision
+                probs_temp_int = probs_temp_int.round().long()
+
+                if is_sort:
+                    probs_temp_int, indices = bin_sort(probs_temp_int, indices, cur_int_range,
+                                                       entropy_in_this_distribution, device)
+                cum_probs = probs_temp_int.cumsum(0)
+
+                # Remove any elements from the bottom if rounding caused the total prob to be too large
+                overfill_index = (cum_probs > cur_int_range).nonzero()
+                if len(overfill_index) > 0:
+                    cum_probs = cum_probs[:overfill_index[0]]
+
+                # Add any mass to the top if removing/rounding causes the total prob to be too small
+                cum_probs += cur_int_range - cum_probs[-1]  # add
+
+                # Get out resulting probabilities
+                probs_final = cum_probs.clone()
+                probs_final[1:] = cum_probs[1:] - cum_probs[:-1]
+
+                # Convert to position in range
+                cum_probs += cur_interval[0]
+
+                # Apply the mask to the message
+                # message_bits = message[i:i + precision]
+                # if i + precision > len(message):
+                #    message_bits = message_bits + [0] * (i + precision - len(message))
+
+                # mask_bits = mask_generator.generate_bits(precision)
+
+                # for b in range(0, len(message_bits)):
+                #    message_bits[b] = message_bits[b] ^ mask_bits[b]
+
+                # Get selected index based on binary fraction from message bits
+                message_idx = bits2int(reversed(ciphertext_bits[i:i + precision]))
+                selection = (cum_probs > message_idx).nonzero()[0].item()
+
+                # Calculate new range as ints
+                new_int_bottom = cum_probs[selection - 1] if selection > 0 else cur_interval[0]
+                new_int_top = cum_probs[selection]
+
+                # Convert range to bits
+                new_int_bottom_bits_inc = list(reversed(int2bits(new_int_bottom, precision)))
+                new_int_top_bits_inc = list(
+                    reversed(int2bits(new_int_top - 1, precision)))  # -1 here because upper bound is exclusive
+
+                # Consume most significant bits which are now fixed and update interval
+                num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
+                encoded_bits_in_output += [num_bits_encoded]  # for statistics
+                i += num_bits_encoded
+
+                # Gather statistics
+                total_log_probs += log_probs[selection].item()
+
+                q = probs_final.double() / probs_final.sum()
+                logq = q.log()
+                total_kl += kl(q, logq, log_probs[:len(q)])
+                total_entropy_ptau += entropy_in_this_distribution
+                total_num_for_stats += 1
+
+            # Update history with new token
+            prev = indices[selection].view(1)
+            output = torch.cat((output, prev))
+            total_num += 1
+
+            # For text->bits->text
+            partial = enc.decode(output[len(context):].tolist())
+            if '<eos>' in partial:
+                break
+
+    avg_NLL = -total_log_probs / total_num_for_stats
+    avg_KL = total_kl / total_num_for_stats
+    avg_Hq = total_entropy_ptau / total_num_for_stats
+    words_per_bit = total_num_for_stats / i
+    stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output}
+
+    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
+
+
+def decode_meteor_randomized(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000,
+                             is_sort=False) -> Tuple[List[bool], List[str]]:
+    import torch
+    # inp is a list of token indices
+    # context is a list of token indices
+    inp = enc.encode(text)
+
+    context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
+
+    max_val = 2 ** precision
+    threshold = 2 ** (-precision)
+    cur_interval = [0, max_val]  # bottom inclusive, top exclusive
+
+    prev = context
+    past = None
+    ciphertext_bits = []
+    debug_entropies = []
+    debug_encoded_num = []
+    with torch.no_grad():
+        i = 0
+        while i < len(inp):
+            result = model(prev.unsqueeze(0), past_key_values=past)
+            logits = result.logits
+            past = result.past_key_values
+            past = limit_past(past)
+            logits[0, -1, -1] = -1e20  # endoftext can't happen
+            logits[0, -1, 628] = -1e20  # 2 newlines can't happen
+            logits, indices = logits[0, -1, :].sort(descending=True)
+            logits = logits.double()
+            logits_temp = logits / temp
+            log_probs_temp = F.log_softmax(logits_temp, dim=0)
+            probs_temp = F.softmax(logits_temp, dim=0)
+
+            # Cutoff low probabilities that would be rounded to 0
+            cur_int_range = cur_interval[1] - cur_interval[0]
+            cur_threshold = 1 / cur_int_range
+            k = min(max(2, (probs_temp < cur_threshold).nonzero()[0].item()), topk)
+            probs_temp_int = probs_temp[:k]  # Cutoff all but top k
+
+            # Rescale to correct range
+            probs_temp_int = probs_temp_int / probs_temp_int.sum() * cur_int_range
+            entropy_in_this_distribution = entropy(probs_temp, log_probs_temp)
+
+            # Round probabilities to integers given precision
+            probs_temp_int = probs_temp_int.round().long()
+            if is_sort:
+                probs_temp_int, indices = bin_sort(probs_temp_int, indices, cur_int_range, entropy_in_this_distribution,
+                                                   device)
+            cum_probs = probs_temp_int.cumsum(0)
+
+            # Remove any elements from the bottom if rounding caused the total prob to be too large
+            overfill_index = (cum_probs > cur_int_range).nonzero()
+            if len(overfill_index) > 0:
+                cum_probs = cum_probs[:overfill_index[0]]
+                k = overfill_index[0].item()
+
+            # Add any mass to the top if removing/rounding causes the total prob to be too small
+            cum_probs += cur_int_range - cum_probs[-1]  # add
+
+            # Covnert to position in range
+            cum_probs += cur_interval[0]
+
+            rank = (indices == inp[i]).nonzero().item()
+
+            # Handle most errors that could happen because of BPE with heuristic
+            if rank >= k:
+                true_token_text = enc.decoder[inp[i]]
+                for rank_idx in range(k):
+                    prop_token_text = enc.decoder[indices[rank_idx].item()]
+                    # common case that is not caught
+                    if inp[i] == 128 and indices[rank_idx] == 198:
+                        rank = rank_idx
+                        inp[i] = indices[rank_idx].item()
+                        break
+
+                    # Is there a more likely prefix token that could be the actual token generated?
+                    if len(prop_token_text) <= len(true_token_text) and \
+                            prop_token_text == true_token_text[:len(prop_token_text)]:
+                        rank = rank_idx
+                        suffix = true_token_text[len(prop_token_text):]
+                        suffix_tokens = enc.encode(suffix)  # a list
+                        inp[i] = indices[rank_idx].item()
+                        inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
+                        break
+
+                    # Is there a more likely longer token that could be the actual token generated?
+                    elif len(prop_token_text) > len(true_token_text) and \
+                            true_token_text == prop_token_text[:len(true_token_text)]:
+                        whole_text = true_token_text
+                        num_extra = 1
+                        while len(whole_text) < len(prop_token_text):
+                            whole_text += enc.decoder[inp[i + num_extra]]
+                            num_extra += 1
+                        if prop_token_text == whole_text[:len(prop_token_text)]:
+                            rank = rank_idx
+                            inp[i] = indices[rank_idx].item()
+                            for j in range(1, num_extra):
+                                del inp[i + j]
+
+                            if len(whole_text) > len(prop_token_text):
+                                suffix = whole_text[len(prop_token_text):]
+                                suffix_tokens = enc.encode(suffix)  # a list
+                                inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
+                            break
+                else:
+                    print('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
+                    rank = 0
+
+            selection = rank
+
+            # Calculate new range as ints
+            new_int_bottom = cum_probs[selection - 1] if selection > 0 else cur_interval[0]
+            new_int_top = cum_probs[selection]
+
+            # Convert range to bits
+            new_int_bottom_bits_inc = list(reversed(int2bits(new_int_bottom, precision)))
+            new_int_top_bits_inc = list(
+                reversed(int2bits(new_int_top - 1, precision)))  # -1 here because upper bound is exclusive
+
+            # Emit most significant bits which are now fixed and update interval
+            num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
+            if i == len(inp) - 1:
+                new_bits = new_int_bottom_bits_inc
+            else:
+                new_bits = new_int_top_bits_inc[:num_bits_encoded]
+
+            debug_entropies.append(entropy_in_this_distribution)
+            debug_encoded_num.append(num_bits_encoded)
+
+            # Get the mask and apply it to the recovered bits
+            # mask_bits = mask_generator.generate_bits(precision)
+            # for b in range(0, len(new_bits)):
+            #    new_bits[b] = new_bits[b] ^ mask_bits[b]
+            # message += new_bits
+            ciphertext_bits += new_bits
+
+            # Update history with new token
+            prev = torch.tensor([inp[i]], device=device, dtype=torch.long)
+
+            i += 1
+
+    ciphertext = bitarray.bitarray(ciphertext_bits).tobytes()
+    message = bitarray.bitarray()
+    message.frombytes(decrypt_ctr_aes(key, ciphertext))
+
+    return message.tolist(), enc.decode(inp)[1]
+
+
+def encode_meteor(model, enc, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
+                  temp=1.0,
                   precision=16, topk=50000, is_sort=False):
+    x = message
+    message = bitarray.bitarray()
+    message.frombytes(x)
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
@@ -907,7 +1219,7 @@ def encode_arithmetic(model, enc, message, context, finish_sent=False, device='c
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
 
 
-def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precision=16, topk=50000):
+def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precision=16, topk=50000) -> bytes:
     import torch.nn.functional as F
     # inp is a list of token indices
     # context is a list of token indices
@@ -1047,9 +1359,7 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
             prev = torch.tensor([inp[i]], device=device, dtype=torch.long)
             i += 1
 
-    return message
-
-
+    return bitarray.bitarray(message).tobytes()
 # </editor-fold>
 
 
@@ -1102,17 +1412,22 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: List[bool], context_tokens, key, nonce, temp=0.95, precision=32, topk=50000) -> \
+    def encode_binary(self, message: bytes, context_tokens, key, nonce, temp=0.95, precision=32, topk=50000,
+                      randomized=False) -> \
             Tuple[str, List[str], Dict[str, any]]:
         finish_sent = False
         meteor_sort = False
         meteor_random = False
 
         # Next encode bits into cover text, using arbitrary context
-        out, nll, kl, words_per_bit, Hq, stats = encode_meteor(self.model, self.enc, message, context_tokens, key,
-                                                               nonce, temp=temp, finish_sent=finish_sent,
-                                                               precision=precision, topk=topk, device=self.device,
-                                                               is_sort=meteor_sort)
+        if randomized:
+            encode = encode_meteor_randomized
+        else:
+            encode = encode_meteor
+        out, nll, kl, words_per_bit, Hq, stats = encode(self.model, self.enc, message, context_tokens, key,
+                                                        nonce, temp=temp, finish_sent=finish_sent,
+                                                        precision=precision, topk=topk, device=self.device,
+                                                        is_sort=meteor_sort)
         text, tokens = self.enc.decode(out, skip_special_tokens=True)
 
         # print("="*40 + " Encoding " + "="*40)
@@ -1130,11 +1445,16 @@ class MeteorCoder:
         })
         return text, tokens, stats
 
-    def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000) -> Tuple[
+    def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000,
+                      randomized=False) -> Tuple[
         list, List[str]]:
         meteor_sort = False
-        return decode_meteor(self.model, self.enc, text, context_tokens, key, nonce, temp=temp,
-                             precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
+        if randomized:
+            decode = decode_meteor_randomized
+        else:
+            decode = decode_meteor
+        return decode(self.model, self.enc, text, context_tokens, key, nonce, temp=temp,
+                      precision=precision, topk=topk, device=self.device, is_sort=meteor_sort)
 
     """
     Encode a message_str to a meteor stegotext
@@ -1142,7 +1462,8 @@ class MeteorCoder:
     Returns: text, tokens, stats
     """
 
-    def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8', context_tokens: list[int] = None) -> Tuple[
+    def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8',
+                       context_tokens: list[int] = None, randomized=False) -> Tuple[
         str, List[str], Dict]:
         # First encode message to uniform bits, without any context
         # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
@@ -1160,15 +1481,16 @@ class MeteorCoder:
         else:
             raise 'unknown coding ' + coding
 
-        return self.encode_binary(message, context_tokens, key, nonce)
+        return self.encode_binary(message, context_tokens, key, nonce, randomized=randomized)
 
     """
     Decode a meteor stegotext to message string
     """
 
-    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8') -> Tuple[str, List[str]]:
+    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8', randomized=False) -> Tuple[
+        str, List[str]]:
         context_tokens = encode_context(context_str, self.enc)
-        message_rec, tokens = self.decode_binary(text, context_tokens, key, nonce)
+        message_rec, tokens = self.decode_binary(text, context_tokens, key, nonce, randomized=randomized)
         if coding == 'utf-8':
             reconst = bitarray.bitarray(message_rec)
             reconst = reconst.tobytes().decode('utf-8', 'replace')
@@ -1192,7 +1514,8 @@ class MeteorCoder:
         context_str = self.enc.eos_token.join(history) + self.enc.eos_token
         return self.enc.encode(context_str, truncation=True)
 
-    def encode_conversation(self, message: List[bool], history: [str], key, nonce, max_length=12) -> Tuple[
+    def encode_conversation(self, message: List[bool], history: [str], key, nonce, max_length=12, randomized=False) -> \
+    Tuple[
         str, List[bool]]:
         message_part = message[:max_length]
         context_tokens = self.encode_conversation_history(history)
@@ -1202,13 +1525,16 @@ class MeteorCoder:
                                                                                        temp=0.6, finish_sent=False,
                                                                                        precision=16, topk=50,
                                                                                        device=self.device,
-                                                                                       is_sort=False)
+                                                                                       is_sort=False,
+                                                                                       randomized=randomized)
         text, tokens = self.enc.decode(out, skip_special_tokens=True)
         remainder += message[max_length:]
         return text, remainder
 
-    def decode_conversation(self, encoded_message, history: [str], key, nonce) -> Tuple[List[bool], List[str]]:
+    def decode_conversation(self, encoded_message, history: [str], key, nonce, randomized=False) -> Tuple[
+        List[bool], List[str]]:
         context_tokens = self.encode_conversation_history(history)
         msg, tokens = decode_conversation_meteor(self.model, self.enc, encoded_message, context_tokens, key, nonce,
-                                                 temp=0.6, precision=16, topk=50, device=self.device, is_sort=False)
+                                                 temp=0.6, precision=16, topk=50, device=self.device, is_sort=False,
+                                                 randomized=randomized)
         return msg, tokens
