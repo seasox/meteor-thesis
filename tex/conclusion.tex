@@ -30,5 +30,9 @@ This problem occurs due to subword tokenization, a feature of modern generative 
 We have discussed a modification to the Meteor stegosystem which fixes these decoding errors.
 This modification first tries to detect an encoding error by using a checksum and, in case a decoding error occurs, generates every possible decomposition of the stegotext using the tokens associated with the model.
 
-The Meteor stegosystem establishes a very promising approach for using generative neural networks for cryptographically secure steganographic communication. 
+While the Meteor authors have discussed that the Meteor stegosystem will be adaptable to GPT-3 once it is released, OpenAI unfortunately did not yet decide to release the model publicly and only allows limited access to GPT-3 using a private (and paid) online API.
+While it would technically still be possible to use this private API, its practical application is limited.
+Also, the ocurring costs of US\$ 0.15 to US\$ 7.68 per megabyte of hiddentext (US\$ 0.0004 to US\$ 0.02 per 1000 tokens with an average of 3 bits of hiddentext per token) are a problem in practical use.
+
+The Meteor stegosystem establishes a very promising approach for using generative neural networks for cryptographically secure steganographic communication.
 Since it can be expected that computational performance in machine learning will continue to improve in the coming years, steganography on ML models is likely to remain a promising area of research.
