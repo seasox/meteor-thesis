@@ -189,7 +189,7 @@ The second iteration of GPT, called GPT-2, has been introduced in \cite{OpenAI20
 While it is mostly known for its capabilities in text generation, it is not specifically designed to generate blog posts or newspaper articles.
 It can also be used for a variety of other NLP tasks, such as question answering, sentiment detection or automatic text summarization.
 
-We can think of GPT-2 as a function $\mathcal{M} \colon \mathbb{N}^k \rightarrow \mathbb{N}^\ell$. 
+We can think of GPT-2 as a function $\mathcal{M} \colon \mathbb{N}^k \rightarrow \mathbb{Z}^\ell$. 
 It takes as input a vector of dimension $k$ and transforms it into another vector of dimension $\ell$. 
 The input vector is a numeric representation of a history $h$, which is a string.
 The output is a $\ell$-dimensional logits vector with components $l_i$ for each token $t_i$ in the model's token dictionary, which we can transform to a probability distribution.
@@ -218,9 +218,9 @@ After the tokenizer has encoded the history as a vector of subwords -- with each
 The model's output is a logits vector.
 A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value represents a stronger activation.
 Ultimately, we want to have a probability distribution to sample from.
-To transform the logits vector $z \in \mathbb{N}^\ell$ to a probability distribution $p = (p_i)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$, we can use the softmax function $\sigma$:
+To transform the logits vector $z \in \mathbb{Z}^\ell$ to a probability distribution $p = (p_i)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$, we can use the softmax function $\sigma$:
 
-$$\sigma \colon \mathbb{N}^{\ell} \rightarrow [0,1]^{\ell},$$
+$$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},$$
 $$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)^{1 \leq i \leq \ell}$$
 
 When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
