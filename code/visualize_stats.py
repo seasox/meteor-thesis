@@ -44,16 +44,19 @@ if __name__ == '__main__':
         ppl = list(map(lambda x: 1 / x.stats['ppl'], data_w_coding))
 
         histbins = np.arange(min(mismatch_count) - 0.5, max(mismatch_count) + 1.5)
+        weights = np.ones_like(mismatch_count) / len(mismatch_count)
         plt.xlim(min(histbins), max(histbins))
-        plt.hist(mismatch_count, bins=histbins, label="mismatch count", align='mid')
+        plt.xticks(np.arange(min(mismatch_count), max(mismatch_count)+1, step=1))
+        plt.xlabel('$x$')
+        plt.ylabel('$\hat{Pr}[X=x]$')
+        plt.hist(mismatch_count, bins=histbins, align='mid', weights=weights)
         plt.tight_layout()
-        plt.legend()
         if tikzexport:
             tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_count_{step_size}.tikz')
         else:
             plt.show()
         plt.clf()
-
+        """
         # plt.annotate('%E' % avg_mismatch_rate[-1], (len(avg_mismatch_rate), avg_mismatch_rate[-1]))
         # plt.plot(avg_mismatch_rate, label="avg mismatch rate")
         # xaxis = plt.gca()
@@ -77,3 +80,4 @@ if __name__ == '__main__':
         else:
             plt.show()
         plt.clf()
+        """
