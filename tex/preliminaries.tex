@@ -1,0 +1,24 @@
+\chapter{Preliminaries}
+In this chapter, we will introduce notation that will be used in this thesis.
+
+We denote $x \leftarrow\$ D$ as a value $x$ sampled uniformly at random from the distribution $U_n = \{ 1, \dots, n \}$, respectively. \todo{fix dollar sign}
+
+In code samples, we denote $x \leftarrow a$ as assignment of value $a$ to variable $x$.
+When working with sequences or arrays, we use pythonic slicing notation.
+Given a sequence $x = (x_0, x_1, \dots, x_{n-1})$ of length $n$, we use the following slicing operations:
+
+\begin{itemize}
+	\item $x[i] = x_i$
+	\item $x[i:j] = (x_i, x_{i+1}, \dots, x_{j-1})$
+	\item $x[i:] = x[i:n] = (x_i, x_{i+1}, \dots, x_{n-1})$
+\end{itemize}
+
+We will use $x \leftarrow \epsilon$ as the empty value assignment.
+We also use the infix operator $\oplus \colon \{0,1\}^n \times \{0,1\}^n \rightarrow \{0,1\}^n,~ a \oplus b$ for the exclusive or of values $a$ and $b$.
+The (infix) concatenation operator $|| \colon X^n \times X^m \rightarrow X^{n+m},~ a||b$ appends the value or sequence $b$ to the value or sequence $a$. 
+
+The variable $\lambda$ denotes the security parameter used in cryptographic primitives.
+The set $\mathcal{K}$ denotes the set of keys of a cryptographic primitive, the variable $k \in \mathcal{K}$ is a key.
+With $\mu(\lambda)$, we denote a function negligible in $\lambda$.
+
+With steganographic protocols, we will use the variable $m \in \{0,1\}^*$ as hiddentext messages and set of histories $\mathcal{H}$ with specific history $h \in \mathcal{H}$.

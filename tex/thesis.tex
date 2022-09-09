@@ -379,9 +379,16 @@
 
 \newcommand{\exampleref}[1]{Example \ref{#1}}
 
+\newcommand{\leftarrowS}{\leftarrow\smalldollar}
+
+\makeatletter
+\newcommand{\smalldollar}{\mathrel{\mathpalette\small@dollar\relax}}
+\makeatother
+
 \begin{document}
 
 \include{introduction.tex}
+\include{preliminaries.tex}
 \include{previous_work.tex}
 \include{correctness.tex}
 \include{twowaycommunication.tex}
