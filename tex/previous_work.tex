@@ -126,7 +126,7 @@ Hopper defines the correctness of a stegosystem as follows:
 \label{def:correctness-hopper}
 A stegosystem $\mathcal{S}$ is \emph{correct} if for every polynomial $p(\lambda)$, there exists a negligible function $\mu(\lambda)$ such that $SE$ and $SD$ also satisfy the relationship:
 
-$$\forall m \in \{0,1\}^{p(\lambda)}, h \in D^* \colon Pr(SD(k, SE(k, m, h), h) = m) \geq 1 - \mu(\lambda)$$
+$$\forall m \in \{0,1\}^{p(\lambda)}, h \in D^* \colon Pr[SD(k, SE(k, m, h), h) = m] \geq 1 - \mu(\lambda)$$
 
 where the randomization is over the key $k$ and any coin tosses of $SE$, $SD$, and the oracles accessed by $SE$, $SD$.
 \end{definition}
