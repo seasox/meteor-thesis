@@ -3,12 +3,14 @@
 \section{Motivation}
 
 When governmental and private-sector adversaries try to breach the confidentiality of private communication, society requires means to defend their privacy.
-Especially in authoritorian states, law enforcement continuously attempts to break or prohibit effective means of cryptography, especially when used for censorship-resistant communication such as Tor.
-Steganography extends the concepts of cryptography by not only hiding the contents of a message, but also hiding the mere existence of a hidden message.
-If we are able to establish provably secure steganographic protocols -- or stegosystems -- people can use it to circumvent censorship and avoid persecution in environments.
+Especially in authoritarian states, law enforcement continuously attempts to break or prohibit effective means of cryptography, especially when used for censorship-resistant communication such as Tor Onion Routing \cite{Tor2004}.
 
-This thesis discusses Meteor, an innovative steganographic protocol which exploits the randomness used in sampling from distributions of text generation frameworks such as GPT-2 to embed a hidden message into generated text.
-We will show that the Meteor stegosystem is not correct with regards to common definition of steganographic correctness.
+Steganography extends the concepts of cryptography by not only hiding the contents of a message, but also hiding the mere existence of a hidden message.
+If we are able to establish provably secure steganographic protocols -- or stegosystems -- people can use them to circumvent censorship and avoid persecution in hostile environments.
+
+This thesis discusses Meteor, an innovative steganographic protocol which exploits the randomness used in sampling from distributions of machine learning based text generation models such as GPT-2 to embed a hidden message into the generated text.
+We will show that the Meteor stegosystem is not correct with regard to common the definition of steganographic correctness.
+Afterwards, we present a modification to the Meteor stegosystem to improve its use in instant messaging applications by replacing the generative model with another one which is primed to generate chat-like texts.
 Subsequently, Meteor's security against chosen hiddentext attackers is discussed.
 We will discuss that an attacker can distinguish Meteor's output from a random oracle in polynomial queries.
 For both correctness and security, algorithms are presented that improve the Meteor stegosystem.
@@ -19,8 +21,8 @@ For both correctness and security, algorithms are presented that improve the Met
 
 \autoref{chap:preliminaries} introduces notation that will be used throughout this thesis.
 
-\autoref{chap:previous-work} discusses previous works.
-First, we will discuss steganography and provably secure steganography, introduced in \cite{Hopper2004}.
+\autoref{chap:previous-work} discusses previous works we will need to understand the architecture of the Meteor stegosystem.
+First, we will discuss steganography and provably secure steganography as defined in \cite{Hopper2004}.
 Afterwards, we discuss how generative neural networks (GNNs) such as GPT-2 produce high-quality text iteratively.
 Concluding, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels as introduced by \cite{Meteor2021}.
 
@@ -28,18 +30,18 @@ Concluding, the Meteor stegosystem is presented, a provably secure steganographi
 This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic correctness established in \autoref{def:correctness-hopper} and \autoref{def:correctness-kaptchuk} as well as the discussion of generative neural networks in \autoref{sec:generative-neural-networks}.
 We will see that the Meteor stegosystem is not correct because of subword tokenization present in most modern GNNs.
 Afterwards, algorithms are presented which ensure correctness of Meteor on the receiver site.
-Unfortunately, these algorithms pose overhead exponential in the length of the generated stegotext.
+Unfortunately, these algorithms in the worst case introduce overhead exponential in the length of the generated stegotext.
 
 In \autoref{chap:twowaycommunication}, a small modification to the Meteor stegosystem is presented which allows two-way communication.
 This chapter relies on the material presented in \autoref{sec:meteor} and \autoref{sec:generative-neural-networks}.
-There, we embed a fixed amount of bits in each message, using the DialoGPT model developed by Microsoft \cite{Zhang2020} to generate dialog-like messages.
+There, we embed a fixed amount of bits in each message, using the DialoGPT model presented in \cite{Zhang2020} to generate dialog-like messages.
 This modification allows users of the Meteor stegosystem to communicate more naturally in the context of instant messaging.
-It also makes sure that the algorithms from \autoref{chap:correctness} can be applied more conveniently, since the exponential overhead is still manageable for shorter messages.
+It also makes sure that the algorithms from \autoref{chap:correctness} can be applied more conveniently with smaller overhead.
 
-In \autoref{chap:security}, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of secure stegosystem.
-This chapter relies heavily on the material presented in \autoref{chap:previous-work}, especially the security definitions in \autoref{def:sec-kaptchuk} and \autoref{def:sec-hopper}.
+In \autoref{chap:security}, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of a secure stegosystem.
+This chapter relies heavily on the material presented in \autoref{chap:previous-work}, especially the security definitions in \autoref{def:sec-hopper} and \autoref{def:sec-kaptchuk}.
 We will compare the definition of security used by the Meteor authors with the definition of security by Hopper.
-We then will show that the Meteor stegosystem is not universally secure in Hopper's definition.
-Concluding, a modification to the Meteor stegosystem is presented which increases its security against chosen hiddentext attackers.
+We will then show that the Meteor stegosystem is not universally secure in Hopper's definition.
+Afterwards, a modification to the Meteor stegosystem is presented which increases its security against chosen hiddentext attackers.
 
 Finally, in \autoref{chap:conclusion}, we will discuss the results in a conclusion.
