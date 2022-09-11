@@ -146,7 +146,7 @@
     We will find that correctness is violated especially for longer hiddentexts ($|m| \geq 1024$ bytes).
     This correctness violation occurs due to ambiguous tokenization of text.
 	This can occur when using subword tokens, which are used in modern generative models such as GPT-2.
-    In addition, the Meteor stegosystem is vulnerable to chosen-hidden-text attackers with polynomially many queries.
+    Additionally, the Meteor stegosystem is vulnerable to chosen-hidden-text attackers with polynomially many queries.
     We present optimizations that improve the correctness and chosen-hiddentext attack security of the Meteor stegosystem.
     We also discuss a modification that allows Meteor to be used for more compelling use in the context of instant messaging.
   },
@@ -379,11 +379,7 @@
 
 \newcommand{\exampleref}[1]{Example \ref{#1}}
 
-\newcommand{\leftarrowS}{\leftarrow\smalldollar}
-
-\makeatletter
-\newcommand{\smalldollar}{\mathrel{\mathpalette\small@dollar\relax}}
-\makeatother
+\newcommand{\leftarrowS}{\mathrel{{\leftarrow}\vcenter{\hbox{\scriptsize\rmfamily\upshape\$}}}}
 
 \begin{document}
 
