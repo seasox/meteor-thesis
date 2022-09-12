@@ -395,8 +395,8 @@ Consider that the output of $Encode$ is deterministic, i.e. for a given $k_{prg}
 algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
-	Parse $c$ as $c_0 || c_1 || \dots || c_{|c|-1}$
-	for $i \in \{0, 1, \dots, |c|-1 \}$ do
+	Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
+	for $i \in \{ 0, 1, \dots, \tau \}$ do
 		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
 		$mask \leftarrow PRG.Next(k_{prg})$
