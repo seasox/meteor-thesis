@@ -10,7 +10,7 @@ Wouldn't it be great if we could adapt the Meteor stegosystem to generate messag
 Since the Meteor stegosystem is constructed to be very adaptable to different underlying distributions (as long as they are a RRRSS scheme), this certainly is possible.
 To achieve the task at hand, we can use Microsoft's DialoGPT \cite{Zhang2020} to generate stegotext messages using a GNN optimized for chat-like text generation.
 
-\section{Protocol For Two-Way Communication}
+\section{Protocol for Two-Way Communication}
 
 In \autoref{fig:twowaycommunication}, we introduce a simple chat protocol between two participants Alice and Bob.
 Here, Alice and Bob send messages back and forth.
@@ -59,7 +59,7 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 	\label{fig:twowaycommunication}
 \end{figure}
 
-\section{Implementation Of Two-Way Communication}
+\section{Implementation of Two-Way Communication}
 While we can generate stegotexts for two-way communication using the GPT-2 model, as the original Meteor stegosystem does, the texts generated with GPT-2 are not really convincing as chat messages. 
 In the following example we see a conversations between Alice, the encoding party, and Bob, the decoding party using the protocol described in \autoref{fig:twowaycommunication}.
 The initial history consists of a short sequence of messages where both participants greet and ask each other how their day was.
