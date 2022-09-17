@@ -2,17 +2,18 @@
 \label{chap:correctness}
 
 The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. On the website, they state that ``due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
-During experimentation,  we have concluded that the cause of this is due to the way subword based GNNs, such as GPT-2, encode text and not due to issues with the algorithm interface.
+During experimentation,  we have concluded that the cause of this is due to the way subword based GNNs, such as GPT-2, encode text and not necessarily due to issues with the algorithm interface.
 
-In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's definition as defined in \autoref{def:correctness-hopper} by providing a counterexample.
-Afterwards, an experiment will be presented which has been performed to approximate the probability of incorrect decodings.
-The experiment shows that for sufficiently long hiddentexts the probability of incorrect decoding increases to about 82 \%.
-To restore correctness, we concludingly present a change to Meteor's $Decoder$ algorithm to increase the probability of successfully recovering the hiddentext message while introducing overhead exponential in stegotext length.
+In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's definition in \autoref{def:correctness-hopper} by providing a counterexample.
+Afterwards, we will discuss an experiment which has been performed to approximate the probability of incorrect decodings.
+The experiment shows that for sufficiently long hiddentexts the probability of incorrect decoding increases to approximately 82 \%.
+To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while introducing overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
 
 In \autoref{sec:generative-neural-networks}, we discuss that GPT-2 uses a token dictionary to represent text.
 To improve generated text quality, modern GNNs use subword tokens.
+\todo{subword tokens are learned}
 Subword tokenization is opposed to word tokenization, where text is split by spaces, and character-based tokenization, which tokenizes text character by character.
 Subword tokenization allows for more effective deep learning, as the model can easier connect related words to each other. 
 For example, the model might learn that, by adding the suffix ``n't'' to a verb, one can invert the meaning of that verb, e.g. ``haven't'' is the opposite of ``have''.
