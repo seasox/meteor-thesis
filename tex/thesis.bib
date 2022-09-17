@@ -1,8 +1,14 @@
-@article{Simmons1983,
-   author={Simmons, Gustavus J.},
-   title={The Prisoners' Problem And The Subliminal Channel},
-   year=1983,
-   pages={1-2}
+@inbook{Simmons1983,
+author="Simmons, Gustavus J.",
+editor="Chaum, David",
+title="The Prisoners' Problem and the Subliminal Channel",
+bookTitle="Advances in Cryptology: Proceedings of Crypto 83",
+year="1984",
+publisher="Springer US",
+address="Boston, MA",
+pages="51--67",
+isbn="978-1-4684-4730-9",
+doi="10.1007/978-1-4684-4730-9_5",
 }
 @phdthesis{Hopper2004,
 author = {Hopper, Nicholas J.},
@@ -14,7 +20,7 @@ publisher = {Carnegie Mellon University},
 address = {USA},
 note = {AAI3143943}
 }
-@article{Zhang2020,
+@misc{Zhang2020,
   author    = {Yizhe Zhang and
                Siqi Sun and
                Michel Galley and
@@ -26,15 +32,9 @@ note = {AAI3143943}
                Bill Dolan},
   title     = {DialoGPT: Large-Scale Generative Pre-training for Conversational Response
                Generation},
-  journal   = {CoRR},
-  volume    = {abs/1911.00536},
+  publisher = {arXiv},
   year      = {2019},
-  url       = {http://arxiv.org/abs/1911.00536},
-  eprinttype = {arXiv},
-  eprint    = {1911.00536},
-  timestamp = {Tue, 05 Jan 2021 15:06:52 +0100},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-1911-00536.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  doi       = {10.48550/arXiv.1911.00536}
 }
 @article{OpenAI2018,
   title={Improving Language Understanding by Generative Pre-Training},
@@ -46,12 +46,11 @@ note = {AAI3143943}
   author = {Radford, Alec and Wu, Jeffrey and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya},
   keywords = {model},
   title = {{Language Models are Unsupervised Multitask Learners}},
-  url = {https://openai.com/blog/better-language-models/},
+  url = {https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf},
   year = {2019}
 }
 @misc{GPTReleasePlan2019,
-  doi = {10.48550/ARXIV.1908.09203},
-  url = {https://arxiv.org/abs/1908.09203},
+  doi = {10.48550/arXiv.1908.09203},
   author = {Solaiman, Irene and Brundage, Miles and Clark, Jack and Askell, Amanda and Herbert-Voss, Ariel and Wu, Jeff and Radford, Alec and Krueger, Gretchen and Kim, Jong Wook and Kreps, Sarah and McCain, Miles and Newhouse, Alex and Blazakis, Jason and McGuffie, Kris and Wang, Jasmine},
   keywords = {Computation and Language (cs.CL), Artificial Intelligence (cs.AI), Computers and Society (cs.CY), FOS: Computer and information sciences, FOS: Computer and information sciences, I.2; I.2.7; K.4},
   title = {Release Strategies and the Social Impacts of Language Models},
@@ -60,8 +59,7 @@ note = {AAI3143943}
   copyright = {arXiv.org perpetual, non-exclusive license}
 }
 @article{OpenAI2020,
-  doi = {10.48550/ARXIV.2005.14165},
-  url = {https://arxiv.org/abs/2005.14165},
+  doi = {10.48550/arXiv.2005.14165},
   author = {Brown, Tom B. and Mann, Benjamin and Ryder, Nick and Subbiah, Melanie and Kaplan, Jared and Dhariwal, Prafulla and Neelakantan, Arvind and Shyam, Pranav and Sastry, Girish and Askell, Amanda and Agarwal, Sandhini and Herbert-Voss, Ariel and Krueger, Gretchen and Henighan, Tom and Child, Rewon and Ramesh, Aditya and Ziegler, Daniel M. and Wu, Jeffrey and Winter, Clemens and Hesse, Christopher and Chen, Mark and Sigler, Eric and Litwin, Mateusz and Gray, Scott and Chess, Benjamin and Clark, Jack and Berner, Christopher and McCandlish, Sam and Radford, Alec and Sutskever, Ilya and Amodei, Dario},
   keywords = {Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},
   title = {Language Models are Few-Shot Learners},
@@ -76,31 +74,14 @@ pages = {1529-1548},
 title = {Meteor: Cryptographically Secure Steganography for Realistic Distributions},
 doi = {10.1145/3460120.3484550}
 }
-@misc{MeteorDemo2021,
+@online{MeteorDemo2021,
 author = {Kaptchuk, Gabriel and Jois, Tushar and Green, Matthew and Rubin, Aviel},
+title = {Meteor Live Demo},
 year = {2021},
 month = {08},
 day = {24},
-howpublished = {\url{https://colab.research.google.com/gist/tusharjois/ec8603b711ff61e09167d8fef37c9b86}},
-note = {[Online; accessed 2022-08-24]}
-}
-@article{PRF1986,
-author = {Goldreich, Oded and Goldwasser, Shafi and Micali, Silvio},
-title = {How to Construct Random Functions},
-year = {1986},
-issue_date = {Oct. 1986},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {33},
-number = {4},
-issn = {0004-5411},
-url = {https://doi.org/10.1145/6490.6503},
-doi = {10.1145/6490.6503},
-abstract = {A constructive theory of randomness for functions, based on computational complexity, is developed, and a pseudorandom function generator is presented. This generator is a deterministic polynomial-time algorithm that transforms pairs (g, r), where g is any one-way function and r is a random k-bit string, to polynomial-time computable functions undefinedr: {1, … , 2k} → {1, … , 2k}. These undefinedr's cannot be distinguished from random functions by any probabilistic polynomial-time algorithm that asks and receives the value of a function at arguments of its choice. The result has applications in cryptography, random constructions, and complexity theory.},
-journal = {J. ACM},
-month = {aug},
-pages = {792–807},
-numpages = {16}
+url = {https://colab.research.google.com/gist/tusharjois/ec8603b711ff61e09167d8fef37c9b86},
+urldate = {2022-09-17}
 }
 @phdthesis{Berndt2017,
 author = {Berndt, Sebastian},
@@ -108,16 +89,18 @@ advisor = {Liśkiewicz, Maciej},
 title = {New Results on Feasibilities And Limitations of Provable Secure Steganography},
 year = {2017},
 publisher = {Universität zu Lübeck},
-address = {Germany}
+address = {Germany},
+url = {https://www.zhb.uni-luebeck.de/epubs/ediss2063.pdf}
 }
-@article{Tor2004,
+@inproceedings{Tor2004,
 author = {Dingledine, Roger and Mathewson, Nick and Syverson, Paul},
 year = {2004},
-month = {06},
+month = {08},
 pages = {},
 title = {Tor: The Second-Generation Onion Router},
-volume = {13},
-journal = {Paul Syverson}
+address = {San Diego, CA},
+booktitle = {13th USENIX Security Symposium (USENIX Security 04)},
+doi = {10.5555/1251375.1251396} 
 }
 @phdthesis{Wölfel2011,
 author = {Wölfel, Ulrich},
@@ -126,10 +109,11 @@ title = {Efficient And Provably Secure Steganography},
 year = {2011},
 month = {01},
 publisher = {Universität zu Lübeck},
-address = {Germany}
+address = {Germany},
+url = {https://d-nb.info/1012218260/34}
 }
 @article{LRW2013,
-author = {Liskiewicz, Maciej and Reischuk, Rüdiger and Wölfel, Ulrich},
+author = {Liśkiewicz, Maciej and Reischuk, Rüdiger and Wölfel, Ulrich},
 year = {2013},
 month = {09},
 pages = {27-41},
@@ -140,14 +124,13 @@ doi = {10.1016/j.tcs.2012.03.037}
 }
 @article{DIRR2008,
 	doi = {10.1007/s00145-008-9020-3}, 
-	url = {https://doi.org/10.1007%2Fs00145-008-9020-3},
 	year = 2008,
 	month = {04},
 	publisher = {Springer Science and Business Media {LLC}},
 	volume = {22},
 	number = {3},
 	pages = {365--394},
-	author = {Dedić, Nenad, and Itkis, Gene and Reyzin, Leonid and Russell, Scott},
+	author = {Dedić, Nenad and Itkis, Gene and Reyzin, Leonid and Russell, Scott},
 	title = {Upper and Lower Bounds on Black-Box Steganography},
 	journal = {Journal of Cryptology}
 }
@@ -162,8 +145,8 @@ year="2002",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="77--92",
-abstract="Informally, steganography is the process of sending a secret message from Alice to Bob in such a way that an eavesdropper (who listens to all communications) cannot even tell that a secret message is being sent. In this work, we initiate the study of steganography from a complexity-theoretic point of view. We introduce definitions based on computational indistinguishability and we prove that the existence of one-way functions implies the existence of secure steganographic protocols.",
-isbn="978-3-540-45708-4"
+isbn="978-3-540-45708-4",
+doi = {10.1007/3-540-45708-9_6}
 }
 @article{BoShSo2012,
 author = {Bochkarev, Vladimir and Shevlyakova, Anna and Solovyev, Valery},
@@ -172,40 +155,42 @@ month = {08},
 pages = {153-175},
 title = {Average word length dynamics as indicator of cultural changes in society},
 volume = {14},
-journal = {Social Evolution and History}
+journal = {Social Evolution and History},
+doi = {10.48550/arXiv.1208.6109}
 }
-@misc{Vaswani2017,
-  doi = {10.48550/ARXIV.1706.03762},
-  url = {https://arxiv.org/abs/1706.03762},
+@article{Vaswani2017,
+  doi = {10.48550/arXiv.1706.03762},
   author = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
   keywords = {Computation and Language (cs.CL), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences},
   title = {Attention Is All You Need},
   publisher = {arXiv},
-  year = {2017},
-  copyright = {arXiv.org perpetual, non-exclusive license}
+  year = {2017}
 }
 @article{Hochreiter1997,
     author = {Hochreiter, Sepp and Schmidhuber, Jürgen},
-    title = "{Long Short-Term Memory}",
+    title = {Long Short-Term Memory},
     journal = {Neural Computation},
     volume = {9},
     number = {8},
     pages = {1735-1780},
     year = {1997},
     month = {11},
-    abstract = "{Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We briefly review Hochreiter's (1991) analysis of this problem, then address it by introducing a novel, efficient, gradient based method called long short-term memory (LSTM). Truncating the gradient where this does not do harm, LSTM can learn to bridge minimal time lags in excess of 1000 discrete-time steps by enforcing constant error flow through constant error carousels within special units. Multiplicative gate units learn to open and close access to the constant error flow. LSTM is local in space and time; its computational complexity per time step and weight is O. 1. Our experiments with artificial data involve local, distributed, real-valued, and noisy pattern representations. In comparisons with real-time recurrent learning, back propagation through time, recurrent cascade correlation, Elman nets, and neural sequence chunking, LSTM leads to many more successful runs, and learns much faster. LSTM also solves complex, artificial long-time-lag tasks that have never been solved by previous recurrent network algorithms.}",
     issn = {0899-7667},
-    doi = {10.1162/neco.1997.9.8.1735},
-    url = {https://doi.org/10.1162/neco.1997.9.8.1735},
-    eprint = {https://direct.mit.edu/neco/article-pdf/9/8/1735/813796/neco.1997.9.8.1735.pdf},
+    doi = {10.1162/neco.1997.9.8.1735}
 }
 @misc{GPTneo2022,
-  doi = {10.48550/ARXIV.2204.06745},
-  url = {https://arxiv.org/abs/2204.06745},
+  doi = {10.48550/arXiv.2204.06745},
   author = {Black, Sid and Biderman, Stella and Hallahan, Eric and Anthony, Quentin and Gao, Leo and Golding, Laurence and He, Horace and Leahy, Connor and McDonell, Kyle and Phang, Jason and Pieler, Michael and Prashanth, USVSN Sai and Purohit, Shivanshu and Reynolds, Laria and Tow, Jonathan and Wang, Ben and Weinbach, Samuel},
   keywords = {Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},
   title = {GPT-NeoX-20B: An Open-Source Autoregressive Language Model},
   publisher = {arXiv},
   year = {2022},
   copyright = {Creative Commons Attribution 4.0 International}
+}
+@online{OpenAIPricing2022,
+  title = {OpenAI API Pricing},
+  author = {{OpenAI L.L.C.}},
+  year = 2022,
+  url = {https://web.archive.org/web/20220917214410/https://openai.com/api/pricing/},
+  urldate = {2022-09-17}
 }
