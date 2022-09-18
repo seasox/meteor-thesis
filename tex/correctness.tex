@@ -1,49 +1,48 @@
 \chapter{Correctness}
 \label{chap:correctness}
 
-The Meteor authors have released a demo of Meteor at \cite{MeteorDemo2021}. On the website, they state that ``due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
-During experimentation,  we have concluded that the cause of this is due to the way subword based GNNs, such as GPT-2, encode text and not necessarily due to issues with the algorithm interface.
+The Meteor authors have released an online demo of Meteor at \cite{MeteorDemo2021}.
+On the website, they state that ``due to issues with the GPT-2 algorithm interface, you sometimes may see extra output from a decoded stegotext. This does not impact the underlying security of the scheme''.
+During experimentation, we have concluded that the cause of this is due to the way subword based GNNs, such as GPT-2, tokenize text and not due to issues with the algorithm interface.
 
-In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's definition in \autoref{def:correctness-hopper} by providing a counterexample.
-Afterwards, we will discuss an experiment which has been performed to approximate the probability of incorrect decodings.
+In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to Hopper's notion of correctness in \autoref{def:correctness-hopper} by providing a counterexample.
+Afterwards, we will discuss an experiment which approximates the probability of incorrect decodings.
 The experiment shows that for sufficiently long hiddentexts the probability of incorrect decoding increases to approximately 82 \%.
-To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while introducing overhead exponential in stegotext length.
+To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while introducing computational overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
 
-In \autoref{sec:generative-neural-networks}, we discuss that GPT-2 uses a token dictionary to represent text.
-To improve generated text quality, modern GNNs use subword tokens.
-\todo{subword tokens are learned}
-Subword tokenization is opposed to word tokenization, where text is split by spaces, and character-based tokenization, which tokenizes text character by character.
-Subword tokenization allows for more effective deep learning, as the model can easier connect related words to each other. 
-For example, the model might learn that, by adding the suffix ``n't'' to a verb, one can invert the meaning of that verb, e.g. ``haven't'' is the opposite of ``have''.
+In \autoref{sec:generative-neural-networks}, we discussed that GNNs use a set of tokens to represent text.
+To improve the quality of generated text, models not only in the GPT-n family use subword tokens.
+Subword tokenization is opposed to word tokenization, where text is split by spaces, and character based tokenization, where text is tokenized to a sequence of characters.
+Subword tokenization allows for more effective deep learning, as the model can easier connect related words to each other.
 This technique proved to be very effective in enhancing GNN performance in the last few years.
 
-On the other hand, this allows for one word to have multiple representations in the ML model.
-For example, the word ``doesn't'' might be tokenized by a tokenizer $T$ over tokens $\mathcal{T}$ as $T(\textrm{``doesn't''}) = ( \textrm{``do''}, \textrm{``es''}, \textrm{``n't''} )$.
-It could also be tokenized as $T(\textrm{``doesn't''}) = ( \textrm{``does''}, \textrm{``n't''} )$ or even $T(\textrm{``doesn't''}) = ( \textrm{``d''}, \textrm{``o''}, \textrm{``e''}, \textrm{``s''}, \textrm{``n''}, \textrm{``'t''})$.
+On the other hand, this allows for one word to have multiple tokenizations.
+For example, the word ``doesn't'' might be tokenized as ``do$||$es$||$n't'', but it could also be tokenized as ``does$||$n't'' or even ``d$||$o$||$e$||$s$||$n$||$'$||$t''.
 This situation is what we call an ambiguous tokenization.
+If Alice generates a stegotext which has an ambiguous tokenization and Bob choses a different tokenization than Alice, the decoding will fail because a wrong prefix will be recovered from the stegotext.
 
-We define a distance function $D$ between tokenizations from Alice and Bob as the following:
+To measure the difference in tokenizations of a given word between Alice and Bob, we define a distance function $D$ as follows:
 
 \begin{definition}[Tokenization Distance]
 Let $t, t' \in \mathcal{T}^*$ be sequences of tokens.
-We define the \emph{tokenization distance between t and t'} with a function $D \colon \mathcal{T}^* \times \mathcal{T}^* \rightarrow \mathbb{N}$ as
+We define the \emph{tokenization distance of t and t'} as a function $D \colon \mathcal{T}^* \times \mathcal{T}^* \rightarrow \mathbb{N}$ with
 
 $$D(t, t') = \left| \left\{ i \in [1, |t|] \mid \exists i' > 1~ \exists l > 0: t_{i-1} = t'_{i'-1} \land \left( \bigwedge_{j=0}^{l-1} t_{i+j} \neq t'_{i'+j} \right) \land t_{i+l} = t'_{i'+l} \right\} \right|$$
 \end{definition}
 
-This distance function is a measure for the number of tokenization mismatches between the sending party Alice and the receiving party Bob.
+The distance function measures the number of tokenization mismatches between the sending party Alice and the receiving party Bob.
 We denote the function $T_P \colon \Sigma^* \rightarrow \mathcal{T}^*$ as the tokenizer used by party $P$ to generate or parse the stegotext $s \in \Sigma^*$.
 
-\begin{example}
-Let $s = \textrm{``hello''}$ be a text generated by sending party Alice with tokenization $T_A(s) = (\textrm{``he''}, \textrm{``llo''})$.
-Let $T_B(s) = (\textrm{``he''}, \textrm{``l''}, \textrm{``lo''})$ be the tokenization of $s$ generated by the receiving party Bob.
+\begin{example}[Tokenization Distance]
+Let $s = \textrm{``hello''}$ be a text generated by sending party Alice with tokenization $T_A(s) = \textrm{he}||\textrm{llo}||\epsilon$.
+Let $T_B(s) = \textrm{he}||\textrm{l}||\textrm{lo}||\epsilon$ be the tokenization of $s$ generated by the receiving party Bob.
 The distance between $T_A(s)$ and $T_B(s)$ is 
 
 $$
 D(T_A(s), T_B(s)) 
-= D( (\textrm{``he''}, \textrm{``llo''}), (\textrm{``he''}, \textrm{``l''}, \textrm{``lo''})  ) 
+= D( \textrm{he}||\textrm{llo}||\epsilon, \textrm{he}||\textrm{l}||\textrm{lo}||\epsilon)
 = \left| \left\{ 2 \right\} \right| = 1
 $$
 \end{example}
@@ -62,8 +61,8 @@ $$
 \section{Correctness Of The Meteor Stegosystem}
 
 In \autoref{alg:decode}, we see that during decoding, the stegotext $c$ generated by \autoref{alg:encode} should be parsed as $c = c_0 ||c_1 || \dots || c_{\tau}$.
-This task is performed by a tokenizer over tokens $\mathcal{T}$ specific to the underlying model.
-Meteor's decode algorithm expects that the parsing of $c$ can recover the $c_i$ originally generated during encoding.
+This task is performed by a tokenizer over tokens $\mathcal{T}$.
+Meteor's $Decode$ algorithm expects that the parsing of $c$ can recover the $c_i$ originally generated during encoding.
 This unfortunately is, at least for models with subword tokenizations such as GPT-2, not the case for some combinations of stegotext, key and history due to ambiguous tokenization as defined above.
 In \autoref{sec:alg-rec-tok-candidates}, we will show how to fix these correctness issues.
 
@@ -74,7 +73,7 @@ The Meteor Stegosystem is not correct.
 \begin{proof}
 For Meteor to be correct, it must fulfil \autoref{def:correctness-kaptchuk}, i.e. for any $k \leftarrow KeyGen(1^\lambda)$, hiddentext $m$ and history $h$:
 
-$$\mathop{Pr}[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k, m, h), h) = m] \geq 1 - \mu(\lambda)$$
+$$\mathop{Pr}[Decode_{\mathcal{D}}^\beta(k, Encode_{\mathcal{D}}^\beta(k, m, h), h) = m] \geq 1 - \mu(\lambda)$$
 
 We show incorrectness by giving a counterexample. 
 The counterexample below has been generated by repeatedly encoding a fixed message and history using the Meteor stegosystem with random keys.
@@ -94,8 +93,8 @@ The stegotext for these inputs when using the Meteor demo code at \cite{MeteorDe
 c = '\nZeus communication system, controlled by anÆ2 desktop mic with'
 \end{lstlisting}
 
-When passed to the standard GPT-2 Tokenizer, the substring ``Zeus'' of $c$ is parsed as \lstinline{['Z', 'eus']}, while the encoding process has generated ``Zeus'' with token sequence \lstinline{['Ze', 'us']}.
-Therefore, the stegotext $c$ cannot be successfully decoded to the original hiddentext ``Hello world'', which violates correctness.
+When passed to the standard GPT-2 Tokenizer, the substring ``Zeus'' of $c$ is parsed as ``Z$||$eus'', while the encoding party has generated ``Zeus'' with token sequence ``Ze$||$us''.
+Therefore, the stegotext cannot be successfully decoded to the original hiddentext ``Hello world'', which violates correctness.
 \end{proof}
 
 After we have seen that this problem appears at least once by finding a counterexample, another question arises:
@@ -107,19 +106,19 @@ To approach this question, we first define a random variable $X$ as the distance
 $$Pr[X=a] = \frac{\left| \left\{ s \in \Sigma^* \mid D(T_A(s), T_B(s)) = a \right\} \right|}{\left| \Sigma^* \right|}$$
 
 As we have argued before, the decoding can only be successful if no tokenization mismatches appear, i.e. the tokenization generated by Alice and Bob are the same.
-Thus, for a successful decoding, the distance between tokenizations must be zero.
+Therefore for a successful decoding the distance between tokenizations must be zero.
 We can establish the tokenization distance as an upper bound for the decoding success:
 
 $$Pr[Decode_{\mathcal{D}}(k, Encode_{\mathcal{D}}(k,m,h), h)=m] \leq Pr[X=0]$$
 
 How can we determine the probability $Pr[X=0]$?
-While there are exponentially many combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ (which we could potentially brute-force), there are infinitely many messages $m \in \{0,1\}^*$.
+While the combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ are finite (and which we could potentially brute-force, even though), there are infinitely many messages $m \in \{0,1\}^*$.
 Therefore, we cannot determine $Pr$ exactly.
-What we can do instead is fix some set of messages $K \subset \{0,1\}^\lambda$ for a fixed security parameter $\lambda$, $M_n \subset \{0,1\}^n$ of fixed length $n$ and $H \subset \mathcal{H}$ and calculate the distances $D$ for samples $(k,m,h) \in K \times M_n \times H$ to establish an approximation $\hat{Pr} \approx Pr$.
+What we can do instead is fix some set of keys $K \subset \{0,1\}^\lambda$ for a fixed security parameter $\lambda$, messages $M_n \subset \{0,1\}^n$ of fixed length $n$ and histories $H \subset \mathcal{H}$ and calculate the distances $D$ for samples $(k,m,h) \in K \times M_n \times H$ to establish an approximation $\hat{Pr} \approx Pr$.
 
 How do we select $K$, $M_n$ and $H$?
-For $K$, we fix $\lambda = 512$ and uniformly choose random keys $k \leftarrow U_{512}$, for each sample $m \in M_n$.
-For $M_n$, we use blocks of length $n=128$ or 1024 bytes from William Shakespeare's drama Hamlet, respectively.
+For $K$, we fix $\lambda = 512$ and uniformly choose random keys $k \leftarrow U_{512}$ for each sample $m \in M_n$.
+For $M_n$, we use blocks of length $n=128$ and $1024$ bytes from William Shakespeare's drama Hamlet, respectively.
 The entire script of Hamlet is 191726 bytes long.
 That gives us $|M_{128}|=\lceil \frac{191726}{128} \rceil = 1498$ and $|M_{1024}|= \lceil \frac{191726}{1024} \rceil = 188$ samples for $m$.
 Even though the sample size for blocks of 1024 bytes is rather small, the average stegotext length grows proportionally to the number of bits encoded, so we can expect about the same length of token sequences for both experiments.
@@ -179,7 +178,7 @@ But when encoding larger blocks, that probability decreases to $\hat{Pr}[X=0] \a
 %	\label{fig:meteor-stats-mismatch-count}	
 %\end{figure}
 
-Therefore, we have to find a way to deal with these failed decodings, especially if we plan to encode hiddentext messages of significant length such as HTTP messages or Diffie-Hellman key exchange messages.
+Therefore, we have to find a way to deal with these failed decodings, especially if we plan to encode hiddentext of significant length such as HTTP messages or Diffie-Hellman key exchange messages.
 In \autoref{sec:alg-rec-tok-candidates}, we will present an approach to recover from decoding errors while introducing computational overhead exponential in stegotext length. 
 In \autoref{chap:twowaycommunication}, we will show how we can split the hiddentext message and use Microsoft's DialoGPT -- a derivation of GPT-2 -- to generate chat-like stegotext.
 Splitting the hiddentext results in shorter stegotext and thus decreases the probability of tokenization mismatches.
@@ -193,30 +192,29 @@ Unfortunately, with subword tokenization, the decoding party cannot decide which
 To allow successful decoding of ambiguously tokenized stegotexts, we will introduce algorithms to detect and fix wrong tokenizations.
 
 
-For that we have to modify the encoding step of Meteor to detect and fix wrong tokenization.
-Before encoding, split the message $m$ into blocks $m_i$ of length $\gamma$. \todo{variable block length?}
-After each block $m_i$, add another block $q_i = q(m_i)$ of length $\delta$ into the hiddentext, i.e. $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$.
+For that we have to modify the encoding step of Meteor to detect and fix wrong tokenizations.
+Before encoding, split the message $m$ into blocks $m_i$ of length $\gamma$.
+After each block $m_i$, add a checksum block $q_i = q(m_i)$ of length $\delta$ into the hiddentext, i.e. $q \colon \{ 0,1 \}^\gamma \rightarrow \{ 0,1 \}^\delta$.
 This value helps the decoder to decide if the decoding is still correct up to this point.
-The block $q_i$ can be a checksum of $m_i$ or a fixed marker.
-By adding checksums, we introduce $\delta \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
+By adding checksum blocks, we introduce $\delta \cdot \frac{|m|}{\gamma}$ bits of overhead to the hiddentext.
 The modified $Encode$ algorithm can be found in \autoref{alg:marked-encode}.
 
-Now the decoding party has to verify that after each block $m_i$ of $\gamma$ bits, the marker $q(m_i)$ appears and is valid.
+Now the decoding party has to verify that after each block $m_i$ of $\gamma$ bits, the checksum $q(m_i)$ of length $\delta$ appears.
 If not, a decoding error has occured in the stegotext, i.e. a tokenization mismatch has been occured.
 To recover from this, the decoding party has to roll back their encoding and generate all possible tokenizations since their last successful checksum check.
-When they find a tokenization with correct checksum, the decoder expects that the correct tokenization has been found and proceeds.
+When a tokenization with correct checksum was found, the decoder expects that the correct tokenization has been found and proceeds.
 
 It is still possible that a wrong tokenization randomly yields a correct checksum.
-In an actual implementation, one might want to check multiple blocks in advance before expecting that the correct tokenization has been found.
-The amount of blocks which should be checked to be sufficiently confident that the correct tokenization has been found primarily depends on block length $\gamma$ and checksum length $\delta$.
+In an actual implementation, one might want to check multiple blocks in advance before expecting that the correct tokenization has been found and/or choose $\gamma$ and $\delta$ depending on the security parameter $\lambda$ such that the probability of a false-positive checksum is negligible.
 Determining specific values for $\gamma$ and $\delta$ is a trade-off between stegotext length and computational overhead in the case of a decoding error.
-While longer checksums $\delta$ decreases the risk of falsely verified checksums, longer checksums causes longer stegotexts.
-If we chose $\gamma = |m|$, only one checksum is generated over the entire message. If an error is detected after decoding the entire hiddentext, every possible tokenization for the stegotext $s$ has to be generated, which are exponential in stegotext length.
+While longer checksums $\delta$ decrease the risk of false-positive checksum checks, longer checksums cause longer stegotexts.
+If we chose $\gamma = |m|$, only one checksum is generated over the entire message. 
+If an error is detected after decoding the entire hiddentext every possible tokenization for the stegotext $s$ has to be generated in the worst case, which are exponential in stegotext length.
 If we choose a small $\gamma$, many checksums are inserted, increasing stegotext length.
 A modified $Decode$ algorithm can be found in \autoref{alg:marked-decode}.
 
 \begin{Pseudocode}[caption={
-Marked Encode Algorithm.
+$MarkedEncode$ Algorithm.
 The modification this algorithm introduces is that after every $\gamma$ bits a checksum $q(m_i)$ is inserted into the hiddentext.
 This allows the recipient to check for decoding errors due to wrong tokenization.
 $q$ is a function $q \colon \{0,1\}^\gamma \rightarrow \{0,1\}^\delta$ which generates a checksum of length $\delta$ for a message block of length $\gamma$.
@@ -242,8 +240,8 @@ algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma, \delta}(k_{prg}, m, h, q)$
 
 
 \begin{Pseudocode}[caption={
-Marked Decode Algorithm.
-In comparison to Meteor's $Decode$ algorithm, MarkedDecode checks the checksum every $\gamma$ bits. 
+$MarkedDecode$ Algorithm.
+In comparison to Meteor's $Decode$ algorithm, $MarkedDecode$ checks the checksum every $\gamma$ bits. 
 If the checksum does not match, a decoding error happened.
 We then perform a lookbehind on the stegotext and generate all possible tokenizations $paths$ for a substring of $c$.
 Afterwards, rewind the internal state and retry decoding with a path $p$ selected from $paths$.
@@ -278,34 +276,29 @@ algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
 				$paths \leftarrow \emptyset$
 				$s \leftarrow s + \gamma + \delta$
 				$i^* \leftarrow i$
-	$j \leftarrow 0$
-	$m \leftarrow \epsilon$
-	while $j < |m|$ do  # remove checksums from $m^*$
-		$m \leftarrow m^* || m^*[j: j + \gamma]$
-		$j \leftarrow j + \gamma + \delta$
-	Output $m$
+	Parse $m^*$ as $m_1||q(m_1)||m_2||q(m_2)||\dots||m_\xi||q(m_\xi)$
+	Output $m \leftarrow m_1||m_2||\dots||m_n$
 \end{Pseudocode}
-\todo{parse $m$ as $m_1||q_1||m_2||q_2||\dots||m_\xi||q_\xi$}
 \todo{MarkedDecode: $c_{i^*+x}$ explain $c^*$ length}
 \todo{fix MarkedDecode}
 
 For the modifications in $MarkedDecode$, we need some helper algorithms to generate a graph representing all possible tokenizations, called $TokenizeCandidates$, for a given stegotext, generate $AllPaths$ in that graph, and $SelectPath$ from the generated paths.
 
 We can represent the tokenization candidates in a graph using the ML model's tokens $\mathcal{T}$.
-When passed a string $c$, the algorithm $TokenizeCandidates$ generates a directed, acyclic graph (DAG) $G = (V, E)$.
-The nodes $v \in V$ represent all possible suffix strings of $c$ (including the empty string $\epsilon$) with $|V| = |c| + 1$.
+When passed a string $c$, the algorithm $TokenizeCandidates$ generates a directed, acyclic graph (or DAG) $G = (V, E)$.
+The nodes $v \in V$ represent all possible suffix strings of $c$ (including the empty string $\epsilon$) with $|V| \leq |c| + 1$.
 The edges $e \in E$ represent possible tokens used to transition between suffixes.
-An example graph for input ``hello'' can be found in \autoref{fig:ex-graph-tokenize-candidates}.
+For an example graph for input ``hello'' see \autoref{fig:ex-graph-tokenize-candidates}.
 For example, ``hello'' can be transformed to ``lo'' with token ``hel''.
 
 Now that we have a graph for $c$, we can generate every possible sequence of tokens which $c$ can be parsed as.
-For that we use the algorithm $AllPaths$, which takes as inputs a graph $G = (V, E)$ and a start node $v_i \in V$ and returns a set of all possible paths between $v_i$ and a fixed sink $v_j = \epsilon$.
+To do that we need the algorithm $AllPaths$, which takes as inputs a graph $G = (V, E)$ and a start node $v_i \in V$ and returns a set of all possible paths between $v_i$ and a fixed sink $v_j = \epsilon$.
 
 But how many paths exist between $v_i$ and $v_j$?
 A path between two vertices is a subset of $E$ which contains both vertices.
-In a maximum DAG, there are up to $2^{|V|-2} = 2^{|c|-1}$ subsets of $E$ which contain both $v_i$ and $v_j$.
+In a maximum DAG, there are up to $2^{|V|-2} \leq 2^{|c|-1}$ subsets of $E$ which contain both $v_i$ and $v_j$.
 Therefore, the output size of $AllPaths$ is, in the worst case, exponential in input length.
-A DFS-based implementation for AllPaths can be found in \autoref{alg:all-paths}.
+For a DFS-based implementation of AllPaths see \autoref{alg:all-paths}.
 
 Remember that each path generated by $AllPaths$ is a possible tokenization of $c$.
 To successfully decode the stegotext, we have to find the tokenization that has been used by the encoding party.
@@ -314,7 +307,7 @@ How can we select a tokenization from $paths$?
 A simple strategy would be to choose one element at random and try to decode it.
 If we encounter a checksum mismatch again, we select another until we have found the correct tokenization.
 With this approach, we will find the correct tokenization on average after $\frac{|paths|}{2} \leq \frac{2^{|c|-1}}{2} = 2^{|c|-2}$ attempts.
-For an implementation of $SelectPath$ which chooses a path at random refer to \autoref{alg:select-path-rnd}.
+For an implementation of $SelectPath$ which chooses a path at random see \autoref{alg:select-path-rnd}.
 
 While there are more advanced strategies to select a tokenization, e.g. by selecting a tokenization according to the probability distribution generated by the ML model, this simple approach is still viable when using the english language since we only generate paths for single words with relative short lengths.
 As has been shown in \cite{BoShSo2012} by analyzing books from different epochs, the average word length in the english language is about five characters.
@@ -372,7 +365,7 @@ algorithm $TokenizeCandidates_{\mathcal{T}}(c)$
 	\end{tikzpicture}
 	\caption{
 Tokenization graph generated by $TokenizeCandidates_{\mathcal{T}}(\textrm{``hello''})$ with tokens $\mathcal{T} = \{ h, e, l, o, he, lo,  hel, hell, ello, hello \}$.
-The vertices represent substrings of $s = $``hello'' which are accessible by removing a prefix token $t \in \mathcal{T}$ from $s$.
+The vertices represent substrings of $s = \textrm{``hello''}$ which are accessible by removing a prefix token $t \in \mathcal{T}$ from $s$.
 The edges are labeled with the token $t \in \mathcal{T}$ used to transform the left-hand side vertex $v_i$ to the right-hand side vertex $v_j$, i.e. $v_i = t || v_j$.
 The special node $\epsilon$ represents the empty string and is a sink in the tokenization graph.
 The list of all possible paths between $s$ and $\epsilon$ are the possible tokenizations of $s$ using tokens $\mathcal{T}$.

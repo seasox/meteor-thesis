@@ -13,7 +13,7 @@ Steganography is usually modelled using the Prisoners' Problem, as introduced in
 The participants Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a warden who we will call Eve.
 Alice and Bob now want to craft and exchange escape plans while Eve observes the messages exchanged between Alice and Bob.
-Since Eve des not want Alice and Bob to leave the prison prematurely, she tries to distinguish the exchange of the escape plan from innocuous messages.
+Since Eve does not want Alice and Bob to leave the prison prematurely, she tries to distinguish the exchange of the escape plan from innocuous messages.
 If Eve succeeds, she suppresses the message.
 For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 
@@ -238,32 +238,38 @@ For example, when translating a sentence from one language to another, the trans
 
 
 
-When we use GPT-2 in a stegosystem as we will with Meteor, we can abstract it as a function $\mathcal{GPT} \colon \mathcal{T}^\nu \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
-It takes an input vector $v \in \mathcal{T}^\nu$ of tokens and transforms it into a logits vector of unweighted model outputs of dimension $|\mathcal{T}|$.
-This input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over tokens $\mathcal{T}$.
+When we use GPT-2 in a stegosystem as we will with Meteor, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
+It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the maximum history length supported by the model) and transforms it into a logits vector of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
+The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over tokens $\mathcal{T}$.
 The output is logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
 Afterwards, we can transform the output $z$ to a probability distribution.
 
 Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
 In the simplest case, the token set can be the characters or words of the english language.
-We can then encode a string $m$ with $|m| \leq \nu$ into a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\nu - |m|$ entries in the vector with a special padding token $\bot$ and pass it to $Next_{\mathcal{GPT}}$.
-
-\todo{use example environment}
+We can then encode a string $m$ with $|m| \leq \zeta$ into a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\zeta - |m|$ entries in the vector with a special padding token $\bot$ and pass it to $Next_{\mathcal{GPT}}$.
 	
-While the character based approach works, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
+While the character based approach could work, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
 Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
 Probably yes.
-But from the model's perspective, the vectors $(d, o, \bot, \bot, \bot)^T$ and $(t, o, \bot, \bot, \bot)^T$ are very close to each other (the only differ in one dimension), while $(d, o, \bot, \bot, \bot)^T$ and $(d, o, n, ', t)^T$ differ in all but two dimensions.
+But on the character level, ``do'' and ``to'' are very close to each other as they only differ in one character.
+Meanwhile, ``do'' and ``don't'' share a common prefix, but differ in three characters (if we pad ``do'' with filler characters in the end).
+As we can see, using character based tokenization creates long token sequences and makes each token for itself meaningless.
 
-To tackle this challenge, most modern text generation models use subword tokenization. \todo{byte pair encoding}
-With subword tokenization, a token may not only be a single character or a full word, but also a substring of a word.
-This allows the models to better predict relationships between words.
+With word tokens on the other hand, each word is represented by a unique token, causing large token sets.
+It is also unlikely that a token set can be exhaustive for all kinds of texts, especially if we take typing errors into account.
+Word based tokenization makes it hard for a machine learning algorithm to learn relationships between words.
+Similar words -- such as the examples ``do'' and ``to'' from above -- can have vastly different meanings.
+
+To tackle this challenge, most modern text generation models use subword tokenization.
+Subword tokenization uses encoding techniques to find common sequences of characters.
+One of the commonly used encoding techniques in NLP (and coincidentally the one used in the GPT-n family) is byte-pair encoding (BPE), which was originally introduced as a data compression algorithm in \cite{BPE1994} and proposed as an encoding algorithm in neural machine translation in \cite{BPENMT2016}.
+With subword tokenization, a token may not only be a single character or a full word of a given language, but also a substring of a word.
+The use of subword tokens allows a model to better predict relationships between words.
 For example, the words ``do'' and ``don't'' are probably closely related.
-With subword tokens, we might tokenize ``do'' as $(do, \bot)^T$ and ``don't'' as $(do, n't)^T$.
-These vectors only differ in one dimension.
-A deep learning model might learn that n't is used to negate a word.
-While this approach makes it easier for the model to learn relationships between different words, there exist multiple tokenizations for some words.
+With subword tokens, a tokenizer can parse ``don't'' as ``do|n't''. 
+An NLP model might then learn that the suffix ``n't'' is used to negate certain verbs.
+While this approach makes it easier for the model to learn relationships between different words, there may exist multiple tokenizations for some words.
 
 After the tokenizer has encoded the history as a vector of subwords -- with each subword token having a unique numeric identifier -- this vector is passed as input to the generative model.
 
@@ -273,14 +279,14 @@ Ultimately, we want to have a probability distribution to sample from.
 To transform the logits vector $z \in \mathbb{Z}^\ell$ to a probability distribution $p = (p_i)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$, we can use the softmax function $\sigma$:
 
 $$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},$$
-$$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)^{1 \leq i \leq \ell}$$
+$$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}$$
 
 When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
 
 \begin{figure}[htpb]
 	\centering
 	\begin{tikzpicture}
-            \node[rectangle, draw=black, minimum width=4cm, minimum height=4cm] (oracle) {ML Model};
+            \node[rectangle, draw=black, minimum width=4cm, minimum height=4cm] (oracle) {$\mathcal{GPT}$};
             \node[right=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=4cm] (sigmoid) {$\sigma$};
             \node[left=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=2cm] (transform) {Tokenizer};
             \node[left=of transform] (history) {$h$};
@@ -289,31 +295,28 @@ When we combine all the previous steps, we get the black box for our ML model as
             \node[below=5mm of t2] (t3) {$t_3$};
             \node[below=5mm of t3] (t4) {$\dots$};
             \node[below=5mm of t4] (tn) {$t_\ell$};
-            \node[dotted,inner sep=2mm,label={$Next_{\mathcal{GPT}}$},fit=(sigmoid) (oracle) (transform)] {};
+            \node[draw,dashed,inner sep=2mm,label={$Next_{\mathcal{GPT}}$},fit=(sigmoid) (oracle) (transform)] {};
             \draw[->] (transform) -- node[midway,above] {$v$} (oracle);
             \draw[->] (history) -- (transform);
             \draw[->] (oracle) -- node[midway,above] {$z$} (sigmoid);
             \draw[->] (sigmoid) -- node[midway,below] {$p_1$} (t1);
             \draw[->] (sigmoid) -- node[midway,below] {$p_2$} (t2);
             \draw[->] (sigmoid) -- node[midway,below] {$p_3$} (t3);
-            %\draw[->] (oracle) -- (t4);
             \draw[->] (sigmoid) -- node[midway,below] {$p_\ell$} (tn);
 	\end{tikzpicture}
 	\caption{
 Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_\ell\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell\}$. 
-The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\nu$ (with model-specific $\nu$) of token indices using a tokenizer $T$.
+The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\zeta$ (with model-specific $\zeta$) of token indices using a tokenizer $T$.
 The model takes as input said vector $v$ and returns a logits vector $z \in \mathbb{N}^{\ell}$ with unscaled outputs.
 This logits vector is then transformed to a probability distribution $\mathcal{P} = \left(p_i\right)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$ using the softmax function.
-	The $p_i$ represent the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\nu$: $p_i = Pr[s_{\nu+1}=t_i|s=v]$.
+	The $p_i$ represent the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\zeta$: $p_i = Pr[s_{\zeta+1}=t_i|s=v]$.
 }
 	\label{fig:generative-network}
 \end{figure}
 
-\todo{$\nu$ is not good as input dimension}
-
 To generate the next token in the sequence, we can sample according to the generated distribution.
 After sampling from the distribution, we append the sampled token to the history and repeat the whole process until sufficiently many tokens have been generated.
-We then convert the vector to a string to get the generated text.
+We then convert the model outputs to a string to get the generated text.
 For an example of GNN model outputs, see \exampleref{example:gpt2-output-sample}.
 
 \begin{example}[Example of GPT-2 model output]
@@ -323,16 +326,15 @@ For an example of GNN model outputs, see \exampleref{example:gpt2-output-sample}
 	\label{example:gpt2-output-sample}
 \end{example}
 
-To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
-PyTorch is a machine learning framework which implements high performance matrix operations needed for machine learning with hardware acceleration.
-The Huggingface Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
-In its simplest form, the Transformers Pipeline API generates texts using not only GPT-2 but many other generative models.
+To use GPT-2 with the Python programming language, we can use the Hugging Face Transformers library together with PyTorch.
+PyTorch is a machine learning framework which implements high performance operations needed for machine learning with hardware acceleration.
+The Hugging Face Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
+In its simplest form, the pipeline API generates texts using not only GPT-2 but many other generative models.
 A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found in \autoref{alg:gpt2-demo}.
-
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
 A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}.
-The output of \autoref{alg:gpt2-logits-demo} resembles those shown in \exampleref{example:gpt2-output-sample}. 
+Its output resembles that shown in \exampleref{example:gpt2-output-sample}. 
 This code example shows how we can:
 
 \begin{itemize}
@@ -353,11 +355,12 @@ While that value seems random to an observer, a recipient who possesses a secret
 
 \lstinputlisting[style=code, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
+\newpage
 
 \section{Meteor Stegosystem}
 \label{sec:meteor}
 In their paper \cite{Meteor2021}, the authors present the Meteor stegosystem, a provably secure steganographic system for realistic distributions as approximated by ML models.
-The central idea behind Meteor is that the encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
+The central idea behind Meteor is that an encoding party Alice manipulates the randomness used in the underlying sampling scheme to embed hidden text in the generated token sequence.
 The decoding party Bob receives the generated stegotext from Alice and recovers a prefix of the random value used in sampling for each token.
 
 While this is easily possible for the encoding party because they control the randomness used in sampling, it is intuitively unclear whether the decoding party can extract a prefix of the randomness in the decoding process to recover parts of the hiddentext message.
@@ -376,12 +379,13 @@ This definition formally models the desired behaviour described above.
 	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
 	
 	\begin{enumerate}
-		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from its underlying distribution $\mathcal{D}$
+		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from the underlying distribution $\mathcal{D}$
 		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample $s \in \Sigma$ returned from $Sample_{\mathcal{D}}^\beta$, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$
 	\end{enumerate}
 \end{definition}
 
-Now with the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model:
+With the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model.
+While they define the $Sample$ and $Recover$ algorithms for GPT-2 only, they argue that many generative models satisfy the RRRSS property.
 
 \begin{Pseudocode}[caption={
 RRRSS Sample Algorithm for GPT, \cite{Meteor2021}.
@@ -419,12 +423,11 @@ The $Sample_{\mathcal{GPT}}^\beta$ algorithm cumulates the token probabilities $
 Then the current token $t_i$ is the token to be sampled from the distribution.
 We can see that the order of tokens is relevant for the recovery to succeed, so we expect $Next_{\mathcal{GPT}}$ to return probabilities in a somehow ordered fashion.
 
-\todo{move sample/recover down. This is an example for an RRRSS scheme}
 Now that a RRRSS scheme for GPT-2 is established, we can commence with the definition of the stegosystem $\mathcal{S} = \left( Encode_{\mathcal{M}}^\beta, Decode_{\mathcal{M}}^\beta \right)$.
 The authors described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
 
 
-\begin{Pseudocode}[caption={Meteor Encode Algorithm, \cite{Meteor2021}}, label={alg:encode}]
+\begin{Pseudocode}[caption={Meteor Encode Algorithm \cite{Meteor2021}}, label={alg:encode}]
 algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, h)$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0$
@@ -437,17 +440,16 @@ algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, h)$
 		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i$
 	Output $c$
 \end{Pseudocode}
-\todo{explain slicing notation}
 
 $Encode$ uses the PRG to sample a pseudorandom mask and applies that mask to the next $\beta$ bits of $m$ into $r$.
 Since $mask$ is pseudorandom, this makes $r$ pseudorandom as well.
 We then use $r$ to sample from the RRRSS distribution to get the next token $c_i$.
 Afterwards, $Recover_{\mathcal{M}}^\beta$ and $LenPrefix^\beta$ are queried to get the number of bits $n_i$ recoverable from $r$.
 This procedure is repeated until $|m|$ bits of hiddentext have been encoded.
-Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_{prg}$ and $h$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}. \todo{ref https://www2.htw-dresden.de/~westfeld/publikationen/zoellner.et.al.ihw98.pdf}
+Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_{prg}$ and $h$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}.
 
 
-\begin{Pseudocode}[float, caption={Meteor Decode Algorithm, \cite{Meteor2021}}, label={alg:decode}]
+\begin{Pseudocode}[float, caption={Meteor Decode Algorithm \cite{Meteor2021}}, label={alg:decode}]
 algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
@@ -461,7 +463,7 @@ algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
 	Output $m$
 \end{Pseudocode}
 
-$Decode$ decodes the stegotext to the hiddentext message left-to-right. 
+$Decode$ takes a stegotext $c$ and decodes it to the hiddentext message.
 It repeatedly uses $Recover_{\mathcal{M}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distribution.
 It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
 
@@ -478,23 +480,22 @@ algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
 %
 \begin{Pseudocode}[caption={Meteor Prefix Algorithm, \cite{Meteor2021}}]
 algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
-	Output: Bit String $s$
-	Output $r_1[0: LenPrefix^\beta(\mathcal{R})]$
+	Output: Bit String $p$
+	Output $p \leftarrow r_1[0: LenPrefix^\beta(\mathcal{R})]$
 \end{Pseudocode}%
 %
 \begin{Pseudocode}[caption={Meteor KeyGen Algorithm, \cite{Meteor2021}}]
 algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 	Output: Key $k_{prg}$
-	Output $k_{prg} = PRG.Setup(1^\lambda)$
+	Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
 \end{Pseudocode}
 
-For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length.
-They introduce another formal definition, see Definition \autoref{def:correctness-kaptchuk}.
-In \autoref{chap:correctness}, we will argue how correctness is actually not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing exponential overhead.
+For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length, see \autoref{def:correctness-kaptchuk}.
+In \autoref{chap:correctness}, we will argue how correctness is in fact not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing computational overhead exponential in stegotext length.
 
 \begin{definition}[Correctness, \cite{Meteor2021}]
 \label{def:correctness-kaptchuk}
-We call a steganographic \emph{correct}, if, except with negligible probability, an encoded message can be recovered using the decode algorithm. 
+We call a steganographic protocol \emph{correct}, if, except with negligible probability, an encoded message can be recovered using the decode algorithm.
 Formally, for any $k \leftarrow KeyGen(1^\lambda)$, message $m \in \{0,1\}^*$ and history $h \in \mathcal{H}$,
 
 $$\mathop{Pr}[Decode_{\mathcal{D}}^\beta(k, Encode_{\mathcal{D}}^\beta(k, m, h), h) = m] \geq 1 - \mathop{negl}(\lambda)$$
@@ -502,14 +503,14 @@ $$\mathop{Pr}[Decode_{\mathcal{D}}^\beta(k, Encode_{\mathcal{D}}^\beta(k, m, h),
 
 Meteor's security proof is also outlined by the authors.
 They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ sampling from the distribution.
-More formally, they define steganographic secrecy as in \autoref{def:sec-kaptchuk}.
+More formally, they define steganographic secrecy in \autoref{def:sec-kaptchuk}.
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
 In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of steganographic secrecy against chosen hiddentext attackers introduced in \autoref{sec:prov-sec-steg}.
 We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using two queries, polynomial time and message length.
 
 \begin{definition}[Steganographic Secrecy, \cite{Meteor2021}]%
 	\label{def:sec-kaptchuk}%
-	We say that a steganographic scheme $\Sigma_{\mathcal{D}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$
+	We say that a steganographic scheme $\mathcal{S}_{\mathcal{D}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$
 	
 	$$k \leftarrow KeyGen_{\mathcal{D}}(1^\lambda)$$
 	$$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{Encode_{\mathcal{D}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{D}}(\cdot, \cdot)}=1 \right] \right| < \mathop{negl}(\lambda)$$
