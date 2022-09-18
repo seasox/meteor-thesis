@@ -11,17 +11,17 @@ While cryptography can be used to hide the contents of a confidential message, i
 
 Steganography is usually modelled using the Prisoners' Problem, as introduced in \cite{Simmons1983}.
 The participants Alice and Bob are imprisoned.
-While they can exchange messages, their contents are surveilled by a Warden.
-Alice and Bob now want to craft and exchange escape plans while Warden observes the messages exchanged between Alice and Bob.
-Since Warden obviously des not want Alice and Bob to leave the prison prematurely, he tries to distinguish the exchange of the escape plan from innocuous messages.
-If Warden succeeds, he suppresses the message.
+While they can exchange messages, their contents are surveilled by a warden who we will call Eve.
+Alice and Bob now want to craft and exchange escape plans while Eve observes the messages exchanged between Alice and Bob.
+Since Eve des not want Alice and Bob to leave the prison prematurely, she tries to distinguish the exchange of the escape plan from innocuous messages.
+If Eve succeeds, she suppresses the message.
 For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}
 	\node[block] (alice) {Alice};
-	\node[block, right=3cm of alice] (warden) {Warden};
+	\node[block, right=3cm of alice] (warden) {Eve};
 	\node[block, right=3cm of warden] (bob) {Bob};
 	\node[left=of alice] (m) {$m$};
 	\node[above=of alice] (k) {$k$};
@@ -48,8 +48,8 @@ For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 An illustration of The Prisoners' Problem, as described in \cite{Simmons1983}.
 Two accomplices in a crime (Alice and Bob) are imprisoned in widely separated cells.
 They want to escape and try to coordinate their escape plans.
-They are surveilled by a warden who monitors their communication.
-If Warden detects a hidden message by successfully distinguishing it from an innocuous message, he suppresses the message.
+They are surveilled by a warden Eve who monitors their communication.
+If Eve detects a hidden message by successfully distinguishing it from an innocuous message, he suppresses the message.
 Otherwise, the message is forwarded.
 It is expected that Alice and Bob have been able to exchange a common secret key $k$.
 They also have access to the same initial history $h$, which can be public.
@@ -130,26 +130,25 @@ $$\forall m \in \{0,1\}^{p(\lambda)},~ h \in \mathcal{H} \colon Pr[SD(k, SE(k, m
 The introduction of a \emph{negligible} function $\mu(\lambda)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the security parameter $\lambda$.
 While stegosystem with $\mu(\lambda) = 0$ can exist, the introduction of a negligible polynomial proves helpful for reductions on established cryptographic primitives.
 
-Since we naturally want our stegosystem to be prone to analysis by Warden, we also need a definition of security.
-Intuitively, we want Warden to be unable to efficiently detect the use of a stegosystem $\mathcal{S}$ without knowledge of the secret key $k$.
-To show that Warden cannot detect the use of $\mathcal{S}$, we establish an oracle $\mathcal{O}$ which does not actually use $m$ and $k$ to encode a hidden message, but instead draws a random sequence of documents of length $|SE(k,m,h)|$ from $\mathcal{C}$.
+Since we naturally want our stegosystem to be prone to analysis by Eve, we also need a definition of security.
+Intuitively, we want Eve to be unable to efficiently detect the use of a stegosystem $\mathcal{S}$ without knowledge of the secret key $k$.
+To show that Eve cannot detect the use of $\mathcal{S}$, we establish an oracle $\mathcal{O}$ which does not actually use $m$ and $k$ to encode a hidden message, but instead draws a random sequence of documents of length $|SE(k,m,h)|$ from $\mathcal{C}$.
 The actual encoding party Alice generates a stegotext $s = SE(k, m, h)$.
-If Warden is allowed to choose the hiddentext $m$ and history $h$, we call Warden a \emph{chosen hiddentext attacker}.
+If Eve is allowed to choose the hiddentext $m$ and history $h$, we call her a \emph{chosen hiddentext attacker}.
 
-We can model this attack as a distinguishing game between a challenger and Warden.
+We can model this attack as a distinguishing game between a challenger and a challengee Eve.
 First, the challenger samples a key $k \leftarrowS U_\lambda$.
-Next, Warden sends a tuple $(m, h)$ to the challenger.
+Next, Eve sends a tuple $(m, h)$ to the challenger.
 The challenger now secretly flips a coin.
 If the coin shows head, the challenger actually uses $\mathcal{S}$ to generate a stegotext $s = SE(k,m,h)$.
 Otherwise, the challenger uses $\mathcal{O}$ to generate a covertext $s$.
-Either way, the challenger sends the message $s$ back to Warden.
-If Warden is able to guess the result of the coin flip, he must have been able to distinguish a stegotext from a covertext.
+Either way, the challenger sends the message $s$ back to Eve.
+If Eve is able to guess the result of the coin flip, she2 must have been able to distinguish a stegotext from a covertext.
 
-If Warden can distinguish a stegotext from a covertext, he has an advantage against the stegosystem in the distinguishing game.
-The naïve approach to win this game would be to randomly guess the coin flip.
-This approach has a success rate of $\frac{1}{2}$.
-To rule out this, the challenger and Warden repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext.
-Also, Warden is limited computationally by time $t(\lambda)$.
+If Eve can distinguish a stegotext from a covertext, she has an advantage against the stegosystem in the distinguishing game.
+The naïve approach to win this game would be to randomly guess the coin flip with a success rate of $\frac{1}{2}$.
+To rule out this, the challenger and Eve repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext depending on security paramater $\lambda$.
+Also, Eve is limited computationally by time $t(\lambda)$.
 The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
 Formally, Hopper defined a chosen hiddentext attack as follows:
 
@@ -206,26 +205,57 @@ Generative Neural Networks (GNN) establish a model which approximate realistic d
 In the last few years, the artificial intelligence community achieved tremendous progress in building powerful deep learning based models.
 
 One of the milestones in deep learning based generative models certainly is the development of the Generative Pretrained Transformer, or GPT \cite{OpenAI2018}.
-Its successor GPT-2 \cite{OpenAI2019} became one of the industry-standard models in the natural language processing (NLP) community.
-While it is mostly known for its capabilities in text generation, it is not specifically designed to generate blog posts or newspaper articles.
+Its successors GPT-2 \cite{OpenAI2019} and GPT-3 \cite{OpenAI2020} quickly became two of the industry-standard models in the natural language processing (NLP) community.
+While the GPT-n family is mostly known for its capabilities in text generation, it is not specifically designed to generate blog posts or newspaper articles.
 It can also be used for a variety of other NLP tasks, such as question answering, sentiment detection or automatic text summarization.
+While GPT-3 can only be used via a paid online API, GPT-2 has been open-sourced in 2019 \cite{GPTReleasePlan2019}.
+This makes GPT-2 ideal for use in research.
 
-We can think of GPT-2 as a function $\mathcal{M} \colon \mathbb{N}^k \rightarrow \mathbb{Z}^\ell$. 
-It takes as input a vector of dimension $k$ and transforms it into another vector of dimension $\ell$. 
-The input vector is a numeric representation of a history $h$, which is a string.
-The output is a $\ell$-dimensional logits vector with components $l_i$ for each token $t_i$ in the model's token dictionary, which we can transform to a probability distribution.
+All members of the GPT-n family are attention-based transformer models, which were introduced in \cite{Vaswani2017}.
+Before transformer models, state of the art machine learning models were often built with recurrent neural networks (RNNs) such as the long-short-term memory model, or LSTM \cite{Hochreiter1997}.
+
+In comparison to RNNs, transformer models are able to achieve significantly higher training and prediction performance.
+While both RNNs and transformer models parse their inputs as a vector of tokens, they differ in the 
+In RNN, each token is passed into a loop structure which calculates the next output as well as a hidden state vector which is recurrently (hence the name) passed into the loop structure for the next output.
+Since RNN needs the hidden state vector from time step $t$ to calculate the output of time step $t+1$, the calculation has to be done in a serial manner, limiting parallel computation.
+
+A transformer model, on the other hand, uses attention and refrains from using a hidden state vector like RNNs do.
+Instead, at each token of the output, the transformer model weighs its attention on any token of the input, where the sum of attention weights $\omega_i$ over an input of length $n$ must be sum up to $\sum_i \omega_i = 1$.
+This technique mimics the way human attention works.
+For example, when translating a sentence from one language to another, the translator puts their attention to different parts of the input to determine the correct output word at a given position.
+
+\begin{example}[Example of LSTM and attention in translation]
+	When translating the english sentence ``The cat likes to eat bananas very much.'' to german ``Die Katze isst sehr gerne Bananen.'', the structure of the output differs significantly from that of the input.
+	In an RNN, the model has to remember the information ``eat'' until the token ``isst'' is generated.
+	This information has to be encoded in the hidden state vector while parsing the input and be carried throughout the output generation.
+	Since each output in the RNN alters the hidden state, the translation has to performed in a serial manner.
+		
+	In contrast, a transformer model uses attention at each step of output generation.
+	When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce grammatically correct sentences.
+	Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``essen''.
+\end{example}
+
+
+
+When we use GPT-2 in a stegosystem as we will with Meteor, we can abstract it as a function $\mathcal{GPT} \colon \mathcal{T}^\nu \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
+It takes an input vector $v \in \mathcal{T}^\nu$ of tokens and transforms it into a logits vector of unweighted model outputs of dimension $|\mathcal{T}|$.
+This input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over tokens $\mathcal{T}$.
+The output is logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
+Afterwards, we can transform the output $z$ to a probability distribution.
 
 Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
 In the simplest case, the token set can be the characters or words of the english language.
-We can then encode a string $s$ with $|s| \leq k$ into a vector $v = \left(t_i\right)^T_{1 \leq i \leq |s|}, ~t_i \in \mathcal{T}$, fill the remaining $k - |s|$ entries in the vector with a special padding token $\bot$ and pass it to $\mathcal{M}$.
+We can then encode a string $m$ with $|m| \leq \nu$ into a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\nu - |m|$ entries in the vector with a special padding token $\bot$ and pass it to $Next_{\mathcal{GPT}}$.
+
+\todo{use example environment}
 	
-While the character or word based approach works, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
+While the character based approach works, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
 Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
 Probably yes.
 But from the model's perspective, the vectors $(d, o, \bot, \bot, \bot)^T$ and $(t, o, \bot, \bot, \bot)^T$ are very close to each other (the only differ in one dimension), while $(d, o, \bot, \bot, \bot)^T$ and $(d, o, n, ', t)^T$ differ in all but two dimensions.
 
-To tackle this challenge, most modern text generation models use subword tokenization.
+To tackle this challenge, most modern text generation models use subword tokenization. \todo{byte pair encoding}
 With subword tokenization, a token may not only be a single character or a full word, but also a substring of a word.
 This allows the models to better predict relationships between words.
 For example, the words ``do'' and ``don't'' are probably closely related.
@@ -258,6 +288,7 @@ When we combine all the previous steps, we get the black box for our ML model as
             \node[below=5mm of t2] (t3) {$t_3$};
             \node[below=5mm of t3] (t4) {$\dots$};
             \node[below=5mm of t4] (tn) {$t_\ell$};
+            \node[dotted,inner sep=2mm,label={$Next_{\mathcal{GPT}}$},fit=(sigmoid) (oracle) (transform)] {};
             \draw[->] (transform) -- node[midway,above] {$v$} (oracle);
             \draw[->] (history) -- (transform);
             \draw[->] (oracle) -- node[midway,above] {$z$} (sigmoid);
@@ -268,14 +299,16 @@ When we combine all the previous steps, we get the black box for our ML model as
             \draw[->] (sigmoid) -- node[midway,below] {$p_\ell$} (tn);
 	\end{tikzpicture}
 	\caption{
-Generative ML Model as black box function, taking a history as input.
-The history $h$ is a string of text which is transformed to a vector $v \in \mathbb{N}^k$ (with model-specific $k$) of token indices.
-The model returns a logits vector $z \in \mathbb{N}^{\ell}$ with unscaled outputs.
-The logits vector is then transformed to a probability distribution $p = \left(p_i\right)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$ using the softmax function.
-	The $p_i$ represent the probability of token $t_i$ to be the next token in the sequence $s$ given a history $h$: $Pr[s_{k+1}=t_i|s=h]$.
+Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_\ell\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell\}$. 
+The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\nu$ (with model-specific $\nu$) of token indices using a tokenizer $T$.
+The model takes as input said vector $v$ and returns a logits vector $z \in \mathbb{N}^{\ell}$ with unscaled outputs.
+This logits vector is then transformed to a probability distribution $\mathcal{P} = \left(p_i\right)_{1 \leq i \leq \ell}$ with $\sum_{i=1}^{\ell} p_i = 1$ using the softmax function.
+	The $p_i$ represent the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\nu$: $p_i = Pr[s_{\nu+1}=t_i|s=v]$.
 }
 	\label{fig:generative-network}
 \end{figure}
+
+\todo{$\nu$ is not good as input dimension}
 
 To generate the next token in the sequence, we can sample according to the generated distribution.
 After sampling from the distribution, we append the sampled token to the history and repeat the whole process until sufficiently many tokens have been generated.
@@ -291,9 +324,9 @@ For an example of GNN model outputs, see \exampleref{example:gpt2-output-sample}
 
 To use GPT-2 with the Python programming language, we can utilize the Huggingface Transformers library together with PyTorch.
 PyTorch is a machine learning framework which implements high performance matrix operations needed for machine learning with hardware acceleration.
-The Huggingface Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learnings models and allows training of machine learning models.
-In the most simple form, the Transformers Pipeline API generates texts using not only GPT-2 but many other text generation models.
-A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found at \autoref{alg:gpt2-demo}.
+The Huggingface Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
+In the most simple form, the Transformers Pipeline API generates texts using not only GPT-2 but many other generative models.
+A Python program which generates the outputs in \exampleref{example:gpt2-output-sample} can be found in \autoref{alg:gpt2-demo}.
 
 
 While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
@@ -306,7 +339,7 @@ This code example shows how we can:
 	\item use the model to get a logits vector
 	\item transform the logits vector into a probability distribution using the softmax function
 	\item sample the next token from the distribution
-	\item convert a vector of tokens to a string using the tokenizer
+	\item convert a vector of tokens back to a string using the tokenizer
 \end{itemize}
 
 As we can see in \autoref{alg:gpt2-logits-demo}, a pseudorandom value \emph{sample} is generated to select the next token \emph{selection} from the distribution.
@@ -454,7 +487,7 @@ algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 	Output $k_{prg} = PRG.Setup(1^\lambda)$
 \end{Pseudocode}
 
-For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for negligible in key length.
+For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length.
 They introduce another formal definition, see Definition \autoref{def:correctness-kaptchuk}.
 In \autoref{chap:correctness}, we will argue how correctness is actually not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing exponential overhead.
 
