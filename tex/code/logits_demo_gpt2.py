@@ -3,6 +3,7 @@ tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 model.eval()
 
+# tokenize history string using tokenizer, convert to context tensor (vector)
 context_tokens = tokenizer.encode("I'm a language model")
 context = torch.tensor([tokenizer.encoder['<|endoftext|>']] + context_tokens, dtype=torch.long)
 prev = context
@@ -15,7 +16,7 @@ for _ in range(max_len):
 	result = model(prev.unsqueeze(0), past_key_values=past)
 	logits = result.logits
 	past = result.past_key_values
-	# preprocessing logits: sort, convert to double, scale by temperature
+	# preprocess logits: sort, convert to double, scale by temperature
 	logits, indices = logits[0, -1, :].sort(descending=True)
 	logits = logits.double()
 	logits_temp = logits / temperature
