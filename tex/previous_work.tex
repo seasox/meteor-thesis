@@ -104,7 +104,7 @@ Now that we have established the notion of channels and always-informative chann
 
 \begin{definition}[Stegosystem, \cite{Hopper2004}]
 \label{def:stegosystem}
-A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, is a pair of probabilistic algorithms:
+A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with security parameter $\lambda$ is a pair of probabilistic algorithms:
 
 \begin{itemize}
 	\item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $k \in \{0,1\}^\lambda$, a string $m \in \{0,1\}^*$ (the hiddentext), and a message history $h \in \mathcal{H}$.
@@ -143,11 +143,11 @@ The challenger now secretly flips a coin.
 If the coin shows head, the challenger actually uses $\mathcal{S}$ to generate a stegotext $s = SE(k,m,h)$.
 Otherwise, the challenger uses $\mathcal{O}$ to generate a covertext $s$.
 Either way, the challenger sends the message $s$ back to Eve.
-If Eve is able to guess the result of the coin flip, she2 must have been able to distinguish a stegotext from a covertext.
+If Eve is able to guess the result of the coin flip, she must have been able to distinguish a stegotext from a covertext.
 
-If Eve can distinguish a stegotext from a covertext, she has an advantage against the stegosystem in the distinguishing game.
+If Eve can distinguish a stegotext from a covertext, we say that she has an advantage against the stegosystem in the distinguishing game.
 The naïve approach to win this game would be to randomly guess the coin flip with a success rate of $\frac{1}{2}$.
-To rule out this, the challenger and Eve repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext depending on security paramater $\lambda$.
+To rule out this, the challenger and Eve repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext.
 Also, Eve is limited computationally by time $t(\lambda)$.
 The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
 Formally, Hopper defined a chosen hiddentext attack as follows:
@@ -177,7 +177,7 @@ where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at mo
 
 \begin{definition}[Steganographic Secrecy, \cite{Hopper2004}]
 \label{def:sec-hopper}
-A Stegosystem $\mathcal{S}_\lambda$ is called $(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$ ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$
+A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called $(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$ ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$
 \end{definition}
 
 \begin{definition}[Universal Steganographic Secrecy, \cite{Hopper2004}]
@@ -188,8 +188,8 @@ We call a Stegosystem $\mathcal{S}$ \emph{universally steganographic secret agai
 
 In the past two decades, many researchers built upon those cryptographic definitions of steganographic protocols.
 In \cite{DIRR2008}, complexity limitations of black-box steganography were investigated.
-Black-box steganography limits the sending party Alice such that she only knows an oracle which she can use to sample from the channel (but does not know the generated distribution), while Bob needs no access to the channel at all.
-While a black-box construction provides the most rigorous definition with the least required knowledge of the channel, exponential sampling complexity is required for the encoding party with respect to the number of message bits.
+In black-box steganography, the sending party Alice knows nothing about the underlying except a bound to its min-entropy and the ability to sample from it (but does not have to know the generated distribution), while Bob needs no access to the channel at all.
+While a black-box construction provides a definition with the least required knowledge of the channel, exponential sampling complexity is required for the encoding party with respect to the number of message bits.
 
 In contrast, white-box steganography describes the other extreme, where Alice either knows the channel distribution beforehand or can efficiently compute it.
 Both black-box and white-box steganography are unrealistic in practice, because Alice is possibly able to gain some knowledge or approximation about the channel, but most of the time cannot perfectly describe the channel's distribution.
@@ -202,9 +202,9 @@ This allows the use of steganography on efficiently learnable covertext channels
 \label{sec:generative-neural-networks}
 
 Generative Neural Networks (GNN) establish a model which approximate realistic distributions such as natural language.
-In the last few years, the artificial intelligence community achieved tremendous progress in building powerful deep learning based models.
+In the last few years, the artificial intelligence community achieved tremendous progress in building powerful models based on deep learning \cite{DeepLearning2015}.
 
-One of the milestones in deep learning based generative models certainly is the development of the Generative Pretrained Transformer, or GPT \cite{OpenAI2018}.
+One of the milestones in deep learning based generative models certainly is the development and release of the Generative Pretrained Transformer, or GPT \cite{OpenAI2018}.
 Its successors GPT-2 \cite{OpenAI2019} and GPT-3 \cite{OpenAI2020} quickly became two of the industry-standard models in the natural language processing (NLP) community.
 While the GPT-n family is mostly known for its capabilities in text generation, it is not specifically designed to generate blog posts or newspaper articles.
 It can also be used for a variety of other NLP tasks, such as question answering, sentiment detection or automatic text summarization.
@@ -215,9 +215,10 @@ All members of the GPT-n family are attention-based transformer models, which we
 Before transformer models, state of the art machine learning models were often built with recurrent neural networks (RNNs) such as the long-short-term memory model, or LSTM \cite{Hochreiter1997}.
 
 In comparison to RNNs, transformer models are able to achieve significantly higher training and prediction performance.
-While both RNNs and transformer models parse their inputs as a vector of tokens, they differ in the 
-In RNN, each token is passed into a loop structure which calculates the next output as well as a hidden state vector which is recurrently (hence the name) passed into the loop structure for the next output.
-Since RNN needs the hidden state vector from time step $t$ to calculate the output of time step $t+1$, the calculation has to be done in a serial manner, limiting parallel computation.
+While both RNNs and transformer models parse their inputs as a vector of so-called tokens, they differ in the way they use it to generate an output.
+In RNN, the input tokens are parsed one word at a time, while transformer models are able to parse all input tokens at the same time.
+This is due to the architecture of RNNs.
+RNNs consist of a loop structure which parses input tokens together with a hidden state vector and outputs a hidden state vector for the next iteration.
 
 A transformer model, on the other hand, uses attention and refrains from using a hidden state vector like RNNs do.
 Instead, at each token of the output, the transformer model weighs its attention on any token of the input, where the sum of attention weights $\omega_i$ over an input of length $n$ must be sum up to $\sum_i \omega_i = 1$.
@@ -226,13 +227,13 @@ For example, when translating a sentence from one language to another, the trans
 
 \begin{example}[Example of LSTM and attention in translation]
 	When translating the english sentence ``The cat likes to eat bananas very much.'' to german ``Die Katze isst sehr gerne Bananen.'', the structure of the output differs significantly from that of the input.
-	In an RNN, the model has to remember the information ``eat'' until the token ``isst'' is generated.
+	In an RNN, the model has to remember the token ``eat'' until the token ``isst'' is generated.
 	This information has to be encoded in the hidden state vector while parsing the input and be carried throughout the output generation.
 	Since each output in the RNN alters the hidden state, the translation has to performed in a serial manner.
 		
 	In contrast, a transformer model uses attention at each step of output generation.
-	When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce grammatically correct sentences.
-	Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``essen''.
+	When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce a grammatically correct sentence.
+	Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``isst''.
 \end{example}
 
 
