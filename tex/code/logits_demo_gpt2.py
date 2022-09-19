@@ -1,15 +1,15 @@
 # initialize tokenizer and model for GPT-2
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-model = GPT2LMHeadModel.from_pretrained('gpt2')
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2-large')
+model = GPT2LMHeadModel.from_pretrained('gpt2-large')
 model.eval()
 
-# tokenize history string using tokenizer, convert to context tensor (vector)
-context_tokens = tokenizer.encode("I'm a language model")
+# tokenize history string using tokenizer, convert to context tensor (vector), set up some parameters
+context_tokens = tokenizer.encode("What is steganography in computer science?")
 context = torch.tensor([tokenizer.encoder['<|endoftext|>']] + context_tokens, dtype=torch.long)
 prev = context
 output = context
 past = None
-max_len = 43
+max_len = 128
 temperature = 0.7
 for _ in range(max_len):
 	# get model result for next token
@@ -20,7 +20,7 @@ for _ in range(max_len):
 	logits, indices = logits[0, -1, :].sort(descending=True)
 	logits = logits.double()
 	logits_temp = logits / temperature
-	# apply the softmax function to convert logits to probability distribution
+	# apply the softmax function to convert logits to probabilities
 	probs_temp = F.softmax(logits_temp, dim=0)
 	# accumulate probabilites
 	cum_probs = probs_temp.cumsum(0)

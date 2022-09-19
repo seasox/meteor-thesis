@@ -1,4 +1,3 @@
-generator = pipeline("text-generation", model='gpt2')
+generator = pipeline("text-generation", model='gpt2-large')
 
-print("Example of GPT-2 model output")
-print(generator("Hello, I'm a language model,", max_length=43, do_sample=True)[0]['generated_text'])
+print(generator("What is steganography in computer science?", max_length=128, do_sample=True)[0]['generated_text'])

@@ -2,25 +2,22 @@
 \label{chap:security}
 
 When we communicate using a steganographic protocol, secrecy is of upmost importance.
-We probably communicate in an environment which is very hostile against its communication participants.
-Therefore, we should satisfy the most rigorous security requirements we can possibly satisfy.
+We probably communicate in an environment that is very hostile against its communication participants.
+Therefore, we should satisfy the most rigorous security requirements we can.
 
 In \autoref{chap:previous-work}, we have discussed two different definitions of steganographic secrecy.
 In \autoref{def:sec-kaptchuk}, we have seen a rigorous definition of steganographic secrecy when we defined \emph{steganographic secrecy against chosen hiddentext attacks}, or SS-CHA.
 Later, in \autoref{sec:meteor}, we have introduced the Meteor stegosystem and its definition of security.
-In this chapter, we will
-\begin{itemize}
-	\item compare Meteor's security definition with Hopper's security game,
-	\item show that the Meteor stegosystem does not satisfy Hopper's security game,
-	\item modify Meteor to improve its security against SS-CHA adversaries.
-\end{itemize}
+In this chapter, we will compare Meteor's security with Hopper's definition of SS-CHA.
+Afterwards, we will show that the Meteor stegosystem is in fact insecure with respect to Hopper's definition of SS-CHA secrecy.
+In conclusion, we will introduce a modification to the Meteor stegosystem to improve its security against SS-CHA adversaries.
 
-\section{Comparison of Meteor's and Hopper's Security Game}
+\section{Comparison of Meteor's and Hopper's Steganographic Secrecy}
 
 In \autoref{sec:prov-sec-steg} and \autoref{sec:meteor}, we have discussed Hopper's and Meteor's definition of steganographic secrecy against chosen hiddentext attackers. 
 In this section, we will compare the security definition of the Meteor stegosystem with Hopper's definition of SS-CHA and see that Meteor's definition is weaker than Hopper's.
 
-In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack, if for all $k \leftarrow KeyGen(1^\lambda)$, the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
+In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack if for all $k \leftarrow KeyGen(1^\lambda)$ the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
 
 \begin{theorem}
 	Meteor is secure (\autoref{def:sec-kaptchuk}) against ppt. adversaries. 
@@ -34,7 +31,7 @@ In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against
 	
 	How is $r$ constructed? 
 	It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
-	Since $mask$ is a output of a pseudorandom generator which we expect to be indistinguishable from true randomness, the exclusive or of $mask$ with some other value is indistinguishable from true randomness as well.
+	Since $mask$ is an output of a pseudorandom generator which we expect to be indistinguishable from true randomness, the exclusive-or of $mask$ with some other value is indistinguishable from true randomness as well.
 	But to distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e. the attacker has to distinguish $r$ from a truly random value $r'$.
 	
 	Therefore, $\mathcal{A}$ can be used to attack the PRG.
@@ -51,25 +48,25 @@ After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs fr
 
 \section{Improve Meteor's Security}
 
-To improve Meteor's security, we have to randomize the output of $Encode$, i.e. on each invocation with the same inputs, $Encode$ should, with high probability, return a different stegotext, while retaining indistinguishability from random sampling.
+To improve Meteor's security, we have to randomize the output of $Encode$, i.e. on each invocation with the same inputs, $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
 
 To achieve that we have to introduce a new cryptographic primitive, symmetric encryption schemes (SES) in counter (CTR) mode based on a pseudorandom function (PRF) $F$.
-We introduce a definition of a SES in Figure \ref{fig:ses} which is a simplified variant of that introduced in \cite{Berndt2017}.
-There, it is argued that SES satisfies the IND\$-CPA property if F is a secure pseudorandom function.
+We introduce a definition of a SES in \autoref{fig:ses} which is a variant of that introduced in \cite{Berndt2017}.
+There it is argued that SES satisfies the IND\$-CPA property if F is a secure pseudorandom function.
 
 The idea behind encryption in SES-CTR is simple:
 First, split the message $m$ into $n$ blocks of size $F.in(\lambda)$ specific to $F$.
-Secondly, choose an $IV$ of size $F.in(\lambda)$ at random.
+Then choose an $IV$ of size $F.in(\lambda)$ at random.
 It is important to not reuse an $IV$ with a given key $k$ to retain One-Time-Pad security.
 Now, for each block $m_i$, use $F.Eval$ to generate the pseudorandom value $r = F.Eval(k, IV+i)$.
 Afterwards, calculate the exclusive or of $r$ and $m_i$ to get the next block $c_i$.
-The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is the IV concatenated with ciphertext blocks $c_i$.
+The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is $IV$ concatenated with ciphertext blocks $c_i$.
 
 Decryption is similar to encryption.
 First, split $c$ in $n+1$ blocks of size $F.in(\lambda)$.
 Interpret the first block of $c$ as $IV$.
 Afterwards, analogously to encryption, for each block $c_i$, calculate $r = F.Eval(k, IV+i)$.
-Now, calculate the exclusive or of $r$~ and $c_i$ to recover the message block $m_i = c_i \oplus r$.
+Now, calculate the exclusive or of $r$ and $c_i$ to recover the message block $m_i = c_i \oplus r$.
 
 Now that we have established the concept of an SES, we still need to find $F$ which is a PRF.
 In practice, we can use AES as $F$, which is believed to be a pseudorandom permutation (PRP), with key $k$ and messages $IV+i$.
@@ -98,36 +95,37 @@ algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\la
 	\label{fig:ses}%
 \end{figure}%
 
+\todo{Figure -> Listing?}
 
-In \autoref{alg:encode-nd}, we prepend the bits encoded in the covert distribution with an initialization vector IV randomly sampled from bitstrings of length $\gamma$.
-This IV is then used as randomness input for our PRF.
-Since IV is pseudorandom, an attacker cannot distinguish the sampled tokens from those sampled by a random oracle $\mathcal{O}$.
+In \autoref{alg:encode-nd}, we use the SES defined in \autoref{fig:ses} to encrypt the hiddentext message.
+Since $IV$ as well as all blocks $c_i$ are indistinguishable from pseudorandom values, the entire output of $SES.Encrypt_F$ is pseudorandom.
+Therefore, an attacker cannot distinguish the stegotext tokens from those sampled using a random oracle $\mathcal{O}$.
 
-\autoref{alg:encode-nd} and \autoref{alg:decode-nd} improve Meteor's steganographic secrecy.
-The algorithms use the SES scheme defined above, replacing the original One-Time-Pad based encryption scheme.
-Since SES is IND\$-CPA secure we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA secrecy against polynomial attackers as long as the same $IV$ is not encountered twice, which is -- in practice -- very unlikely for sufficient IV lengths.
+These modifications improve Meteor's security against SS-CHA adversaries.
+Repeated invocations of $EncodeRandomized$ return different stegotexts with overwhelming probability.
+Since $SES$ is IND\$-CPA secure we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA secrecy against polynomial attackers as long as the same $IV$ is not generated twice, which is -- in practice -- very unlikely for sufficient $IV$ lengths.
 
 
 \begin{Pseudocode}[float, caption={
-Meteor EncodeRandomized Algorithm.
-This algorithm differs from the original Encode algorithm by using a SES to encrypt the message.
-The ciphertext (which is indistinguishable from randomness) is then used to sample from $\mathcal{M}$.
+Meteor $EncodeRandomized$ Algorithm.
+This algorithm differs from the original $Encode$ algorithm by using SES to encrypt the message.
+The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{M}$.
 }, label={alg:encode-nd}]
 algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
 	Output: Stegotext message $c$
-	$c \leftarrow \epsilon,~ j \leftarrow 0,~ n \leftarrow 0$
+	$c \leftarrow \epsilon,~ i \leftarrow 0,~ n \leftarrow 0$
 	$r \leftarrow SES.Encrypt(k, m)$
 	while $n < |r|$ do
 		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r[n: n+\beta])$
 		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i$
+		$c \leftarrow c || c_i,~ n \leftarrow n+n_i,~ h \leftarrow h||c_i,~ i \leftarrow i + 1$
 	Output $c$
 \end{Pseudocode}
 \begin{Pseudocode}[float, caption={
-Meteor DecodeRandomized Algorithm.
-This algorithm differs from the original Decode algorithm by interpreting the first $\gamma$ bits of the hiddentext as IV.
-After decoding $\gamma$ bits of hiddentext, a PRF is initialized with IV for generation of pseudorandom masks.}, label={alg:decode-nd}]
+Meteor $DecodeRandomized$ Algorithm.
+This algorithm differs from the original Decode algorithm by using SES to decrypt the stegotext.
+}, label={alg:decode-nd}]
 algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, h)$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon,~ n \leftarrow 0,~ r \leftarrow \epsilon$
