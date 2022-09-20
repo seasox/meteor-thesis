@@ -1,12 +1,11 @@
 \chapter{Conclusion}
 \label{chap:conclusion}
 
-\todo{rewrite conclusion, redundant}
 We have discussed Meteor, an innovative stegosystem that uses generative neural networks to embed a hiddentext into a cover channel.
 It achieves that by replacing the randomness used for sampling with an encryption of the hiddentext.
 
 If the encrypted hiddentext is indistinguishable from randomness, this process is secure against chosen hiddentext attackers.
-In \autoref{chap:security}, we have seen that this is the case if an attacker is allowed to send up to one query to the SS-CHA game defined by \cite{Hopper2004}.
+In \autoref{chap:security}, we have seen that this is the case if an attacker is allowed to send up to one query in the SS-CHA game.
 Unfortunately, Meteor's security guarantee does not hold for attackers who can send polynomial queries, because Meteor's output is deterministic.
 To fix this, we discussed a modification to the Meteor stegosystem which uses a symmetric encryption scheme (SES) in counter mode to become indeterministic while maintaining indistinguishability from randomness.
 
