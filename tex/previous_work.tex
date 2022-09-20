@@ -78,30 +78,18 @@ Let $\mathcal{C}$ be a channel over $\Sigma$ and $h \in \mathcal{H}$ a history.
 We let $\mathcal{C}_h = \mathcal{D}_{\mathcal{C},h}$ denote the \emph{marginal channel distribution on a single document from $\Sigma$} conditioned on the history $h$ of already drawn documents.
 We let $\mathcal{C}_h^\ell$ denote the \emph{marginal channel distribution on a sequence of $\ell$ documents} from $\Sigma$ conditioned on the history $h$ of already drawn documents.
 \end{definition}
-
-We will also need the notion of an \emph{always informative channel}.
-An always informative channel is a channel with minimum-entropy bounded by some value $\alpha$.
+%We will also need the notion of an \emph{always informative channel}.
+%An always informative channel is a channel with minimum-entropy bounded by some value $\alpha$.
+We will also need the notion of the \emph{support of a distribution}.
+The support of a distribution consists of all elements with non-zero probability.
 
 \begin{definition}[Support]
 Let $D$ be a distribution.
-We denote the \emph{support of $D$} as $\mathop{supp}(D) = \{ x \in D \colon Pr_{D}[x] \neq 0 \}$.
+We denote the \emph{support of $D$} as 
+$$\mathop{supp}(D) = \{ x \in D \colon Pr_{D}[x] \neq 0 \}$$
 \end{definition}
 
-\begin{definition}[Minimum-Entropy, \cite{Hopper2004}]
-Let $D$ be a distributon with finite support $X$.
-We define the \emph{minimum entropy of $D$} as
-
-	$$H_{\infty}(D) = \min_{x \in X}\left\{ \log_2 \frac{1}{ Pr_{D}[x] } \right\}$$
-\end{definition}
-
-\begin{definition}[Always-Informative Channel, \cite{Hopper2004}]
-	Let $L > 0,~ \alpha > 0, \beta > 0$. 
-	We call a channel \emph{$\mathcal{C}$ $(L, \alpha, \beta)$-informative} if for all $h \in \Sigma^L$,~ $\mathcal{C}$ satisfies $Pr_{\mathcal{C}}[h] = 0$ or $H_{\infty}(C_{\mathcal{h}}^\beta) \geq \alpha$.
-	
-	If a channel $\mathcal{C}$ is $(\alpha, \beta)$-informative for all $L > 0$, we call $\mathcal{C}$ \emph{$(\alpha, \beta)$-always informative} or simply \emph{always informative}.
-\end{definition}
-
-Now that we have established the notion of channels and always informative channels, we can commence with the definiton of a stegosystem.
+Now that we have established the notion of channels, we can commence with the definiton of a stegosystem.
 
 \begin{definition}[Stegosystem, \cite{Hopper2004}]
 \label{def:stegosystem}
@@ -115,7 +103,7 @@ A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with secu
 \end{itemize}
 \end{definition}
 
-This definition resembles that of a symmetric encryption scheme, except that both $SE$ and $SD$ takes a message history $h$ as additional argument.
+This definition resembles that of a symmetric encryption scheme, except that both $SE$ and $SD$ take a message history $h$ as additional argument.
 Now that we have defined what a steganographic protocol is, we will introduce some properties we would like a stegosystem to satisfy.
 First of all, we want a stegosystem to be correct.
 The decoding of a given stegotext $s$, given the correct key $k$ and history $h$, should yield the original hiddentext $m$.
@@ -147,8 +135,8 @@ Either way, the challenger sends $s$ back to Eve.
 If Eve is able to guess the result of the coin flip using a distinguisher $W$, she must have been able to distinguish a stegotext from a covertext.
 
 If Eve can distinguish a stegotext from a covertext, we say that she has an advantage against the stegosystem in the distinguishing game.
-The naïve approach to win this game would be to randomly guess the coin flip with a success rate of $\frac{1}{2}$.
-To rule out this strategy, the challenger and Eve repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext.
+The naïve approach to win this game would be to simply guess the coin flip with a success rate of $\frac{1}{2}$ if they play this game just once.
+The challenger and Eve repeat this game $q(\lambda)$ times with up to $l(\lambda)$ bits of hiddentext chosen by Eve.
 Additionally, Eve is limited computationally by time $t(\lambda)$.
 The insecurity of a stegosystem is the maximum possible advantage any attacker can have.
 Formally, Hopper defined a chosen hiddentext attack as follows:
@@ -237,7 +225,7 @@ For example, when translating a sentence from one language to another, the trans
 
 
 
-When we use GPT-2 in a stegosystem as we will with Meteor, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
+When we use GPT-2 in the Meteor stegosystem, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
 It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the history length supported by the model) and transforms it into a logits vector of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
 The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over $\mathcal{T}$.
 The output is logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
