@@ -48,7 +48,7 @@ $$
 \end{example}
 
 
-\todo{double check if $D$ is correct, introduce offfset for $j^'$}
+\todo{double check if $D$ is correct, introduce offfset for $j'$}
 
 
 
@@ -114,7 +114,7 @@ We can establish the tokenization distance as an upper bound of the probability 
 $$Pr[Decode_{\mathcal{M}}(k, Encode_{\mathcal{M}}(k,m,h), h)=m] \leq Pr[X=0]$$
 
 How can we determine the probability $Pr[X=0]$?
-While the combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ are finite (which we could potentially brute-force), there are infinitely many messages $m \in \{0,1\}^*$ and sequences of documents $s \in \Sigma^*$.
+While there are finitely many combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ (which we could potentially brute-force even though they are exponential in $\lambda$), there are infinitely many messages $m \in \{0,1\}^*$ and sequences of documents $s \in \Sigma^*$.
 Therefore, we cannot determine $Pr$ exactly.
 What we can do instead is fix some set of keys $K \subset \{0,1\}^\lambda$ for a fixed security parameter $\lambda$, messages $M_n \subset \{0,1\}^n$ of fixed length $n$ and histories $H \subset \mathcal{H}$ and calculate the distances $D$ for samples $(k,m,h) \in K \times M_n \times H$ to establish an approximation $\hat{Pr} \approx Pr$.
 
