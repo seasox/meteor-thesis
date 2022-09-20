@@ -23,13 +23,13 @@ This modification first tries to detect a decoding error with a checksum of leng
 Further research could compare different values for $\gamma$ and $\delta$ to find a good trade-off between stegotext length and computational overhead or develop more efficient techniques to recover from decoding errors.
 
 While the Meteor authors have discussed that the Meteor stegosystem will be adaptable to GPT-3 once it is released, OpenAI unfortunately did not yet decide to release the model publicly and only allows limited access to GPT-3 using a private (and paid) online API.
-While it would technically still be possible to use this private API, its practical application in a stegosystem is limited.
-Also, the occurring costs of US\$ 0.15 to US\$ 7.68 per megabyte of hiddentext (US\$ 0.0004 to US\$ 0.02 per 1000 tokens with an average of 3 bits of hiddentext per token) are a problem in practical use \cite{OpenAIPricing2022}.
+While it would technically still be possible to use this private API with Meteor, its practical use in a stegosystem is limited.
+Also, the occurring costs of US\$ 1.12 to US\$ 55.92 per megabyte of hiddentext (US\$ 0.0004 to US\$ 0.02 per 1000 tokens with an average of 3 bits of hiddentext per token) are a problem in practical use \cite{OpenAIPricing2022}.
 
 Fortunately, other researchers have built and trained open-source alternatives to GPT-3.
-One collective that stands out in the NLP community is EleutherAI which trained and released GPT-NeoX, a generative model with 20 billion parameters, which can arguably compete with GPT-3 in prediction quality \cite{GPTneo2022}.
-Also, GPT-neoX seems to be compatible with GPT-2, since it uses the same encoder and token dictionary.
-Further research could incorporate GPT-neoX as an alternative model for use with the Meteor stegosystem.
+One alternative might be GPT-NeoX, a generative model with 20 billion parameters that can arguably compete with GPT-3 in prediction quality \cite{GPTneo2022}.
+Also, GPT-NeoX seems to be compatible with GPT-2, since it uses the same encoder and token dictionary.
+Further research could incorporate GPT-NeoX as an alternative model for use with the Meteor stegosystem.
 First experiments conducted for this thesis have concluded that text generation with large models, i.e. models with parameters an order of magnitude greater than GPT-2's 345 million parameters, requires a considerable amount of computational power which state-of-the-art laptops cannot deliver without hardware acceleration.
 
 Another promising topic for further research could be to adapt the Meteor stegosystem to use public keys instead of symmetric keys and allow steganographic group communication.
