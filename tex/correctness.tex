@@ -248,7 +248,7 @@ Afterwards, rewind the internal state and retry decoding with a path $p$ selecte
 }, label={alg:marked-decode}]
 algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
 	Output: Plaintext message $m$
-	$m^* \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0,~ i^* \leftarrow 0,~ s \leftarrow 0$
+	$m^* \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0,~ i^* \leftarrow 0,~ \alpha \leftarrow 0$
 	$paths \leftarrow \emptyset$
 	Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
 	for $i \in \{ 0, 1, \dots, \tau \}$ do
@@ -262,8 +262,7 @@ algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
 		$h \leftarrow h||c_i$
 		if $j \geq \gamma + \delta$
 			# calculate checksum
-			$j \leftarrow j \mod (\gamma+\delta)$
-			if $m^*[s+\gamma:s+\gamma+\delta] \neq q(m^*[s:s+\gamma])$  # checksum failed
+			if $m^*[\alpha+\gamma:\alpha+\gamma+\delta] \neq q(m^*[\alpha:\alpha+\gamma])$  # checksum failed
 				$j^* \leftarrow \min_{a \in \{ i^*, \dots, \tau \}} (c[a] = \textrm{'~ '})$
 				$c^* \leftarrow c_{i^*} || c_{i^*+1} || \dots || c_{j^*-1}$
 				if $paths = \emptyset$
@@ -273,21 +272,24 @@ algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
 				rewind PRG state and variables to state at $i^*$
 				retry decoding of $m^*[s:|m^*|]$ with $p$
 			else  # checksum ok, expect first $i$ tokens to be correctly decoded
+				$j \leftarrow j \mod (\gamma+\delta)$
 				$paths \leftarrow \emptyset$
-				$s \leftarrow s + \gamma + \delta$
+				$\alpha \leftarrow \alpha + \gamma + \delta$
 				$i^* \leftarrow i$
 	Parse $m^*$ as $m_1||q(m_1)||m_2||q(m_2)||\dots||m_\xi||q(m_\xi)$
 	Output $m \leftarrow m_1||m_2||\dots||m_n$
 \end{Pseudocode}
+
+\todo{too many variables: improve notation, maybe use ``parse $m^* as \dots$ or sth.}
 
 For the modifications in $MarkedDecode$, we need some helper algorithms to generate a graph representing all possible tokenizations, called $TokenizeCandidates$. 
 For a given stegotext, generate $AllPaths$ in the generated graph, then $SelectPath$ from the generated paths.
 
 We can represent the tokenization candidates in a graph using $\mathcal{T}$.
 When passed a string $c$, the algorithm $TokenizeCandidates$ generates a directed, acyclic graph (or DAG) $G = (V, E)$.
-The nodes $v \in V$ represent all possible suffix strings of $c$ (including the empty string $\epsilon$) with $|V| \leq |c| + 1$.
+The nodes $v \in V$ represent all reachable suffix strings of $c$ (including the empty string $\epsilon$) using tokens from $\mathcal{T}$ with $|V| \leq |c| + 1$.
 The edges $e \in E$ represent possible tokens used to transition between suffixes.
-For an example graph for input ``hello'' see \autoref{fig:ex-graph-tokenize-candidates}.
+For an example graph for input ``hello'', see \autoref{fig:ex-graph-tokenize-candidates}.
 For example, ``hello'' can be transformed to ``lo'' with token ``hel''.
 
 Now that we have a graph for $c$, we can generate every possible sequence of tokens which $c$ can be parsed as.

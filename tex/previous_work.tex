@@ -233,7 +233,7 @@ Afterwards, we can transform the output $z$ to a probability distribution.
 
 Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
-In the simplest case, the tokens can be the characters or words of the english language, i.e. $\mathcal{T} = \{ a, b, \dots, z A, B, \dots, Z, 0, 1, \dots, 9, \textrm{'}, ", \dots \}$.
+In the simplest case, the tokens can be the characters of the english language, i.e. $\mathcal{T} = \{ a, b, \dots, z, A, B, \dots, Z, 0, 1, \dots, 9, \textrm{'}, ", \dots \}$.
 We can then encode a string $m$ with $|m| \leq \zeta$ as a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\zeta - |m|$ entries in the vector with a special padding token $\bot$ and pass it to $\mathcal{GPT}$.
 	
 While the character based approach could work, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
@@ -243,7 +243,8 @@ But on the character level, ``do'' and ``to'' are very close to each other as th
 Meanwhile, ``do'' and ``don't'' share a common prefix, but differ in three characters (if we pad ``do'' with padding characters $\bot$).
 As we can see, the disadvantages of character based tokenization are long token sequences and meaninglessness of each token for itself.
 
-With word tokens on the other hand, each word is represented by a unique token, causing large token sets.
+We could also use words of the english language as tokens, where each word is represented by a unique token.
+But this results in large token sets.
 It is also unlikely that any token set of full words can be exhaustive for all kinds of texts, especially if we take typographical errors into account.
 Also, word based tokenization makes it hard for a machine learning algorithm to learn relationships between words.
 Similar words -- such as the examples ``do'' and ``to'' from above -- can have vastly different meanings, while the mistyped word ``bananna'' probably means the same as ``banana''.
@@ -260,8 +261,8 @@ While this approach makes it easier for the model to learn relationships between
 
 After the tokenizer has encoded the history as a vector of tokens it is passed as input to the generative model.
 The model's output is a logits vector.
-A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value represents a stronger activation.
-Ultimately, we want to have a probability distribution to sample from.
+A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value in a component represents a stronger activation and therefore a higher likelyhood of a token to appear as the next token in the sequence.
+But the logits vector is unweighted. It might contain positive and negative values, which don't sum up nicely as they would in a probability distribution we can sample from.
 To get a probability distribution from a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ we can use the softmax function $\sigma$, which transforms a logits vector of some dimension $\ell$ into another vector of the same dimension representing the probability mass function for the components of the logits vector:
 
 $$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},$$
@@ -276,11 +277,11 @@ When we combine all the previous steps, we get the black box for our ML model as
             \node[right=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=4cm] (sigmoid) {$\sigma$};
             \node[left=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=2cm] (transform) {Tokenizer};
             \node[left=of transform] (history) {$h$};
-            \node[above right=-5mm and 1cm of sigmoid] (t1) {$t_1$};
+            \node[above right=-5mm and 1.2cm of sigmoid] (t1) {$t_1$};
             \node[below=5mm of t1] (t2) {$t_2$};
             \node[below=5mm of t2] (t3) {$t_3$};
             \node[below=5mm of t3] (t4) {$\dots$};
-            \node[below=5mm of t4] (tn) {$t_\ell$};
+            \node[below=5mm of t4] (tn) {$t_{|\mathcal{T}|}$};
             \node[draw,dashed,inner sep=2mm,label={$Next_{\mathcal{GPT}}$},fit=(sigmoid) (oracle) (transform)] {};
             \draw[->] (transform) -- node[midway,above] {$v$} (oracle);
             \draw[->] (history) -- (transform);
@@ -288,10 +289,10 @@ When we combine all the previous steps, we get the black box for our ML model as
             \draw[->] (sigmoid) -- node[midway,below] {$p_1$} (t1);
             \draw[->] (sigmoid) -- node[midway,below] {$p_2$} (t2);
             \draw[->] (sigmoid) -- node[midway,below] {$p_3$} (t3);
-            \draw[->] (sigmoid) -- node[midway,below] {$p_\ell$} (tn);
+            \draw[->] (sigmoid) -- node[midway,below] {$p_{|\mathcal{T}|}$} (tn);
 	\end{tikzpicture}
 	\caption{
-Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_\ell\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell\}$. 
+Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_{|\mathcal{T}|}\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_{|\mathcal{T}|}\}$. 
 The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\zeta$ (with model-specific $\zeta$) of token indices using a tokenizer.
 The prediction model $\mathcal{GPT}$ takes vector $v$ as input and returns a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ of unscaled outputs.
 This logits vector is then transformed to a probability distribution $p \in [0,1]^{|\mathcal{T}|}$ using the softmax function.
@@ -299,6 +300,8 @@ This logits vector is then transformed to a probability distribution $p \in [0,1
 }
 	\label{fig:generative-network}
 \end{figure}
+
+\todo{fix alignment of $p_{|\mathcal{T}|}$}
 
 To generate the next token in the sequence, we can sample according to the generated distribution.
 After sampling from the distribution, we append the sampled token to the history and repeat the process until sufficiently many tokens have been generated.

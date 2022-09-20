@@ -99,6 +99,7 @@ algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\la
 
 In \autoref{alg:encode-nd}, we use the SES defined in \autoref{fig:ses} to encrypt the hiddentext message.
 Since $IV$ as well as all blocks $c_i$ are indistinguishable from pseudorandom values, the entire output of $SES.Encrypt_F$ is pseudorandom.
+In \autoref{alg:decode-nd}, the SES is used to decrypt the hiddentext.
 Therefore, an attacker cannot distinguish the stegotext tokens from those sampled using a random oracle $\mathcal{O}$.
 
 These modifications improve Meteor's security against SS-CHA adversaries.
