@@ -28,7 +28,10 @@ def create_plot(data, step_size, tikzexport):
     plt.hist(mismatch_count, bins=histbins, align='mid', weights=weights)
     plt.tight_layout()
     if tikzexport:
-        tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_count_{step_size}.tikz')
+        axis_params = [
+            'yticklabel style={/pgf/number format/fixed}',
+        ]
+        tikzplotlib.save(f'../tex/fig_meteor_stats_mismatch_count_{step_size}.tikz', extra_axis_parameters=axis_params)
     else:
         plt.show()
     plt.clf()
@@ -42,7 +45,7 @@ def visualize_mismatches(data):
 
 
 if __name__ == '__main__':
-    tikzexport = False
+    tikzexport = True
     for step_size in [128, 1024]:
         print(f'generating {step_size} bytes stats')
         fname = f'meteor_statistics_{step_size}.pickle'
@@ -50,8 +53,4 @@ if __name__ == '__main__':
         data_w_coding = list(filter(lambda x: x.coding == 'arithmetic', data))
         if not data_w_coding:
             raise 'no data'
-        #create_plot(data_w_coding, step_size, tikzexport)
-        mismatches = visualize_mismatches(data_w_coding)
-        m = max(mismatches, key=lambda m: m[0])
-        print(m)
-        print(visualize_mismatches(data_w_coding))
+        create_plot(data_w_coding, step_size, tikzexport)

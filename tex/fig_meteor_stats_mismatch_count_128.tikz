@@ -14,7 +14,8 @@ xtick style={color=black},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \hat{Pr}[X=x]\)},
 ymin=0, ymax=0.57616822429907,
-ytick style={color=black}
+ytick style={color=black},
+yticklabel style={/pgf/number format/fixed}
 ]
 \draw[draw=none,fill=steelblue31119180] (axis cs:-0.5,0) rectangle (axis cs:0.5,0.548731642189591);
 \draw[draw=none,fill=steelblue31119180] (axis cs:0.5,0) rectangle (axis cs:1.5,0.303738317757013);
