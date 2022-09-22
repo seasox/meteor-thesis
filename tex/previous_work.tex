@@ -45,7 +45,7 @@ For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 	\draw[->] (steganalysis) -- node[below] {No} (notstego);
 \end{tikzpicture}
 \caption{
-An illustration of The Prisoners' Problem \cite{Simmons1983}.
+An illustration of the Prisoners' Problem \cite{Simmons1983}.
 Two accomplices in a crime (Alice and Bob) are imprisoned in widely separated cells.
 They want to escape and try to coordinate their escape plans.
 They are surveilled by a warden Eve who monitors their communication.
@@ -118,7 +118,7 @@ $$\forall m \in \{0,1\}^{p(\lambda)},~ h \in \mathcal{H} \colon Pr[SD(k, SE(k, m
 \end{definition}
 
 The introduction of a \emph{negligible function} $\mu(\lambda)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the security parameter $\lambda$.
-While there might be stegosystem with $\mu(\lambda) = 0$, the introduction of a negligible function proves helpful for reductions on established cryptographic primitives.
+While there might be stegosystems with $\mu(\lambda) = 0$, the introduction of a negligible function proves helpful for reductions on established cryptographic primitives.
 
 Since we naturally want our stegosystem to be prone to analysis by Eve, we also need a definition of security.
 Intuitively, we want Eve to be unable to efficiently detect the use of a stegosystem $\mathcal{S}$ without knowledge of the secret key $k$.
@@ -150,39 +150,33 @@ In a chosen hiddentext attack, $W$ is given access to a ``mystery oracle'' $M$ w
 \end{enumerate}
 
 $W^M(1^\lambda)$ outputs a bit which represents its guess about the type of $M$.
-We define $W$'s advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$ by
+We define $W$'s \emph{advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$} by
 
 $$Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(\lambda) = |Pr[W^{ST}(1^\lambda)=1] - Pr[W^{CT}(1^\lambda)=1]|$$
 
 where the probability is taken over the randomness of $ST$, $CT$, and $W$. 
-Define the insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$ by
+Define the \emph{insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$} by
 
 $$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, \lambda) = \max_{W \in \mathcal{W}(t, q, l)} \left\{ Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(\lambda) \right\}$$
 
-where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(\lambda)$ queries totalling at most $l(\lambda)$ bits (of hiddentext) and running in time at most $t(\lambda)$.
+where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(\lambda)$ queries totaling at most $l(\lambda)$ bits (of hiddentext) and running in time at most $t(\lambda)$.
 \end{definition}
 
 \begin{definition}[Steganographic Secrecy, \cite{Hopper2004}]
 \label{def:sec-hopper}
-A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called $(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$ ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$
+A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called \emph{$(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$} ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$
 \end{definition}
-
-%\begin{definition}[Universal Steganographic Secrecy, \cite{Hopper2004}]
-%A Stegosystem $\mathcal{S}$ is called $(t, q, l, \epsilon)$-universally steganographic secret against chosen hiddentext attack ($(t,q,l,\epsilon)$-SS-CHA if it is $(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$ for every always-informative channel $\mathcal{C}$
-
-%We call a Stegosystem $\mathcal{S}$ \emph{universally steganographic secret against chosen hiddentext attacks} (USS-CHA) if for every channel $\mathcal{C}$ and for any ppt. adversary $W \in \mathcal{W}(t,q,l,\lambda)$, $Adv_{\mathcal{S},\mathcal{C},W}^{ss}(\lambda)$ is negligible in $\lambda$.
-%\end{definition}
 
 In the past two decades, many researchers built upon those cryptographic definitions of steganographic protocols.
 In \cite{DIRR2008}, complexity limitations of black-box steganography were investigated.
-In black-box steganography the sending party Alice knows nothing about the underlying except a bound to its min-entropy and the ability to sample from it (but does not have to know the generated distribution) while Bob needs no access to the channel at all.
+In black-box steganography the sending party Alice knows nothing about the underlying distribution except a bound to its min-entropy and the ability to sample from it (but does not have to know the generated distribution) while Bob needs no access to the channel at all.
 While a black-box construction provides a definition with the least required knowledge of the channel, exponential sampling complexity is required for the encoding party with respect to the number of message bits.
 
 In contrast, white-box steganography describes the other extreme, where Alice either knows the channel distribution beforehand or can efficiently compute it.
 Both black-box and white-box steganography are unrealistic in practice, because Alice is possibly able to gain some knowledge or approximation about the channel, but most of the time cannot perfectly describe the channel's distribution.
 Therefore, grey-box steganography has been introduced \cite{LRW2013}.
 Grey-box steganography tries to resolve these deficiencies by expecting that Alice has some initial knowledge of the covertext channel.
-Alice then uses machine learning techniques to learn about the covertext distribution and generate suitable stegotexts.
+Alice then uses machine learning techniques to learn about the covertext distribution and generates suitable stegotexts.
 This allows the use of steganography on efficiently learnable covertext channels and lowers the required complexity to sample stegotext documents.
 
 \section{Generative Neural Networks}
@@ -205,10 +199,10 @@ In comparison to RNNs, transformer models are able to achieve significantly high
 While both RNNs and transformer models parse their inputs as a vector of so-called tokens, they differ in the way they process them to generate an output.
 In RNN, the input tokens are parsed one word at a time, while transformer models are able to parse all input tokens at the same time.
 This is due to the architecture of RNNs.
-RNNs consist of a loop structure which parses one input token after the other together with a hidden state vector and outputs a hidden state vector for the next iteration.
+RNNs consist of a loop structure that parses one input token after the other together with a hidden state vector and outputs a hidden state vector for the next iteration.
 
 A transformer model, on the other hand, uses attention and refrains from using a hidden state vector like RNNs do.
-Instead, for each output token, the transformer model weighs its attentions on the input, where the sum of attention weights $\omega_i$ over an input of length $n$ must be sum up to $\sum_{1\leq i \leq n} \omega_i = 1$.
+Instead, for each output token, the transformer model weighs its attentions on the input, where the sum of attention weights $\omega_i$ over an input of length $n$ must add up to $\sum_{1\leq i \leq n} \omega_i = 1$.
 This technique mimics the way human attention works.
 For example, when translating a sentence from one language to another, the translator puts their attention to different parts of the input to determine the correct output word at a given position.
 
@@ -228,7 +222,7 @@ For example, when translating a sentence from one language to another, the trans
 When we use GPT-2 in the Meteor stegosystem, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
 It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the history length supported by the model) and transforms it into a logits vector of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
 The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over $\mathcal{T}$.
-The output is logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
+The output is a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
 Afterwards, we can transform the output $z$ to a probability distribution.
 
 Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
