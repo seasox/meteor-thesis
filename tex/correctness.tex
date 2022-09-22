@@ -201,7 +201,10 @@ For the modified $MarkedEncode$ algorithm, see \autoref{alg:marked-encode}.
 
 Now the decoding party has to verify that after each block $m_i$ of $\gamma$ bits, the checksum $q(m_i)$ of length $\delta$ appears.
 If not, a decoding error has occured in the stegotext, i.e. a tokenization mismatch has been occured.
-To recover from this, Bob has to roll back his decoding and generate all possible tokenizations since his last successful checksum check.
+To recover from this, Bob has to roll back his decoding and generate all possible tokenizations of a substring of $c$ starting with the position in $c$ after his last successful checksum check.
+The BPE tokenizer used in GPT-2 does not contain subword tokens that span word boundaries, i.e. no subword token contains inner spaces. Therefore, we can assume that a tokenization mismatch ends when the current word does.
+This approach will not work with models that use language independent tokenizers such as SentencePiece \cite{SentencePiece2018}, which tokenize strings as raw sentences and treats spaces as regular characters.
+With language independent tokenizers, the entire suffix of $c$ starting with the block failing the checksum heck has to be 
 When a tokenization with correct checksums was found, the decoder expects that the correct tokenization has been found and proceeds.
 
 It is still possible that a wrong tokenization randomly yields a correct checksum.
