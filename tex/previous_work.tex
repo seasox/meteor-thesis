@@ -9,7 +9,7 @@ This makes it robust against censorship and prohibition.
 While cryptography can be used to hide the contents of a confidential message, its use is easily discoverable by adversaries.
 
 
-Steganography is usually modelled using the Prisoners' Problem, as introduced in \cite{Simmons1983}.
+Steganography is usually modeled using the Prisoners' Problem, as introduced in \cite{Simmons1983}.
 The participants Alice and Bob are imprisoned.
 While they can exchange messages, their contents are surveilled by a warden we will call Eve.
 Alice and Bob now want to craft and exchange escape plans while Eve observes the messages exchanged between Alice and Bob.
@@ -221,14 +221,12 @@ For example, when translating a sentence from one language to another, the trans
 
 When we use GPT-2 in the Meteor stegosystem, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
 It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the history length supported by the model) and transforms it into a logits vector of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
-The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over $\mathcal{T}$.
-The output is a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
-Afterwards, we can transform the output $z$ to a probability distribution.
 
-Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
+The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over tokens $\mathcal{T}$.
+Since we work with text, we need to find a way for $T$ to transform our history $h$ into the realm of numbers, i.e. tokenize the history.
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
 In the simplest case, the tokens can be the characters of the english language, i.e. $\mathcal{T} = \{ a, b, \dots, z, A, B, \dots, Z, 0, 1, \dots, 9, \textrm{'}, ", \dots \}$.
-We can then encode a string $m$ with $|m| \leq \zeta$ as a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\zeta - |m|$ entries in the vector with a special padding token $\epsilon$ and pass it to $\mathcal{GPT}$.
+We can then encode a string $h$ with $|h| \leq \zeta$ as a vector $v = T(h) \in \mathcal{T}^{|h|}$, fill the remaining $\zeta - |h|$ entries in the vector with a special padding token $\epsilon$ and pass it to $\mathcal{GPT}$.
 	
 While the character based approach could work, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
 Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
@@ -239,7 +237,7 @@ As we can see, the disadvantages of character based tokenization are long token 
 
 We could also use words of the english language as tokens, where each word is represented by a unique token.
 But this results in large token sets.
-It is also unlikely that any token set of full words can be exhaustive for all kinds of texts, especially if we take typographical errors into account.
+It is also unlikely that any token set of full words can be exhaustive for all kinds of texts, especially if we take typographical errors or neologisms into account.
 Also, word based tokenization makes it hard for a machine learning algorithm to learn relationships between words.
 Similar words -- such as the examples ``do'' and ``to'' from above -- can have vastly different meanings, while the mistyped word ``bananna'' probably means the same as ``banana''.
 
@@ -254,13 +252,12 @@ An NLP model might then learn that the token ``n't'' can be used to negate a ver
 While this approach makes it easier for the model to learn relationships between different words, there may exist multiple tokenizations for a given word, a pitfall that will be important when we discuss correctness in \autoref{chap:correctness}.
 
 After the tokenizer has encoded the history as a vector of tokens it is passed as input to the generative model.
-The model's output is a logits vector.
+The model's output is a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
 A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value in a component represents a stronger activation and therefore a higher likelyhood of a token to appear as the next token in the sequence.
-But the logits vector is unweighted. It might contain positive and negative values, which don't sum up nicely as they would in a probability distribution we can sample from.
+Since the logits vector is unweighted, it might contain positive and negative values, which don't sum up nicely as they would in a probability distribution we can sample from.
 To get a probability distribution from a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ we can use the softmax function $\sigma$, which transforms a logits vector of some dimension $\ell$ into another vector of the same dimension representing the probability mass function for the components of the logits vector:
 
-$$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},$$
-$$\sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}$$
+$$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},~ \sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}$$
 
 When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
 
@@ -288,7 +285,7 @@ When we combine all the previous steps, we get the black box for our ML model as
 	\caption{
 Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_{|\mathcal{T}|}\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_{|\mathcal{T}|}\}$. 
 The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\zeta$ (with model-specific $\zeta$) of token indices using a tokenizer.
-The prediction model $\mathcal{GPT}$ takes vector $v$ as input and returns a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ of unscaled outputs.
+The prediction model $\mathcal{GPT}$ takes $v$ as input and returns a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ of unscaled outputs.
 This logits vector is then transformed to a probability distribution $p \in [0,1]^{|\mathcal{T}|}$ using the softmax function.
 	The component $p_i$ represents the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\zeta$: $p_i = Pr[s_{\zeta+1}=t_i|s=v]$.
 }
@@ -308,12 +305,12 @@ It is a form of digital communication that uses data to hide or obscure messages
 \end{example}
 
 To use GPT-2 with the Python programming language, we can use the Hugging Face Transformers library together with PyTorch.
-PyTorch is a machine learning framework which implements high performance operations needed for machine learning with support for hardware acceleration.
-The Hugging Face Transformers library is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
+PyTorch \cite{PyTorch} is a machine learning framework that implements high performance operations needed for machine learning with support for hardware acceleration.
+The Hugging Face Transformers library \cite{HFTransformers} is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
 In its simplest form, the pipeline API generates texts using not only GPT-2 but many other generative models.
 A Python program which generates the text in \exampleref{example:gpt2-output-sample} can be found in \autoref{alg:gpt2-demo}.
 
-While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept to use in a stegosystem.
+While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept for use in a stegosystem.
 A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}.
 Its output resembles that shown in \exampleref{example:gpt2-output-sample}. 
 This code example shows how we can:
@@ -329,12 +326,12 @@ This code example shows how we can:
 As we can see in \autoref{alg:gpt2-logits-demo}, a pseudorandom value \emph{sample} is generated to select the next token \emph{selection} from the distribution.
 This is what the Meteor stegosystem will abuse.
 There, the sending party will replace the randomness with a crafted value to embed a hidden message.
-While that value seems random to an observer, a recipient who possesses a secret key is able to recover the hidden message.
+While that value seems random to an observer, a recipient who possesses the secret key is able to recover the hidden message.
 
 
-\lstinputlisting[style=code, language=Python, caption={Python program which generates text using the Huggingface Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
+\lstinputlisting[style=code, language=Python, caption={Python text generator using the Hugging Face Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
 
-\lstinputlisting[style=code, language=Python, caption={Python program which generates text using the Huggingface Transformers}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
+\lstinputlisting[style=code, language=Python, caption={Python text generator using the Hugging Face Transformers library}, label={alg:gpt2-logits-demo}]{code/logits_demo_gpt2.py}
 
 \newpage
 
@@ -358,7 +355,7 @@ This definition formally models the desired behavior described above.
 	$Sample_{\mathcal{D}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow \Sigma$ 
 	and 
 	$Recover_{\mathcal{D}}^\beta \colon \mathcal{H} \times \Sigma \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
-	a Ranged Randomness Recoverable Sampling Scheme (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
+	a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
 	
 	\begin{enumerate}
 		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from the underlying distribution $\mathcal{D}$
@@ -370,7 +367,7 @@ With the definition of an RRRSS, the authors define sampling and recovery algori
 While they define the $Sample$ and $Recover$ algorithms for GPT-2 only, they argue that many generative models satisfy the RRRSS property.
 
 \begin{Pseudocode}[caption={
-RRRSS Sample Algorithm for GPT, \cite{Meteor2021}.
+RRRSS $Sample$ algorithm for GPT, \cite{Meteor2021}.
 $Sample$ produces, given a history $h$ and a value $r$, the next token sampled according to $r$ from the distribution for the next token generated by $Next_{\mathcal{GPT}}(h)$.
 }]
 algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
@@ -385,7 +382,7 @@ algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
 \end{Pseudocode}
 
 \begin{Pseudocode}[caption={
-RRRSS Recover Algorithm for GPT, \cite{Meteor2021}.
+RRRSS $Recover$ algorithm for GPT, \cite{Meteor2021}.
 Given a history $h$ and a sample $s$, return a set of possible random values used to generate $s$ with history $h$.
 }]
 algorithm $Recover_{\mathcal{GPT}}^\beta(h, s)$
@@ -409,7 +406,7 @@ Now that a RRRSS scheme for GPT-2 is established, we can commence with the defin
 The authors described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
 
 
-\begin{Pseudocode}[caption={Meteor Encode Algorithm \cite{Meteor2021}}, label={alg:encode}]
+\begin{Pseudocode}[caption={Meteor $Encode$ algorithm \cite{Meteor2021}}, label={alg:encode}]
 algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, h)$
 	Output: Stegotext message $c$
 	$c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
@@ -431,7 +428,7 @@ This procedure is repeated until $|m|$ bits of hiddentext have been encoded.
 Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_{prg}$ and $h$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}.
 
 
-\begin{Pseudocode}[float, caption={Meteor Decode Algorithm \cite{Meteor2021}}, label={alg:decode}]
+\begin{Pseudocode}[float, caption={Meteor $Decode$ algorithm \cite{Meteor2021}}, label={alg:decode}]
 algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
 	Output: Plaintext message $m$
 	$m \leftarrow \epsilon$
@@ -472,7 +469,7 @@ algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 	Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
 \end{Pseudocode}
 
-For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length (\autoref{def:correctness-kaptchuk}). This definition is equivalent to \autoref{def:correctness-hopper}. 
+For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length (\autoref{def:correctness-kaptchuk}). This definition is roughly equivalent to Hopper's correctness in \autoref{def:correctness-hopper}.
 In \autoref{chap:correctness}, we will argue how correctness is in fact not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing computational overhead exponential in stegotext length.
 
 \begin{definition}[Correctness, \cite{Meteor2021}]
@@ -484,7 +481,7 @@ $$\mathop{Pr}[Decode_{\mathcal{M}}^\beta(k, Encode_{\mathcal{M}}^\beta(k, m, h),
 \end{definition}
 
 Meteor's security proof is also outlined by the authors.
-They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ sampling from the distribution.
+They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ randomly sampling from the distribution.
 More formally, they define steganographic secrecy in \autoref{def:sec-kaptchuk}.
 Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
 In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of steganographic secrecy against chosen hiddentext attackers introduced in \autoref{sec:prov-sec-steg}.
@@ -492,7 +489,7 @@ We will also discuss how an attacker can distinguish Meteor's output from a rand
 
 \begin{definition}[Steganographic Secrecy, \cite{Meteor2021}]%
 	\label{def:sec-kaptchuk}%
-	We say that a steganographic scheme $\mathcal{S}_{\mathcal{M}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{D}}$
+	We say that a steganographic scheme $\mathcal{S}_{\mathcal{M}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{M}}$
 	
 	$$k \leftarrow KeyGen_{\mathcal{M}}(1^\lambda)$$
 	$$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{M}}^{Encode_{\mathcal{M}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{M}}(\cdot, \cdot)}=1 \right] \right| < \mu(\lambda)$$

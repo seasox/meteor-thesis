@@ -5,12 +5,12 @@ When we communicate using a steganographic protocol, secrecy is of upmost import
 We probably communicate in an environment that is very hostile against its communication participants.
 Therefore, we should satisfy the most rigorous security requirements we can.
 
-In \autoref{chap:previous-work}, we have discussed two different definitions of steganographic secrecy.
-In \autoref{def:sec-kaptchuk}, we have seen a rigorous definition of steganographic secrecy when we defined \emph{steganographic secrecy against chosen hiddentext attacks}, or SS-CHA.
+In \autoref{chap:previous-work}, we discussed two different definitions of steganographic secrecy.
+In \autoref{def:sec-hopper}, we have established a rigorous definition of steganographic secrecy against chosen hiddentext attackers called SS-CHA.
 Later, in \autoref{sec:meteor}, we have introduced the Meteor stegosystem and its definition of security.
 In this chapter, we will compare Meteor's security with Hopper's definition of SS-CHA.
 Afterwards, we will show that the Meteor stegosystem is in fact insecure with respect to Hopper's definition of SS-CHA secrecy.
-In conclusion, we will introduce a modification to the Meteor stegosystem to improve its security against SS-CHA adversaries.
+In conclusion, we will introduce a modification to the Meteor stegosystem to improve its security against SS-CHA adversaries by replacing the one-time pad in Meteor with a symmetric encryption scheme (SES).
 
 \section{Comparison of Meteor's and Hopper's Steganographic Secrecy}
 
@@ -60,7 +60,7 @@ Then choose an $IV$ of size $F.in(\lambda)$ at random.
 It is important to not reuse an $IV$ with a given key $k$ to retain One-Time-Pad security.
 Now, for each block $m_i$, use $F.Eval$ to generate the pseudorandom value $r = F.Eval(k, IV+i)$.
 Afterwards, calculate the exclusive or of $r$ and $m_i$ to get the next block $c_i$.
-The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is $IV$ concatenated with ciphertext blocks $c_i$.
+The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is the $IV$ concatenated with ciphertext blocks $c_i$.
 
 Decryption is similar to encryption.
 First, split $c$ in $n+1$ blocks of size $F.in(\lambda)$.
@@ -98,7 +98,7 @@ algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\la
 \todo{Figure -> Listing?}
 
 In \autoref{alg:encode-nd}, we use the SES defined in \autoref{fig:ses} to encrypt the hiddentext message.
-Since $IV$ as well as all blocks $c_i$ are indistinguishable from pseudorandom values, the entire output of $SES.Encrypt_F$ is pseudorandom.
+Since $IV$ as well as all blocks $c_i$ are indistinguishable from randomness, the entire output of $SES.Encrypt_F$ is indistinguishable from randomness.
 In \autoref{alg:decode-nd}, the SES is used to decrypt the hiddentext.
 Therefore, an attacker cannot distinguish the stegotext tokens from those sampled using a random oracle $\mathcal{O}$.
 
@@ -108,8 +108,8 @@ Since $SES$ is IND\$-CPA secure we can, with the same reduction as in Theorem \r
 
 
 \begin{Pseudocode}[float, caption={
-Meteor $EncodeRandomized$ Algorithm.
-This algorithm differs from the original $Encode$ algorithm by using SES to encrypt the message.
+$EncodeRandomized$ algorithm.
+This algorithm differs from the original $Encode$ algorithm by using $SES$ to encrypt the message.
 The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{M}$.
 }, label={alg:encode-nd}]
 algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
@@ -124,8 +124,8 @@ algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
 	Output $c$
 \end{Pseudocode}
 \begin{Pseudocode}[float, caption={
-Meteor $DecodeRandomized$ Algorithm.
-This algorithm differs from the original Decode algorithm by using SES to decrypt the stegotext.
+$DecodeRandomized$ algorithm.
+This algorithm differs from the original $Decode$ algorithm by using $SES$ to decrypt the stegotext.
 }, label={alg:decode-nd}]
 algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, h)$
 	Output: Plaintext message $m$

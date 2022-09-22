@@ -4,10 +4,10 @@
 
 In the Prisoners' Problem \cite{Simmons1983}, a unidirectional channel is described.
 The sending party Alice embeds a hidden message in a cover channel, the receiving party Bob decodes the received message.
-The Meteor stegosystem adopts this exact approach of receiving and sending party.
-But in most practical applications, we want a bidirectional communication channel between participants.
+The Meteor stegosystem adopts this approach of receiving and sending party.
+But in most practical applications, a bidirectional communication channel between participants is needed.
 For example in client-server architectures such as HTTP or key exchange protocols such as Diffie-Hellman, the participants exchange messages bidirectionally.
-Also, one of the most commonly used mediums for text messages, which Meteor's current implementation is built to generate, is instant-messaging, which is characterized by a continuous back and forth of messages between participants.
+Also, one of the most commonly used mediums for text messages is instant-messaging, which is characterized by a continuous back and forth of messages between participants.
 
 Since the Meteor stegosystem is constructed to be very adaptable to different underlying distributions (as long as they are RRRSS), we can modify Meteor to generate stegotext messages for use in the context of instant messaging.
 In this chapter, we will introduce a simple protocol for two-way communication using Meteor and adapt Meteor to use DialoGPT \cite{Zhang2020}, a GPT-based generative model which is trained to generate text messages as they could appear in a chat.
@@ -29,7 +29,7 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 		\declinst{bob}{}{Bob}
 		\condition{exchange key $k$ and history $h$}{alice,bob}
 		\nextlevel[2]
-		\action{split hiddentext $m$ in $\ell$ blocks $m_i$ of size $b$}{alice}
+		\action{split hiddentext $m$ in $\ell$ blocks $m_i$}{alice}
 		\nextlevel[3]
 		\condition{for $i \in \{ 1, 2, \dots, \ell \}$ do}{alice,bob}
 		\nextlevel[2]
@@ -65,7 +65,7 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
 While we can generate stegotexts for two-way communication using the GPT-2 model, as the original Meteor stegosystem does, the texts generated with GPT-2 are not really convincing as chat messages. 
 In the following example we see a conversation between Alice and Bob using the protocol described in \autoref{fig:twowaycommunication}.
 The initial history consists of a short sequence of messages where both participants greet and ask each other how their respective day was.
-Alice's messages encode the hiddentext ``Hi there!'' in blocks auf 32 bits, while Bob's responses are written manually.
+Alice's messages encode the hiddentext ``Hi there!'' in blocks auf 32 bits, while Bob's responses are generated manually.
 
 \begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using GPT-2 with 32 bit blocksize]
 \leavevmode
@@ -81,16 +81,17 @@ Alice's messages encode the hiddentext ``Hi there!'' in blocks auf 32 bits, whil
 As we can see, the generated text does not really read as if it was an actual conversation between friends.
 Also, the generated texts appear to lack context.
 Alice's texts don't seem to take Bob's responses into account and cover quite different topics in each iteration.
-This effect is due to the nature of GPT's training dataset, which is a large undisclosed collection of newspaper reports, books, articles and the like.
+This effect is due to the nature of GPT's training dataset called WebText, which is a large undisclosed collection of online newspaper articles, books, blogposts and the like.
 Therefore, it is very likely that GPT generates probability distributions for article-like texts.
-When sampling from this distribution, it is likely to generate text that reads like a newspaper article as well.
+When sampling from these distributions, it is likely to generate text that reads like a newspaper article as well.
 
 Fortunately, the NLP community is very active in building different models for many use cases.
-In 2020, DialoGPT, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads, has been released \cite{Zhang2020}.
-As the name suggests, DialoGPT is a derivation of GPT.
+In 2019, DialoGPT, a pre-trained transformer trained on public multi-turn dialogues from Reddit threads, has been published \cite{Zhang2020}.
+As the name suggests, DialoGPT is a derivation of GPT that is trained and fine-tuned for dialogue generation.
 When repeating the same experiment as above, but with the DialoGPT model as drop-in replacement for GPT-2, the results read more like what we would expect from a chat conversation between friends.
 Again, Alice's text messages encode the hiddentext ``Hi there!'' with 32 bits of encoded data per chat message.
 Bob's responses are handwritten.
+While a little bit incoherent, the transcript is closer to an actual conversation between friends.
 
 \begin{example}[Meteor Conversation for hiddentext ``Hi there!'' using DialoGPT with 32 bit blocksize]
 \leavevmode
