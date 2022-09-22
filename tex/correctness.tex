@@ -222,25 +222,18 @@ $q$ is a function $q \colon \{0,1\}^\gamma \rightarrow \{0,1\}^\delta$ which gen
 }, label={alg:marked-encode}]
 algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma, \delta}(k_{prg}, m, h, q)$
 	Output: Stegotext message $c$
-	$c \leftarrow \epsilon,~ n \leftarrow 0,~ m^* \leftarrow \epsilon,~ j \leftarrow 0$
-	while $j < |m|$ do
-		$m^* \leftarrow m^* || m_j$
-		$j \leftarrow j + 1$
-		if $j \equiv 0~ \pmod \gamma$
-			$m^* \leftarrow m^* || q(m_j)$
+	$c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
+	Parse $m$ as blocks $m_1||m_2||\dots||m_\alpha$ of size $\gamma$
+	$m^* \leftarrow m_1||q(m_1)||m_2||q(m_2)||\dots||m_\alpha||q(m_\alpha)$
 	while $n < |m^*|$ do
 		$mask \leftarrow PRG.Next(k_{prg})$
 		$r \leftarrow m^*[n:n+\beta] \oplus mask$
 		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r)$
 		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
 		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i$
+		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i,~ i \leftarrow i + 1$
 	Output $c$
 \end{Pseudocode}
-
-\todo{fixme}
-
-
 
 \begin{Pseudocode}[caption={
 $MarkedDecode$ Algorithm.
