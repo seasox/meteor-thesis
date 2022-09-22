@@ -228,13 +228,13 @@ Afterwards, we can transform the output $z$ to a probability distribution.
 Since we work with text, we need to find a way to transform our history $h$ into the realm of numbers and vectors.
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
 In the simplest case, the tokens can be the characters of the english language, i.e. $\mathcal{T} = \{ a, b, \dots, z, A, B, \dots, Z, 0, 1, \dots, 9, \textrm{'}, ", \dots \}$.
-We can then encode a string $m$ with $|m| \leq \zeta$ as a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\zeta - |m|$ entries in the vector with a special padding token $\bot$ and pass it to $\mathcal{GPT}$.
+We can then encode a string $m$ with $|m| \leq \zeta$ as a vector $v = T(h) = \left(t_i\right)^T_{1 \leq i \leq |m|}, ~t_i \in \mathcal{T}$, fill the remaining $\zeta - |m|$ entries in the vector with a special padding token $\epsilon$ and pass it to $\mathcal{GPT}$.
 	
 While the character based approach could work, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
 Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
 Probably yes.
 But on the character level, ``do'' and ``to'' are very close to each other as they only differ in one character.
-Meanwhile, ``do'' and ``don't'' share a common prefix, but differ in three characters (if we pad ``do'' with padding characters $\bot$).
+Meanwhile, ``do'' and ``don't'' share a common prefix, but differ in three characters (if we pad ``do'' with padding token $\epsilon$).
 As we can see, the disadvantages of character based tokenization are long token sequences and meaninglessness of each token for itself.
 
 We could also use words of the english language as tokens, where each word is represented by a unique token.
