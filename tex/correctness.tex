@@ -247,7 +247,7 @@ algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
     $h \leftarrow h||c_i$
     if $j \geq \gamma + \delta$
       # calculate checksum
-      Parse $m^*$ as $m^*_1||q_1||m^*_2||q_2||\dots||m^*_{\alpha^*}||q_{\alpha^*}||\dots||m^*_\alpha||q_\alpha$
+      Parse $m^*$ as $m^*_1||q_1||m^*_2||q_2||\dots||m^*_{\alpha^*}||q_{\alpha^*}||\dots||m^*_\alpha||q_\alpha$ ignoring suffix of length $< \gamma+\delta$
       if $q_{\alpha^*+1} \neq q(m^*_{\alpha^*+1}) \lor q_{\alpha^*+2} \neq q(m^*_{\alpha^*+2}) \lor \dots \lor q_\alpha \neq q(m^*_\alpha)$
         Find first index $j^* > i^*$ such that $c_{j^*}$ starts with space
         $c^* \leftarrow c_{i^*} || c_{i^*+1} || \dots || c_{j^*-1}$
