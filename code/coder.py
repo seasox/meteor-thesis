@@ -245,7 +245,7 @@ def encode_conversation_meteor(model, enc, message, context: List[int], key, non
         i = 0
         sent_finish = False
         while (i < len(message) or (finish_sent and not sent_finish)):
-            print(f'{i}: {i / float(len(message))}')
+            # print(f'{i}: {i / float(len(message))}')
             input_ids, kwargs = model.prepare_model_inputs(prev)
             kwargs['past_key_values'] = past
             result = model(input_ids.unsqueeze(0), **kwargs)
@@ -584,7 +584,7 @@ def encode_meteor_randomized(model, enc, message, context: List[int], key, nonce
                 probs_temp_int = probs_temp_int / probs_temp_int.sum() * cur_int_range
 
                 entropy_in_this_distribution = entropy(probs_temp, log_probs_temp)
-                print('%d: %.02f, H(D)=%.02f' % (i, i / float(len(ciphertext_bits)), entropy_in_this_distribution))
+                #print('%d: %.02f, H(D)=%.02f' % (i, i / float(len(ciphertext_bits)), entropy_in_this_distribution))
 
                 # Round probabilities to integers given precision
                 probs_temp_int = probs_temp_int.round().long()
@@ -841,7 +841,7 @@ def encode_meteor(model, enc, message: bytes, context: List[int], key, nonce, fi
         i = 0
         sent_finish = False
         while (i < len(message) or (finish_sent and not sent_finish)):
-            print(f'{i}: {i / float(len(message))}')
+            # print(f'{i}: {i / float(len(message))}')
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values
@@ -1243,11 +1243,11 @@ def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precis
     prev = context
     past = None
     message = []
-    print("inp len: %d" % len(inp))
+    # print("inp len: %d" % len(inp))
     with torch.no_grad():
         i = 0
         while i < len(inp):
-            print(f'{i}: {i / float(len(inp))}')
+            #print(f'{i}: {i / float(len(inp))}')
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values

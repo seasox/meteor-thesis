@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tikzplotlib
 
+from meteor_analysis import MeteorStatistic
+
 
 def flat_map(f, xs):
     return [y for ys in xs for y in f(ys)]
@@ -44,6 +46,12 @@ def visualize_mismatches(data):
     return mismatches
 
 
+def check_matching_tokenizations(data: [MeteorStatistic]):
+    def pred(x):
+        return (len(x.mismatches) == 0 and x.encoded_tokens != x.decoded_tokens) \
+            or (len(x.mismatches) != 0 and x.encoded_tokens == x.decoded_tokens)
+    return list(filter(pred, data))
+
 if __name__ == '__main__':
     tikzexport = True
     for step_size in [128, 1024]:
@@ -53,4 +61,8 @@ if __name__ == '__main__':
         data_w_coding = list(filter(lambda x: x.coding == 'arithmetic', data))
         if not data_w_coding:
             raise 'no data'
+        no_mismatch_prob=len(list(filter(lambda x: len(x.mismatches) == 0, data_w_coding)))/len(data_w_coding)
+        print(f'Pr_{step_size}[X=0]={no_mismatch_prob}')
         create_plot(data_w_coding, step_size, tikzexport)
+        # just a little test if the data makes sense
+        print(len(check_matching_tokenizations(data_w_coding)))
