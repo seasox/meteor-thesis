@@ -30,7 +30,7 @@ Concluding, the Meteor stegosystem is presented, a provably secure steganographi
 This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic correctness established in \autoref{def:correctness-hopper} and \autoref{def:correctness-kaptchuk} as well as the discussion of generative neural networks (GNNs) in \autoref{sec:generative-neural-networks}.
 We will see that the Meteor stegosystem is not correct because of subword tokenization used in most modern GNNs.
 Afterwards, algorithms are presented that ensure correctness of Meteor on the receiver site.
-Unfortunately, these algorithms in the worst case introduce overhead exponential in the length of the generated stegotext.
+Unfortunately, these algorithms -- in the worst case and for some models -- introduce overhead exponential in the length of the generated stegotext.
 
 In \autoref{chap:twowaycommunication} we present a small modification to the Meteor stegosystem that allows two-way communication.
 This chapter relies on the material presented in \autoref{sec:meteor} and \autoref{sec:generative-neural-networks}.

@@ -18,7 +18,7 @@ The stegotexts generated with the DialoGPT model more closely resemble those fou
 We also found that Meteor sometimes generates stegotexts that cannot be decoded correctly in \autoref{chap:correctness}.
 These decoding errors happen more frequently the longer the hiddentext is.
 This problem occurs due to subword tokenization, a feature of modern GNNs which greatly increases model performance.
-We have discussed a modification to the Meteor stegosystem which fixes these decoding errors while introducing computational decoding overhead exponential in stegotext length.
+We have discussed a modification to the Meteor stegosystem which fixes these decoding errors while -- in the worst case and for some models -- introducing computational decoding overhead exponential in stegotext length.
 This modification first tries to detect a decoding error with a checksum of length $\delta$ for message blocks of length $\gamma$ and, in case a decoding error occurs, generates every possible tokenization of a part of the stegotext.
 Further research could compare different values for $\gamma$ and $\delta$ to find a good trade-off between stegotext length and computational overhead or develop more efficient techniques to recover from decoding errors.
 

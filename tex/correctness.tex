@@ -8,7 +8,7 @@ After experimentation, we conclude that the cause of this is not due to issues w
 In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to \autoref{def:correctness-kaptchuk} by providing a counterexample.
 Afterwards, we will discuss an experiment which approximates the probability of incorrect decodings.
 The experiment shows that for sufficiently long hiddentexts the probability of incorrect decodings increases to approximately 87 \%.
-To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while introducing computational overhead exponential in stegotext length.
+To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while -- in the worst case -- introducing computational overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
 \label{sec:amb-tok}
@@ -101,7 +101,7 @@ We can establish the tokenization distance as an upper bound of the probability 
 $$Pr[Decode_{\mathcal{M}}^\beta(k, Encode_{\mathcal{M}}^\beta(k,m,h), h)=m] \leq Pr[X=0]$$
 
 How can we determine the probability $Pr[X=0]$?
-While there are finitely many combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ (which we could potentially brute-force even though they are exponential in $\lambda$), there are infinitely many messages $m \in \{0,1\}^*$ and sequences of documents $c \in \Sigma^*$.
+While there are finitely many combinations of keys $k \in \{0,1\}^\lambda$ and histories $h \in \mathcal{H}$ (which we could potentially brute-force even though there are exponentially many in $\lambda$), there are infinitely many messages $m \in \{0,1\}^*$ and sequences of documents $c \in \Sigma^*$.
 Therefore, we cannot determine $Pr$ exactly.
 What we can do instead is fix some set of keys $K \subset \{0,1\}^\lambda$ for a fixed security parameter $\lambda$, messages $M_n \subset \{0,1\}^n$ of fixed length $n$ and histories $H \subset \mathcal{H}$ and calculate the distances $D$ for samples $(k,m,h) \in K \times M_n \times H$ to establish an approximation $\hat{Pr} \approx Pr$.
 
@@ -192,7 +192,7 @@ To recover from this, Bob has to roll back his decoding and generate all possibl
 The BPE tokenizer used in GPT-2 does not contain tokens that span word boundaries, i.e. no token contains inner spaces. Therefore, we can assume that a tokenization mismatch ends when the current word does.
 When a tokenization with correct checksums was found, the decoder expects that the correct tokenization has been found and proceeds.
 Note that this approach will not work with models that use language independent tokenizers such as SentencePiece \cite{SentencePiece2018}, which tokenize strings as raw sentences and treats spaces as regular characters.
-With language independent tokenizers, the entire suffix of $c$ starting with the block failing the checksum has to be considered.
+With language independent tokenizers, the entire suffix of $c$ starting with the block failing the checksum has to be considered, potentially introducing overhead exponential in stegotext length.
 
 It is still possible that a wrong tokenization randomly yields a correct checksum.
 In an actual implementation, one might want to check multiple blocks in advance before expecting that the correct tokenization has been found and/or choose $\gamma$ and $\delta$ depending on the security parameter $\lambda$ such that the probability of a false-positive checksum is negligible.
@@ -200,7 +200,7 @@ Determining specific values for $\gamma$ and $\delta$ is a trade-off between ste
 While longer checksums $\delta$ potentially decrease the risk of false-positive checksum checks, longer checksums cause longer stegotexts.
 If we chose $\gamma = |m|$, only one checksum is generated over the entire message. 
 If an error is detected after decoding the entire hiddentext, every possible tokenization for the stegotext $c$ has to be generated, of which there are exponentially many in stegotext length.
-If we choose a small $\gamma$, many checksums are inserted, increasing stegotext length.
+If we choose a small $\gamma$, many checksums are inserted, drastically increasing stegotext length.
 A modified $Decode$ algorithm can be found in \autoref{alg:marked-decode}.
 
 \begin{Pseudocode}[caption={
@@ -271,18 +271,18 @@ For the modifications in $MarkedDecode$, we need helper algorithms $TokenizeCand
 
 $TokenizeCandidates_{\mathcal{T}}$ generates a graph that represents the possible tokenizations of a given stegotext.
 When passed a string $c$, the algorithm $TokenizeCandidates$ generates a directed, acyclic graph (or DAG) $G = (V, E)$.
-The nodes $v \in V$ represent all reachable suffix strings of $c$ (including the empty string $\epsilon$) using tokens from $\mathcal{T}$ with $|V| \leq |c| + 1$. \todo{give upper bound no. of edges}
-An edge $e \in E$ represents a possible token used to transition between suffixes.
+The nodes $V$ represent all reachable suffix strings of $c$ (including the empty string $\epsilon$) using tokens from $\mathcal{T}$ with $|V| \leq |c| + 1$.
+Edges $E$ represent tokens used to transition between suffixes.
 For an example graph for input ``hello'', see \autoref{fig:ex-graph-tokenize-candidates}.
 For example, ``hello'' can be transformed to ``lo'' with token ``hel''.
 
-$AllPaths$ takes a graph $G = (V, E)$ generated with $TokenizeCandidates_{\mathcal{T}}(c)$ for a stegotext $c$ and a start node $v_i \in V$ as inputs and returns a set of all possible paths between $v_i$ and a fixed sink $v_j = \epsilon$ (the empty suffix).
+$AllPaths$ takes a graph $G = (V, E)$ generated by $TokenizeCandidates_{\mathcal{T}}(c)$ for a stegotext $c$ and a start node $v_i \in V$ as inputs and returns a set of all possible paths between $v_i$ and a fixed sink $v_j = \epsilon$ (the empty suffix).
 Each path in that list represents a possible tokenization of $c$.
 But how many paths exist between $v_i$ and $v_j$?
-A path between two vertices is a subset of $E$ which contains both vertices.
-In a DAG, there are up to $2^{|V|-2} \leq 2^{|c|-1}$ subsets of $E$ which contain both $v_i$ and $v_j$.
+A path between two vertices is a set $V' \subseteq V$ that contains both $v_i$ and $v_j$ where there exist edges in $E$ from topologically greater vertices to topologically smaller vertices in $V'$.
+In a complete DAG, there are up to $2^{|V|-2} \leq 2^{|c|-1}$ subsets of $V$ which contain both $v_i$ and $v_j$.
 Therefore, the output size of $AllPaths$ is, in the worst case, exponential in input length.
-For a DFS-based implementation of AllPaths see \autoref{alg:all-paths}.
+For a DFS-based implementation of $AllPaths$ see \autoref{alg:all-paths}.
 
 Lastly, $SelectPath$ selects a path from a list of $paths$ generated by $AllPaths$.
 A simple strategy is to choose one element at random and try to decode it.
@@ -291,8 +291,8 @@ While there are more advanced strategies to select a tokenization, e.g. by selec
 As has been shown by analyzing books from different epochs, the average word length in the english language is about five characters \cite{BoShSo2012}.
 Therefore, an average english word can have up to $2^4 = 16$ possible tokenizations.
 There still are commonly used (and therefore generated) words with a length of up to 13 characters such as ``international'' or ``circumstances'', which could have up to $2^{12} = 4096$ possible tokenizations.
-Our experiments have shown that when using the GPT-2 tokenizers, the graphs for common longer words of the english language are still relatively small with less than $2^{11}$ possible paths.
-For an implementation of $SelectPath$ which chooses a path at random see \autoref{alg:select-path-rnd}.
+Our experiments have shown that when using the GPT-2 tokenizer, the graphs for common longer words of the english language are still relatively small with less than $2^{11}$ possible paths.
+For an implementation of $SelectPath$ that chooses a path at random see \autoref{alg:select-path-rnd}.
 
 
 
@@ -300,6 +300,7 @@ For an implementation of $SelectPath$ which chooses a path at random see \autore
 $TokenizeCandidates$ algorithm.
 This generates a graph $G = (V, E)$ from a string $c$.
 Vertices are substrings of $c$, each edge represents a token to use to transform between substrings.
+This algorithm can be sped up by using dynamic programming to cache results of invocations of $TokenizeCandidates$.
 }, label={alg:tokenize-candidates}]
 algorithm $TokenizeCandidates_{\mathcal{T}}(c)$
 	Output: Graph $G = (V, E)$
@@ -354,7 +355,7 @@ The list of all possible paths between $c$ and $\epsilon$ are the possible token
 
 \begin{Pseudocode}[float,caption={
 DFS-based $AllPaths$ algorithm that generates a list of all possible paths between between a root and a sink $\epsilon$ in a DAG.
-This algorithm's performance can be sped up by using dynamic programming to cache results of invocations of AllPaths.
+This algorithm's performance can be sped up by using dynamic programming to cache results of invocations of $AllPaths$.
 },label={alg:all-paths}]
 algorithm $AllPaths(G, root)	$
 	Output: List of paths between $root$ and sink $\epsilon$

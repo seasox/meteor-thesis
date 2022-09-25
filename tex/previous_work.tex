@@ -470,7 +470,7 @@ algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
 \end{Pseudocode}
 
 For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length (\autoref{def:correctness-kaptchuk}). This definition is roughly equivalent to Hopper's correctness in \autoref{def:correctness-hopper}.
-In \autoref{chap:correctness}, we will argue how correctness is in fact not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while introducing computational overhead exponential in stegotext length.
+In \autoref{chap:correctness}, we will argue how correctness is in fact not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while -- in the worst case and for some models -- introducing computational overhead exponential in stegotext length.
 
 \begin{definition}[Correctness, \cite{Meteor2021}]
 \label{def:correctness-kaptchuk}

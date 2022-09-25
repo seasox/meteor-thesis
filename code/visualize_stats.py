@@ -62,7 +62,8 @@ if __name__ == '__main__':
         if not data_w_coding:
             raise 'no data'
         no_mismatch_prob=len(list(filter(lambda x: len(x.mismatches) == 0, data_w_coding)))/len(data_w_coding)
+        print(len(data_w_coding))
         print(f'Pr_{step_size}[X=0]={no_mismatch_prob}')
-        create_plot(data_w_coding, step_size, tikzexport)
+        # create_plot(data_w_coding, step_size, tikzexport)
         # just a little test if the data makes sense
-        print(len(check_matching_tokenizations(data_w_coding)))
+        print(check_matching_tokenizations(data_w_coding))
