@@ -20,22 +20,22 @@ In this section, we will compare the security definition of the Meteor stegosyst
 In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack if for all $k \leftarrow KeyGen(1^\lambda)$ the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
 
 \begin{theorem}
-	Meteor is secure (\autoref{def:sec-kaptchuk}) against ppt. adversaries. 
+  Meteor is secure (\autoref{def:sec-kaptchuk}) against ppt. adversaries. 
 \label{thm:meteor-secure}
 \end{theorem}
 \begin{proof}
-	Let $\mathcal{A}$ be an attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish outputs of $Encode$ from those of a random oracle $\mathcal{O}$. 
-	We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
-	The attacker only sees the outputs $c = c_0 ||c_1 || \dots || c_{\tau}$ of $Encode$ and $\mathcal{O}$, respectively.
-	When we take a look at the implementation of $Encode$, we observe that the only output difference to $\mathcal{O}$ in the view of the attacker is the randomness $r$ used to sample $c_i$ from the underlying distribution.
-	
-	How is $r$ constructed? 
-	It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
-	Since $mask$ is an output of a pseudorandom generator which we expect to be indistinguishable from true randomness, the exclusive-or of $mask$ with some other value is indistinguishable from true randomness as well.
-	But to distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e. the attacker has to distinguish $r$ from a truly random value $r'$.
-	
-	Therefore, $\mathcal{A}$ can be used to attack the PRG.
-	Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
+  Let $\mathcal{A}$ be an attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish outputs of $Encode$ from those of a random oracle $\mathcal{O}$. 
+  We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
+  The attacker only sees the outputs $c = c_0 ||c_1 || \dots || c_{\tau}$ of $Encode$ and $\mathcal{O}$, respectively.
+  When we take a look at the implementation of $Encode$, we observe that the only output difference to $\mathcal{O}$ in the view of the attacker is the randomness $r$ used to sample $c_i$ from the underlying distribution.
+  
+  How is $r$ constructed? 
+  It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
+  Since $mask$ is an output of a pseudorandom generator which we expect to be indistinguishable from true randomness, the exclusive-or of $mask$ with some other value is indistinguishable from true randomness as well.
+  But to distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e. the attacker has to distinguish $r$ from a truly random value $r'$.
+  
+  Therefore, $\mathcal{A}$ can be used to attack the PRG.
+  Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
 
 But is this sufficient to satisfy Hopper's definition of steganographic secrecy?
@@ -72,27 +72,27 @@ Now that we have established the concept of an SES, we still need to find $F$ wh
 In practice, we can use AES as $F$, which is believed to be a pseudorandom permutation (PRP), with key $k$ and messages $IV+i$.
 
 \begin{figure}[htbp]%
-	\centering%
-	\begin{Pseudocode}
+  \centering%
+  \begin{Pseudocode}
 algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\lambda)})$
-	Output: Ciphertext $c$
-	$\lambda = |k|$
-	$IV \leftarrowS \{0,1\}^{F.in(\lambda)}$
-	for $i \in \{ 1, 2, \dots, n \}$ do
-		$c_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus m_i$
-	Output $IV||c_1||c_2||\dots||c_n$
-	\end{Pseudocode}%
-	\begin{Pseudocode}
+  Output: Ciphertext $c$
+  $\lambda = |k|$
+  $IV \leftarrowS \{0,1\}^{F.in(\lambda)}$
+  for $i \in \{ 1, 2, \dots, n \}$ do
+    $c_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus m_i$
+  Output $IV||c_1||c_2||\dots||c_n$
+  \end{Pseudocode}%
+  \begin{Pseudocode}
 algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\lambda)})$
-	Output: cleartext $m$
-	$\lambda = |k|$
-	$IV \leftarrow c_0$
-	for $i \in \{ 1, 2, \dots, n \}$ do
-		$m_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus c_i$
-	Output $m_1||m_2||\dots||m_n$
-	\end{Pseudocode}%
-	\caption{Symmetric Encryption Scheme (SES) in counter (CTR) mode}%
-	\label{fig:ses}%
+  Output: cleartext $m$
+  $\lambda = |k|$
+  $IV \leftarrow c_0$
+  for $i \in \{ 1, 2, \dots, n \}$ do
+    $m_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus c_i$
+  Output $m_1||m_2||\dots||m_n$
+  \end{Pseudocode}%
+  \caption{Symmetric Encryption Scheme (SES) in counter (CTR) mode}%
+  \label{fig:ses}%
 \end{figure}%
 
 \todo{Figure -> Listing?}
@@ -113,29 +113,29 @@ This algorithm differs from the original $Encode$ algorithm by using $SES$ to en
 The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{M}$.
 }, label={alg:encode-nd}]
 algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
-	Output: Stegotext message $c$
-	$c \leftarrow \epsilon,~ i \leftarrow 0,~ n \leftarrow 0$
-	$r \leftarrow SES.Encrypt(k, m)$
-	while $n < |r|$ do
-		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r[n: n+\beta])$
-		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
-		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i,~ n \leftarrow n+n_i,~ h \leftarrow h||c_i,~ i \leftarrow i + 1$
-	Output $c$
+  Output: Stegotext message $c$
+  $c \leftarrow \epsilon,~ i \leftarrow 0,~ n \leftarrow 0$
+  $r \leftarrow SES.Encrypt(k, m)$
+  while $n < |r|$ do
+    $c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r[n: n+\beta])$
+    $\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+    $c \leftarrow c || c_i,~ n \leftarrow n+n_i,~ h \leftarrow h||c_i,~ i \leftarrow i + 1$
+  Output $c$
 \end{Pseudocode}
 \begin{Pseudocode}[float, caption={
 $DecodeRandomized$ algorithm.
 This algorithm differs from the original $Decode$ algorithm by using $SES$ to decrypt the stegotext.
 }, label={alg:decode-nd}]
 algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, h)$
-	Output: Plaintext message $m$
-	$m \leftarrow \epsilon,~ n \leftarrow 0,~ r \leftarrow \epsilon$
-	Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
-	for $i \in \{ 0, 1, \dots, \tau \}$ do
-		$\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
-		$r_i \leftarrow Prefix^\beta(\mathcal{R})$
-		$r \leftarrow r || r_i$
-		$h \leftarrow h||c_i$
-	$m \leftarrow SES.Decrypt(k, r)$
-	Output $m$
+  Output: Plaintext message $m$
+  $m \leftarrow \epsilon,~ n \leftarrow 0,~ r \leftarrow \epsilon$
+  Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
+  for $i \in \{ 0, 1, \dots, \tau \}$ do
+    $\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $r_i \leftarrow Prefix^\beta(\mathcal{R})$
+    $r \leftarrow r || r_i$
+    $h \leftarrow h||c_i$
+  $m \leftarrow SES.Decrypt(k, r)$
+  Output $m$
 \end{Pseudocode}

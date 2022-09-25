@@ -20,29 +20,29 @@ For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}
-	\node[block] (alice) {Alice};
-	\node[block, right=3cm of alice] (warden) {Eve};
-	\node[block, right=3cm of warden] (bob) {Bob};
-	\node[left=of alice] (m) {$m$};
-	\node[above=of alice] (k) {$k$};
-	\node[below=of alice] (h) {history $h$};
-	\node[right=of bob] (mb) {$m$};
-	\node[above=of bob] (kb) {$k$};
-	\node[below=of bob] (hb) {history $h$};
-	\node[block, below=of warden] (steganalysis) {Steganalysis: is $s$ stegotext?};
-	\node[below left=of steganalysis] (isstego) {suppress message};
-	\node[below right=of steganalysis] (notstego) {forward message to recipient};
-	\draw[->] (alice) -- node[above] {$s$} (warden);
-	\draw[->] (warden) -- node[above] {$s$} (bob);
-	\draw[->] (m) -- (alice);
-	\draw[->] (k) -- (alice);
-	\draw[->] (h) -- (alice);
-	\draw[->] (bob) -- (mb);
-	\draw[->] (kb) -- (bob);
-	\draw[->] (hb) -- (bob);
-	\draw[->] (warden) -- (steganalysis);
-	\draw[->] (steganalysis) -- node[below] {Yes} (isstego);
-	\draw[->] (steganalysis) -- node[below] {No} (notstego);
+  \node[block] (alice) {Alice};
+  \node[block, right=3cm of alice] (warden) {Eve};
+  \node[block, right=3cm of warden] (bob) {Bob};
+  \node[left=of alice] (m) {$m$};
+  \node[above=of alice] (k) {$k$};
+  \node[below=of alice] (h) {history $h$};
+  \node[right=of bob] (mb) {$m$};
+  \node[above=of bob] (kb) {$k$};
+  \node[below=of bob] (hb) {history $h$};
+  \node[block, below=of warden] (steganalysis) {Steganalysis: is $s$ stegotext?};
+  \node[below left=of steganalysis] (isstego) {suppress message};
+  \node[below right=of steganalysis] (notstego) {forward message to recipient};
+  \draw[->] (alice) -- node[above] {$s$} (warden);
+  \draw[->] (warden) -- node[above] {$s$} (bob);
+  \draw[->] (m) -- (alice);
+  \draw[->] (k) -- (alice);
+  \draw[->] (h) -- (alice);
+  \draw[->] (bob) -- (mb);
+  \draw[->] (kb) -- (bob);
+  \draw[->] (hb) -- (bob);
+  \draw[->] (warden) -- (steganalysis);
+  \draw[->] (steganalysis) -- node[below] {Yes} (isstego);
+  \draw[->] (steganalysis) -- node[below] {No} (notstego);
 \end{tikzpicture}
 \caption{
 An illustration of the Prisoners' Problem \cite{Simmons1983}.
@@ -96,10 +96,10 @@ Now that we have established the notion of channels, we can commence with the de
 A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with security parameter $\lambda$ is a pair of probabilistic algorithms:
 
 \begin{itemize}
-	\item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $k \in \{0,1\}^\lambda$, a string $m \in \{0,1\}^*$ (the hiddentext), and a message history $h \in \mathcal{H}$.
-		$SE(k, m, h)$ returns a sequence of documents $s_1||s_2||\dots||s_l$ (the stegotext) from the support of $\mathcal{C}_h^l$.
-	\item $\mathcal{S}$.Decode (abbreviated $SD$) takes as input a key $k \in \{0,1\}^\lambda$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h \in \mathcal{H}$.
-		$SD(k, s, h)$ returns a hiddentext $m \in \{0,1\}^*$
+  \item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $k \in \{0,1\}^\lambda$, a string $m \in \{0,1\}^*$ (the hiddentext), and a message history $h \in \mathcal{H}$.
+    $SE(k, m, h)$ returns a sequence of documents $s_1||s_2||\dots||s_l$ (the stegotext) from the support of $\mathcal{C}_h^l$.
+  \item $\mathcal{S}$.Decode (abbreviated $SD$) takes as input a key $k \in \{0,1\}^\lambda$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h \in \mathcal{H}$.
+    $SD(k, s, h)$ returns a hiddentext $m \in \{0,1\}^*$
 \end{itemize}
 \end{definition}
 
@@ -207,14 +207,14 @@ This technique mimics the way human attention works.
 For example, when translating a sentence from one language to another, the translator puts their attention to different parts of the input to determine the correct output word at a given position.
 
 \begin{example}[Example of LSTM and attention in translation]
-	When translating the english sentence ``The cat likes to eat bananas very much.'' to german ``Die Katze isst sehr gerne Bananen.'', the structure of the output differs significantly from that of the input.
-	In an RNN, the model has to remember the token ``eat'' until the token ``isst'' is generated.
-	This information has to be encoded in the hidden state vector while parsing the input and be carried throughout the output generation.
-	Since each output in the RNN alters the hidden state, the translation has to performed in a serial manner.
-		
-	In contrast, a transformer model uses attention at each step of output generation.
-	When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce a grammatically correct sentence.
-	Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``isst''.
+  When translating the english sentence ``The cat likes to eat bananas very much.'' to german ``Die Katze isst sehr gerne Bananen.'', the structure of the output differs significantly from that of the input.
+  In an RNN, the model has to remember the token ``eat'' until the token ``isst'' is generated.
+  This information has to be encoded in the hidden state vector while parsing the input and be carried throughout the output generation.
+  Since each output in the RNN alters the hidden state, the translation has to performed in a serial manner.
+    
+  In contrast, a transformer model uses attention at each step of output generation.
+  When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce a grammatically correct sentence.
+  Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``isst''.
 \end{example}
 
 
@@ -227,7 +227,7 @@ Since we work with text, we need to find a way for $T$ to transform our history 
 To do that, we use a set of tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_\ell \}$ specific to the model.
 In the simplest case, the tokens can be the characters of the english language, i.e. $\mathcal{T} = \{ a, b, \dots, z, A, B, \dots, Z, 0, 1, \dots, 9, \textrm{'}, ", \dots \}$.
 We can then encode a string $h$ with $|h| \leq \zeta$ as a vector $v = T(h) \in \mathcal{T}^{|h|}$, fill the remaining $\zeta - |h|$ entries in the vector with a special padding token $\epsilon$ and pass it to $\mathcal{GPT}$.
-	
+  
 While the character based approach could work, it is hard for the model to learn the relationship between words solely on the sequence of characters, which badly influences the quality of outputs.
 Are ``do'' and ``don't'' more closely related then ``do'' and ``to''?
 Probably yes.
@@ -262,8 +262,8 @@ $$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},~ \sigma(z) = \left(\
 When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
 
 \begin{figure}[htpb]
-	\centering
-	\begin{tikzpicture}
+  \centering
+  \begin{tikzpicture}
             \node[rectangle, draw=black, minimum width=4cm, minimum height=4cm] (oracle) {$\mathcal{GPT}$};
             \node[right=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=4cm] (sigmoid) {$\sigma$};
             \node[left=of oracle, rectangle, draw=black, minimum width=2cm, minimum height=2cm] (transform) {Tokenizer};
@@ -281,15 +281,15 @@ When we combine all the previous steps, we get the black box for our ML model as
             \draw[->] (sigmoid) -- node[midway,below] {$p_2$} (t2);
             \draw[->] (sigmoid) -- node[midway,below] {$p_3$} (t3);
             \draw[->] (sigmoid) -- node[midway,below] {$p_{|\mathcal{T}|}$} (tn);
-	\end{tikzpicture}
-	\caption{
+  \end{tikzpicture}
+  \caption{
 Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_{|\mathcal{T}|}\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_{|\mathcal{T}|}\}$. 
 The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\zeta$ (with model-specific $\zeta$) of token indices using a tokenizer.
 The prediction model $\mathcal{GPT}$ takes $v$ as input and returns a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ of unscaled outputs.
 This logits vector is then transformed to a probability distribution $p \in [0,1]^{|\mathcal{T}|}$ using the softmax function.
-	The component $p_i$ represents the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\zeta$: $p_i = Pr[s_{\zeta+1}=t_i|s=v]$.
+  The component $p_i$ represents the probability of token $t_i \in \mathcal{T}$ to be the next token in the sequence $s$ given the history $v$ of length $\zeta$: $p_i = Pr[s_{\zeta+1}=t_i|s=v]$.
 }
-	\label{fig:generative-network}
+  \label{fig:generative-network}
 \end{figure}
 
 \todo{fix alignment of $p_{|\mathcal{T}|}$}
@@ -301,7 +301,7 @@ For an example of GNN model outputs using GPT-2, see \exampleref{example:gpt2-ou
 
 \begin{example}[Example of GPT-2 model output for initial history ``What is steganography in computer science?'']
 It is a form of digital communication that uses data to hide or obscure messages from a third party. It has become so common that today it is one of the most popular ways of communicating online. Steganography can be used to send photos or videos to another user or to hide messages from someone who will not discover the sender is actually the sender. As a result, it has become a real phenomenon known as "steganography".
-	\label{example:gpt2-output-sample}
+  \label{example:gpt2-output-sample}
 \end{example}
 
 To use GPT-2 with the Python programming language, we can use the Hugging Face Transformers library together with PyTorch.
@@ -316,11 +316,11 @@ Its output resembles that shown in \exampleref{example:gpt2-output-sample}.
 This code example shows how we can:
 
 \begin{itemize}
-	\item use a tokenizer to convert strings to a vector of tokens
-	\item use the model to get a logits vector
-	\item transform a logits vector into a probability mass function using the softmax function
-	\item sample the next token from the distribution
-	\item convert a vector of tokens back to a string using the tokenizer
+  \item use a tokenizer to convert strings to a vector of tokens
+  \item use the model to get a logits vector
+  \item transform a logits vector into a probability mass function using the softmax function
+  \item sample the next token from the distribution
+  \item convert a vector of tokens back to a string using the tokenizer
 \end{itemize}
 
 As we can see in \autoref{alg:gpt2-logits-demo}, a pseudorandom value \emph{sample} is generated to select the next token \emph{selection} from the distribution.
@@ -348,19 +348,19 @@ The Meteor authors have introduced the concept of Ranged Randomness Recoverable 
 This definition formally models the desired behavior described above.
 
 \begin{definition}[Ranged Randomness Recoverable Sampling Scheme, \cite{Meteor2021}]
-	\label{def:rrrss}
-	We call 
-	$(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
-	with ppt. algorithms
-	$Sample_{\mathcal{D}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow \Sigma$ 
-	and 
-	$Recover_{\mathcal{D}}^\beta \colon \mathcal{H} \times \Sigma \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
-	a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
-	
-	\begin{enumerate}
-		\item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from the underlying distribution $\mathcal{D}$
-		\item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample $s \in \Sigma$ returned from $Sample_{\mathcal{D}}^\beta$, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$
-	\end{enumerate}
+  \label{def:rrrss}
+  We call 
+  $(Sample_{\mathcal{D}}^\beta, Recover_{\mathcal{D}}^\beta, \mathcal{D}, \beta, \mathcal{H})$ 
+  with ppt. algorithms
+  $Sample_{\mathcal{D}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow \Sigma$ 
+  and 
+  $Recover_{\mathcal{D}}^\beta \colon \mathcal{H} \times \Sigma \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
+  a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over distribution $\mathcal{D}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
+  
+  \begin{enumerate}
+    \item $Sample_{\mathcal{D}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from the underlying distribution $\mathcal{D}$
+    \item $Recover_{\mathcal{D}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample $s \in \Sigma$ returned from $Sample_{\mathcal{D}}^\beta$, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{D}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$
+  \end{enumerate}
 \end{definition}
 
 With the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model.
@@ -370,15 +370,15 @@ While they define the $Sample$ and $Recover$ algorithms for GPT-2 only, they arg
 RRRSS $Sample$ algorithm for GPT, \cite{Meteor2021}.
 $Sample$ produces, given a history $h$ and a value $r$, the next token sampled according to $r$ from the distribution for the next token generated by $Next_{\mathcal{GPT}}(h)$.
 }]
-algorithm $Sample_{\mathcal{GPT}}^\beta(	h, r)$
-	Output: Token $t$
-	$\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
-	$cuml \leftarrow 0$
-	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
-		$cuml \leftarrow cuml + \mathcal{P}[i]$
-		if $cuml > r$ then
-			Output $t \leftarrow \mathcal{T}[i]$
-	Output $t \leftarrow \mathcal{T}[|\mathcal{T}|-1]$
+algorithm $Sample_{\mathcal{GPT}}^\beta(  h, r)$
+  Output: Token $t$
+  $\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
+  $cuml \leftarrow 0$
+  for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+    $cuml \leftarrow cuml + \mathcal{P}[i]$
+    if $cuml > r$ then
+      Output $t \leftarrow \mathcal{T}[i]$
+  Output $t \leftarrow \mathcal{T}[|\mathcal{T}|-1]$
 \end{Pseudocode}
 
 \begin{Pseudocode}[caption={
@@ -386,14 +386,14 @@ RRRSS $Recover$ algorithm for GPT, \cite{Meteor2021}.
 Given a history $h$ and a sample $s$, return a set of possible random values used to generate $s$ with history $h$.
 }]
 algorithm $Recover_{\mathcal{GPT}}^\beta(h, s)$
-	Output: Randomness set $\mathcal{R}$
-	$\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
-	$cuml \leftarrow 0$
-	for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
-		if $\mathcal{T}[i] = s$ then
-			Output $\mathcal{R} \leftarrow \{ r \in \{ 0, 1\}^\beta | cuml \leq r < cuml + \mathcal{P}[i] \}$
-		$cuml \leftarrow cuml + \mathcal{P}[i]$
-	Output $\mathcal{R} \leftarrow \emptyset$
+  Output: Randomness set $\mathcal{R}$
+  $\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{GPT}}(h)$
+  $cuml \leftarrow 0$
+  for $i \in \{ 0, 1, \dots, | \mathcal{T} - 1 | \}$ do
+    if $\mathcal{T}[i] = s$ then
+      Output $\mathcal{R} \leftarrow \{ r \in \{ 0, 1\}^\beta | cuml \leq r < cuml + \mathcal{P}[i] \}$
+    $cuml \leftarrow cuml + \mathcal{P}[i]$
+  Output $\mathcal{R} \leftarrow \emptyset$
 \end{Pseudocode}
 
 Here, $Next_{\mathcal{GPT}}$ is the algorithm which generates the probability distribution for the next token given a history $h$ as shown in \autoref{fig:generative-network}.
@@ -408,16 +408,16 @@ The authors described those algorithms as follows while introducing three helper
 
 \begin{Pseudocode}[caption={Meteor $Encode$ algorithm \cite{Meteor2021}}, label={alg:encode}]
 algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, h)$
-	Output: Stegotext message $c$
-	$c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
-	while $n < |m|$ do
-		$mask \leftarrow PRG.Next(k_{prg})$
-		$r \leftarrow m[n:n+\beta] \oplus mask$
-		$c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r)$
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
-		$n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
-		$c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i,~ i \leftarrow i + 1$
-	Output $c$
+  Output: Stegotext message $c$
+  $c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
+  while $n < |m|$ do
+    $mask \leftarrow PRG.Next(k_{prg})$
+    $r \leftarrow m[n:n+\beta] \oplus mask$
+    $c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r)$
+    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
+    $c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i,~ i \leftarrow i + 1$
+  Output $c$
 \end{Pseudocode}
 
 $Encode$ uses the PRG to sample a pseudorandom mask and applies that mask to the next $\beta$ bits of $m$ into $r$.
@@ -430,16 +430,16 @@ Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_
 
 \begin{Pseudocode}[float, caption={Meteor $Decode$ algorithm \cite{Meteor2021}}, label={alg:decode}]
 algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
-	Output: Plaintext message $m$
-	$m \leftarrow \epsilon$
-	Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
-	for $i \in \{ 0, 1, \dots, \tau \}$ do
-		$\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
-		$m_i \leftarrow Prefix^\beta(\mathcal{R})$
-		$mask \leftarrow PRG.Next(k_{prg})$
-		$m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
-		$h \leftarrow h||c_i$
-	Output $m$
+  Output: Plaintext message $m$
+  $m \leftarrow \epsilon$
+  Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
+  for $i \in \{ 0, 1, \dots, \tau \}$ do
+    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $m_i \leftarrow Prefix^\beta(\mathcal{R})$
+    $mask \leftarrow PRG.Next(k_{prg})$
+    $m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
+    $h \leftarrow h||c_i$
+  Output $m$
 \end{Pseudocode}
 
 $Decode$ takes a stegotext $c$ and decodes it to the hiddentext message.
@@ -448,25 +448,25 @@ It then generates a mask from the PRG (which will be the same mask generated in 
 
 \begin{Pseudocode}[caption={Meteor LenPrefix Algorithm, \cite{Meteor2021}}]
 algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
-	Output: Length $l$
-	$l \leftarrow 1$
-	while $l < \beta$ do
-		if $\exists i, j \in \{ 1, \dots, n \}$ such that $r_i[0: l] \neq r_j[0:	l]$ then
-			Output $l-1$
-		$l \leftarrow l+1$
-	Output $l$
+  Output: Length $l$
+  $l \leftarrow 1$
+  while $l < \beta$ do
+    if $\exists i, j \in \{ 1, \dots, n \}$ such that $r_i[0: l] \neq r_j[0:  l]$ then
+      Output $l-1$
+    $l \leftarrow l+1$
+  Output $l$
 \end{Pseudocode}%
 %
 \begin{Pseudocode}[caption={Meteor Prefix Algorithm, \cite{Meteor2021}}]
-algorithm $Prefix^\beta(	\mathcal R = \{ r_1, \dots r_n \})$
-	Output: Bit String $p$
-	Output $p \leftarrow r_1[0: LenPrefix^\beta(\mathcal{R})]$
+algorithm $Prefix^\beta(  \mathcal R = \{ r_1, \dots r_n \})$
+  Output: Bit String $p$
+  Output $p \leftarrow r_1[0: LenPrefix^\beta(\mathcal{R})]$
 \end{Pseudocode}%
 %
 \begin{Pseudocode}[caption={Meteor KeyGen Algorithm, \cite{Meteor2021}}]
 algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
-	Output: Key $k_{prg}$
-	Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
+  Output: Key $k_{prg}$
+  Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
 \end{Pseudocode}
 
 For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length (\autoref{def:correctness-kaptchuk}). This definition is roughly equivalent to Hopper's correctness in \autoref{def:correctness-hopper}.
@@ -488,9 +488,9 @@ In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is we
 We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using two queries, polynomial time and message length.
 
 \begin{definition}[Steganographic Secrecy, \cite{Meteor2021}]%
-	\label{def:sec-kaptchuk}%
-	We say that a steganographic scheme $\mathcal{S}_{\mathcal{M}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{M}}$
-	
-	$$k \leftarrow KeyGen_{\mathcal{M}}(1^\lambda)$$
-	$$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{M}}^{Encode_{\mathcal{M}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{M}}(\cdot, \cdot)}=1 \right] \right| < \mu(\lambda)$$
+  \label{def:sec-kaptchuk}%
+  We say that a steganographic scheme $\mathcal{S}_{\mathcal{M}}$ is secure against chosen hiddentext attacks if for all ppt. adversaries $\mathcal{A}_{\mathcal{M}}$
+  
+  $$k \leftarrow KeyGen_{\mathcal{M}}(1^\lambda)$$
+  $$\left| \mathop{Pr}\left[ \mathcal{A}_{\mathcal{M}}^{Encode_{\mathcal{M}}(k, \cdot, \cdot)}=1 \right] - \mathop{Pr}\left[ \mathcal{A}_{\mathcal{D}}^{\mathcal{O}_{\mathcal{M}}(\cdot, \cdot)}=1 \right] \right| < \mu(\lambda)$$
 \end{definition}
