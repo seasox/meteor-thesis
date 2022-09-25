@@ -7,7 +7,7 @@ After experimentation, we conclude that the cause of this is not due to issues w
 
 In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed incorrect with respect to \autoref{def:correctness-kaptchuk} by providing a counterexample.
 Afterwards, we will discuss an experiment which approximates the probability of incorrect decodings.
-The experiment shows that for sufficiently long hiddentexts the probability of incorrect decodings increases to approximately 82 \%.
+The experiment shows that for sufficiently long hiddentexts the probability of incorrect decodings increases to approximately 87 \%.
 To restore correctness, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while introducing computational overhead exponential in stegotext length.
 
 \section{Ambiguous Tokenization}
@@ -117,8 +117,8 @@ After we have defined the sample data, we encoded and subsequently decoded them 
 After decoding, we analyzed the tokens generated and computed the tokenization distances between Alice and Bob.
 
 The experiment shows that most stegotexts have at least one mismatch if they are of significant length (\autoref{fig:meteor-stats-mismatch-count}).
-When encoding 128 byte blocks, we get a success probability of $\hat{Pr}[X=0] \approx 0.55$.
-But when encoding larger blocks of 1024 bytes, it decreases to $\hat{Pr}[X=0] \approx 0.18$.
+When encoding 128 byte blocks, we get a success probability of $\hat{Pr}[X=0] \approx 0.57$.
+But when encoding larger blocks of 1024 bytes, it decreases to $\hat{Pr}[X=0] \approx 0.13$.
 
 \begin{figure}[htbp]%
 	\begin{subfigure}{.5\textwidth}%
@@ -126,14 +126,14 @@ But when encoding larger blocks of 1024 bytes, it decreases to $\hat{Pr}[X=0] \a
 	    \resizebox{0.9\linewidth}{!}{%
 			\input{fig_meteor_stats_mismatch_count_128.tikz}%
 		}%
-		\caption{128 bytes ($\hat{Pr}[X=0] \approx 0.55$)}%
+		\caption{128 bytes ($\hat{Pr}[X=0] \approx 0.57$)}%
 	\end{subfigure}%
 	\begin{subfigure}{.5\textwidth}%
 		\centering%
 	    \resizebox{0.9\linewidth}{!}{%
 			\input{fig_meteor_stats_mismatch_count_1024.tikz}%
 		}%
-		\caption{1024 bytes ($\hat{Pr}[X=0] \approx 0.18$)}%
+		\caption{1024 bytes ($\hat{Pr}[X=0] \approx 0.13$)}%
 	\end{subfigure}%
 	\caption{
 	Token mismatch count probability when using Meteor to encode Shakespear's Hamlet blockwise for different block sizes.
