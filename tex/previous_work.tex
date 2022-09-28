@@ -1,4 +1,4 @@
-\chapter{Background of the Meteor Stegosystem}
+\chapter{Backgrounds of the Meteor Stegosystem}
 \label{chap:previous-work}
 
 \section{Provably Secure Steganography}
@@ -105,20 +105,29 @@ A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with secu
 
 This definition resembles that of a symmetric encryption scheme, except that both $SE$ and $SD$ take a message history $h$ as additional argument.
 Now that we have defined what a steganographic protocol is, we will introduce some properties we would like a stegosystem to satisfy.
-First of all, we want a stegosystem to be correct.
+
+First of all, we want a stegosystem to be reliable.
 The decoding of a given stegotext $s$, given the correct key $k$ and history $h$, should yield the original hiddentext $m$.
-Hopper defines the correctness of a stegosystem as follows:
+To measure this, we define the unreliability of a stegosystem $\mathcal{S}$:
 
-\begin{definition}[Correctness, \cite{Hopper2004}]
-\label{def:correctness-hopper}
-A stegosystem $\mathcal{S}$ is \emph{correct} if for every polynomial $p(\lambda)$, there exists a negligible function $\mu(\lambda)$ such that $SE$ and $SD$ satisfy the following relationship, where the randomization is over the key $k$ and any coin tosses of $SE$, $SD$, and the oracles accessed by $SE$, $SD$.
+\begin{definition}[Unreliability, \cite{Berndt2017}]
+\label{def:unreliability}
+The \emph{unreliability} $UnRel_{\mathcal{S}}(\lambda)$ is the maximum probability that the decoder $SD$ fails, i.e.	
 
-$$\forall m \in \{0,1\}^{p(\lambda)},~ h \in \mathcal{H} \colon Pr[SD(k, SE(k, m, h), h) = m] \geq 1 - \mu(\lambda)$$
-
+$$UnRel_{\mathcal{S}}(\lambda) = \max_{\substack{k \in \{0,1\}^\lambda\\m \in \{0,1\}^*\\ h \in \mathcal{H}}}\left\{ Pr[SD(k, SE(k,m,h), h) \neq m] \right\}.$$
 \end{definition}
 
-The introduction of a \emph{negligible function} $\mu(\lambda)$ allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the security parameter $\lambda$.
-While there might be stegosystems with $\mu(\lambda) = 0$, the introduction of a negligible function proves helpful for reductions on established cryptographic primitives.
+\todo{message and history length poly $\lambda$}
+
+\begin{definition}[Reliability]
+\label{def:reliability}
+A stegosystem $\mathcal{S}$ is \emph{reliable} if its unreliability is negligible in $\lambda$.
+\end{definition}
+
+The introduction of \emph{negligible unreliability} allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the security parameter $\lambda$.
+While perfectly reliable stegosystems where the decoder always yields the original message might exist, negligibility proves helpful for reductions on established cryptographic primitives.
+In some works such as \cite{Hopper2004} and the Meteor paper \cite{Meteor2021}, the term \emph{correctness} of a stegosystem is used.
+In this thesis however, we will use reliability instead.
 
 Since we naturally want our stegosystem to be prone to analysis by Eve, we also need a definition of security.
 Intuitively, we want Eve to be unable to efficiently detect the use of a stegosystem $\mathcal{S}$ without knowledge of the secret key $k$.
@@ -249,7 +258,7 @@ The use of subword tokens allows a model to better predict relationships between
 For example, the words ``do'' and ``don't'' are probably closely related.
 With subword tokens, a tokenizer can parse ``don't'' as ``do$||$n't''. 
 An NLP model might then learn that the token ``n't'' can be used to negate a verb.
-While this approach makes it easier for the model to learn relationships between different words, there may exist multiple tokenizations for a given word, a pitfall that will be important when we discuss correctness in \autoref{chap:correctness}.
+While this approach makes it easier for the model to learn relationships between different words, there may exist multiple tokenizations for a given word, a pitfall that will be important when we discuss reliability in \autoref{chap:reliability}.
 
 After the tokenizer has encoded the history as a vector of tokens it is passed as input to the generative model.
 The model's output is a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
@@ -469,23 +478,13 @@ algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
   Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
 \end{Pseudocode}
 
-For correctness, the authors argue that a steganographic protocol is correct if encoded messages can be recovered using the $Decode$ algorithm except for a probability negligible in key length (\autoref{def:correctness-kaptchuk}). This definition is roughly equivalent to Hopper's correctness in \autoref{def:correctness-hopper}.
-In \autoref{chap:correctness}, we will argue how correctness is in fact not achieved using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to achieve correctness while -- in the worst case and for some models -- introducing computational overhead exponential in stegotext length.
-
-\begin{definition}[Correctness, \cite{Meteor2021}]
-\label{def:correctness-kaptchuk}
-We call a steganographic protocol \emph{correct}, if, except with negligible probability, an encoded message can be recovered using the decode algorithm.
-Formally, for any $k \leftarrow KeyGen(1^\lambda)$, message $m \in \{0,1\}^*$ and history $h \in \mathcal{H}$,
-
-$$\mathop{Pr}[Decode_{\mathcal{M}}^\beta(k, Encode_{\mathcal{M}}^\beta(k, m, h), h) = m] \geq 1 - \mu(\lambda)$$
-\end{definition}
+For reliability, the authors introduce a definition of \emph{steganographic correctness} that is roughly equivalent to our definition of reliability in \autoref{def:reliability} without giving a formal proof for the Meteor stegosystem.
+In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is in fact not reliable using GPT-2 as an RRRSS scheme and how we can modify the stegosystem described here to improve reliability while -- in the worst case and for some models -- introducing computational overhead exponential in stegotext length.
 
 Meteor's security proof is also outlined by the authors.
 They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of an oracle $\mathcal{O}$ randomly sampling from the distribution.
-More formally, they define steganographic secrecy in \autoref{def:sec-kaptchuk}.
-Furthermore, they argue that the Meteor stegosystem is secure by reduction to the PRG real-or-random game. 
-In \autoref{chap:security}, we will discuss how \autoref{def:sec-kaptchuk} is weaker than Hopper's definition of steganographic secrecy against chosen hiddentext attackers introduced in \autoref{sec:prov-sec-steg}.
-We will also discuss how an attacker can distinguish Meteor's output from a random oracle $\mathcal{O}_{\mathcal{D}}$ using two queries, polynomial time and message length.
+In \autoref{chap:security}, we will show Meteor's security against chosen hiddentext attackers with query complexity of one.
+We will also show that Meteor is insecure against chosen hiddentext attackers with two or more (identical) queries.
 
 \begin{definition}[Steganographic Secrecy, \cite{Meteor2021}]%
   \label{def:sec-kaptchuk}%

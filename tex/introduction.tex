@@ -10,14 +10,14 @@ If we are able to establish provably secure steganographic protocols -- or stego
 Steganographic techniques are already in use today, for example in the Tor anonymity service to circumvent the so-called ``Great Firewall'' of China \cite{TorBlocking2012}.
 
 This thesis discusses Meteor, an innovative steganographic protocol that exploits the randomness used in sampling from distributions of machine learning based text generation models such as GPT-2 to embed a hidden message into the generated text.
-We will show that the Meteor stegosystem is not correct with regard to the formal definition of steganographic correctness.
+We will show that the Meteor stegosystem is not reliable with regard to the formal definition of steganographic reliability.
 Afterwards, we present a modification to the Meteor stegosystem to improve its use in instant messaging applications by replacing the generative model with one that is primed to generate chat-like texts.
 Subsequently, Meteor's security against chosen hiddentext attackers is discussed.
 We will discuss that an attacker can distinguish Meteor's output from a random oracle in polynomial queries.
-For both correctness and security, algorithms are presented that improve the Meteor stegosystem.
+For both reliability and security, algorithms are presented that improve the Meteor stegosystem.
 
 
-\section{Structure Of This Thesis}
+\section{Structure of this Thesis}
 
 \autoref{chap:preliminaries} introduces notation that will be used throughout this thesis.
 
@@ -26,17 +26,17 @@ First, we will discuss steganography and provably secure steganography as define
 Afterwards, we discuss how generative neural networks such as GPT-2 iteratively produce high-quality text.
 Concluding, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels as introduced in \cite{Meteor2021}.
 
-\autoref{chap:correctness} analyzes the correctness of the Meteor stegosystem. 
-This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic correctness established in \autoref{def:correctness-hopper} and \autoref{def:correctness-kaptchuk} as well as the discussion of generative neural networks (GNNs) in \autoref{sec:generative-neural-networks}.
-We will see that the Meteor stegosystem is not correct because of subword tokenization used in most modern GNNs.
-Afterwards, algorithms are presented that ensure correctness of Meteor on the receiver site.
+\autoref{chap:reliability} analyzes the reliability of the Meteor stegosystem. 
+This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic (un-)reliability established in \autoref{def:unreliability} and \autoref{def:reliability} as well as the discussion of generative neural networks (GNNs) in \autoref{sec:generative-neural-networks}.
+We will see that the Meteor stegosystem is not reliable because of subword tokenization used in most modern GNNs.
+Afterwards, algorithms are presented that improve reliability of Meteor on the receiver site.
 Unfortunately, these algorithms -- in the worst case and for some models -- introduce overhead exponential in the length of the generated stegotext.
 
 In \autoref{chap:twowaycommunication} we present a small modification to the Meteor stegosystem that allows two-way communication.
 This chapter relies on the material presented in \autoref{sec:meteor} and \autoref{sec:generative-neural-networks}.
 There, we embed a fixed amount of bits in each message, using the DialoGPT model presented in \cite{Zhang2020} to generate dialog-like messages.
 This modification allows users of the Meteor stegosystem to communicate more naturally in the context of instant messaging.
-It also makes sure that the algorithms from \autoref{chap:correctness} can be applied more conveniently with smaller overhead.
+It also makes sure that the algorithms from \autoref{chap:reliability} can be applied more conveniently with smaller overhead.
 
 In \autoref{chap:security}, we will perform a security analysis of the Meteor stegosystem using Hopper's definition of a secure stegosystem.
 This chapter relies heavily on the material presented in \autoref{chap:previous-work}, especially the security definitions in \autoref{def:sec-hopper} and \autoref{def:sec-kaptchuk}.
