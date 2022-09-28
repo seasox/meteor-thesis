@@ -75,6 +75,9 @@ def compare_tokens(message, context, key, nonce, coding, encode_tokens, decode_t
         else:
             i += 1
             j += 1
+    if curr_mismatch is not None:
+        # end of mismatch
+        mismatches = mismatches + [(i, mismatch_enc_tokens.copy(), j, mismatch_dec_tokens.copy())]
     return MeteorStatistic(message, context, key, nonce, coding, encode_tokens, decode_tokens, len_offset, mismatches,
                            stats)
 
