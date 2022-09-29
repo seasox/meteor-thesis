@@ -21,10 +21,9 @@ Given a sequence $x = (x_0, x_1, \dots, x_{n-1})$ of length $n$, we use the foll
 
 We will use $x \leftarrow \epsilon$ as the empty value assignment.
 We also use the infix operator $\oplus \colon \{0,1\}^n \times \{0,1\}^n \rightarrow \{0,1\}^n,~ a \oplus b$ for the exclusive or of values $a$ and $b$.
-The (infix) concatenation operator $|| \colon X^n \times X^m \rightarrow X^{n+m},~ a||b$ appends the value or sequence $b$ to the value or sequence $a$. 
+The infix concatenation operator $|| \colon X^n \times X^m \rightarrow X^{n+m},~ a||b$ appends the value or sequence $b$ to the value or sequence $a$. 
 
-The variable $\lambda$ denotes the security parameter used in cryptographic primitives.
-The set $\mathcal{K}$ denotes the set of keys of a cryptographic primitive, the variable $k \in \mathcal{K}$ is a key.
-With $\mu(\lambda)$, we denote a function negligible in $\lambda$.
-
-With steganographic protocols, we will use the variable $m \in \{0,1\}^*$ as hiddentext messages and set of histories $\mathcal{H}$ with specific history $h \in \mathcal{H}$.
+The variable $\lambda$ denotes the security parameter used in cryptographic primitives or steganographic protocols.
+In general, the hiddentext in a steganographic protocol is a bit string $m \in \{0,1\}^*$.
+In this thesis however, we use sequences of unicode characters as hiddentexts.
+We denote the set of unicode characters as $\mathcal{U}$ and hiddentext messages $m \in \mathcal{U}^*$ as strings of unicode characters.
