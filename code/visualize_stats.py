@@ -26,7 +26,7 @@ def create_plot(data, step_size, tikzexport):
     plt.xlim(min(histbins), max(histbins))
     plt.xticks(np.arange(min(mismatch_count), max(mismatch_count)+1, step=1))
     plt.xlabel('$x$')
-    plt.ylabel('$\hat{Pr}[X=x]$')
+    plt.ylabel('$\hat{Pr}_{'+str(step_size)+'}[X=x]$')
     plt.hist(mismatch_count, bins=histbins, align='mid', weights=weights)
     plt.tight_layout()
     if tikzexport:
@@ -61,9 +61,15 @@ if __name__ == '__main__':
         data_w_coding = list(filter(lambda x: x.coding == 'arithmetic', data))
         if not data_w_coding:
             raise 'no data'
-        no_mismatch_prob=len(list(filter(lambda x: len(x.mismatches) == 0, data_w_coding)))/len(data_w_coding)
-        print(len(data_w_coding))
+        no_mismatch_cnt = len(list(filter(lambda x: len(x.mismatches) == 0, data_w_coding)))
+        no_mismatch_prob = no_mismatch_cnt/len(data_w_coding)
+        total_encoded_tokens = sum(list([len(x.encoded_tokens) for x in data_w_coding]))
+        avg_bits_per_token = sum(list([1/x.stats['wordsbit'] for x in data_w_coding]))/len(data_w_coding)
+        print(f'total encoded tokens: {total_encoded_tokens}')
+        print(f'avg bits per token: {avg_bits_per_token}')
+        print(f'no mismatch: {no_mismatch_cnt}')
+        print(f'len {step_size}: {len(data_w_coding)}')
         print(f'Pr_{step_size}[X=0]={no_mismatch_prob}')
-        # create_plot(data_w_coding, step_size, tikzexport)
+        create_plot(data_w_coding, step_size, tikzexport)
         # just a little test if the data makes sense
-        print(check_matching_tokenizations(data_w_coding))
+        #print(check_matching_tokenizations(data_w_coding))

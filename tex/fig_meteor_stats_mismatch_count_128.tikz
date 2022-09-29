@@ -12,7 +12,7 @@ xlabel={\(\displaystyle x\)},
 xmin=-0.5, xmax=9.5,
 xtick style={color=black},
 y grid style={darkgray176},
-ylabel={\(\displaystyle \hat{Pr}[X=x]\)},
+ylabel={\(\displaystyle \hat{Pr}_{128}[X=x]\)},
 ymin=0, ymax=0.603504672897201,
 ytick style={color=black},
 yticklabel style={/pgf/number format/fixed}
