@@ -20,7 +20,7 @@ In this section, we will compare the security definition of the Meteor stegosyst
 In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against chosen hiddentext attack if for all $k \leftarrow KeyGen(1^\lambda)$ the probability of an attacker to distinguish an output of $Encode(k, \cdot, \cdot)$ from the output of a random oracle $\mathcal{O}(\cdot, \cdot)$ is negligible in $\lambda$. In Meteor's security proof, it is argued that Meteor satisfies this security definition by reduction to the underlying PRG.
 
 \begin{theorem}
-  Meteor is secure (\autoref{def:sec-kaptchuk}) against ppt. adversaries. 
+  Meteor is secure (\autoref{def:sec-hopper}) against ppt. adversaries with query complexity of one.
 \label{thm:meteor-secure}
 \end{theorem}
 \begin{proof}
@@ -28,6 +28,8 @@ In \autoref{def:sec-kaptchuk}, it is argued that a stegosystem is secure against
   We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
   The attacker only sees the outputs $c = c_0 ||c_1 || \dots || c_{\tau}$ of $Encode$ and $\mathcal{O}$, respectively.
   When we take a look at the implementation of $Encode$, we observe that the only output difference to $\mathcal{O}$ in the view of the attacker is the randomness $r$ used to sample $c_i$ from the underlying distribution.
+  
+  \todo{attacker has encode oracle with access to Prefix, LenPrefix}
   
   How is $r$ constructed? 
   It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from PRG.
