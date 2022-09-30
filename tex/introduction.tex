@@ -2,19 +2,21 @@
 
 \section{Motivation}
 
-When governmental or private-sector adversaries try to breach the confidentiality of private communication, society requires means to defend their privacy.
-Especially in authoritarian states, law enforcement continuously attempts to break or prohibit effective means of cryptography \cite{TLSBlocking2020}.
+%When governmental or private-sector adversaries try to breach the confidentiality of private communication, society requires means to defend their privacy.
+%Especially in authoritarian states, law enforcement continuously attempts to break or prohibit effective means of cryptography \cite{TLSBlocking2020}.
 
 Steganography extends the concepts of cryptography by not only hiding the contents of a message, but also hiding the mere existence of a hidden message.
 If we are able to establish provably secure steganographic protocols -- or stegosystems -- people can use them to circumvent censorship and avoid persecution in hostile environments.
-Steganographic techniques are already in use today, for example in the Tor anonymity service to circumvent the so-called ``Great Firewall'' of China \cite{TorBlocking2012}.
+Steganographic techniques such as protocol obfuscation are already in use today, for example in the Tor anonymity service to circumvent the so-called ``Great Firewall'' of China \cite{TorBlocking2012}.
+Those techniques are not necessarily cryptographically secure but might rely on the adversary to have a default open policy, i.e. allow communication if the protocol in use cannot be identified.
 
-This thesis discusses Meteor, an innovative steganographic protocol that exploits the randomness used in sampling from distributions of machine learning based text generation models such as GPT-2 to embed a hidden message into the generated text.
+This thesis discusses Meteor, an innovative cryptographically secure steganographic protocol that exploits the randomness used in sampling from distributions of machine learning based text generation models such as GPT-2 to embed a hidden message into the generated text.
 We will show that the Meteor stegosystem is not reliable with regard to the formal definition of steganographic reliability.
-Afterwards, we present a modification to the Meteor stegosystem to improve its use in instant messaging applications by replacing the generative model with one that is primed to generate chat-like texts.
+Afterwards, we present a modification to the Meteor stegosystem to improve its use in instant messaging applications by replacing the generative model with one that is trained to generate chat-like texts.
 Subsequently, Meteor's security against chosen hiddentext attackers is discussed.
-We will discuss that an attacker can distinguish Meteor's output from a random oracle in polynomial queries.
-For both reliability and security, algorithms are presented that improve the Meteor stegosystem.
+We will show that Meteor is secure against chosen hiddentext attackers with query complexity of one.
+Afterwards, we will argue that an attacker can distinguish Meteor's output from a random oracle using two queries.
+For both reliability and security, we propose algorithms that improve the Meteor stegosystem.
 
 
 \section{Structure of this Thesis}
@@ -22,9 +24,9 @@ For both reliability and security, algorithms are presented that improve the Met
 \autoref{chap:preliminaries} introduces notation that will be used throughout this thesis.
 
 \autoref{chap:previous-work} discusses previous works we will need to understand the architecture of the Meteor stegosystem.
-First, we will discuss steganography and provably secure steganography as defined in \cite{Hopper2004}.
-Afterwards, we discuss how generative neural networks such as GPT-2 iteratively produce high-quality text.
-Concluding, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels as introduced in \cite{Meteor2021}.
+First, we will discuss steganography and provably secure steganography.
+Afterwards, we will examine how generative neural networks such as GPT-2 iteratively produce high-quality text.
+Concluding, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels.
 
 \autoref{chap:reliability} analyzes the reliability of the Meteor stegosystem. 
 This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic (un-)reliability established in \autoref{def:unreliability} and \autoref{def:reliability} as well as the discussion of generative neural networks (GNNs) in \autoref{sec:generative-neural-networks}.
