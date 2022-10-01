@@ -25,6 +25,9 @@ We also use the infix operator $\oplus \colon \{0,1\}^n \times \{0,1\}^n \righta
 The infix concatenation operator $|| \colon X^n \times X^m \rightarrow X^{n+m},~ a||b$ appends the value or sequence $b$ to the value or sequence $a$. 
 
 The variable $\lambda$ denotes the security parameter used in cryptographic primitives or steganographic protocols.
+We denote by $\mu(\lambda)$ a function negligible in $\lambda$, i.e. for every integer $c$ there exists an integer $c_0$ such that for every $\lambda > c_0$,
+$$|\mu(\lambda)| < \frac{1}{\lambda^c}.$$
+
 In general, the hiddentext in a steganographic protocol is a bit string $m \in \{0,1\}^*$.
 In this thesis however, we use sequences of unicode characters as hiddentexts.
 We denote the set of unicode characters as $\mathcal{U}$ and hiddentext messages $m \in \mathcal{U}^*$ as strings of unicode characters.
