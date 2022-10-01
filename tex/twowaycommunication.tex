@@ -33,11 +33,11 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
     \nextlevel[3]
     \condition{for $i \in \{ 1, 2, \dots, \ell \}$ do}{alice,bob}
     \nextlevel[2]
-    \action{$s_i = Encode_{\mathcal{M}}^\beta(m_i, k, h)$}{alice}
+    \action{$s_i = Encode_{\mathcal{C}}^\beta(m_i, k, h)$}{alice}
     \nextlevel[3]
     \mess{$s_i$}{alice}{bob}
     \nextlevel
-    \action{$m_i = Decode_{\mathcal{M}}^\beta(s_i, k, h)$}{bob}
+    \action{$m_i = Decode_{\mathcal{C}}^\beta(s_i, k, h)$}{bob}
     \nextlevel[2]
     \action{Generate response $r$}{bob}
     \nextlevel[3]

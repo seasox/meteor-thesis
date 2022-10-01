@@ -91,13 +91,13 @@ As we have argued in \autoref{sec:amb-tok}, the decoding can only succeed if no 
 Therefore, for a successful decoding of a stegotext, the tokenization distance must be zero.
 We can establish the tokenization distance as an upper bound on the probability of a successful decoding:
 
-$$Pr[Decode_{\mathcal{M}}^\beta(k, Encode_{\mathcal{M}}^\beta(k,m,h), h)=m] \leq Pr[X=0].$$
+$$Pr[Decode_{\mathcal{C}}^\beta(k, Encode_{\mathcal{C}}^\beta(k,m,h), h)=m] \leq Pr[X=0].$$
 
 Unfortunately, we cannot determine $Pr[X=0]$ exactly because there are infinitely many stegotexts $c \in \Delta^*$.
 Instead, we will estimate $Pr[X=0]$ with an experimentally determined approximation $\hat{Pr}_n[X=0]$ using a finite number of samples $(k,m,h) \in S_n$ with keys $k \in \{0,1\}^\lambda$ for a fixed security parameter $\lambda$, messages $m$ from some set of text samples $M_n \subset \mathcal{U}^n$ for message lengths $n$ and histories $h \in \mathcal{H}$.
-For every sample in $S_n$, we generate stegotexts $c = Encode_{\mathcal{M}}^\beta(k,m,h)$ and calculate the tokenization distances $D(T_A(c), T_B(c))$.
+For every sample in $S_n$, we generate stegotexts $c = Encode_{\mathcal{C}}^\beta(k,m,h)$ and calculate the tokenization distances $D(T_A(c), T_B(c))$.
 Afterwards, we can establish the approximation
-$$\hat{Pr}_n[X=0] = \frac{|\{ (k,m,h) \in S_n \mid D(T_A(Encode_{\mathcal{M}}^\beta(k,m,h)), T_B(Encode_{\mathcal{M}}^\beta(k,m,h))) = 0 \}|}{|S_n|}.$$
+$$\hat{Pr}_n[X=0] = \frac{|\{ (k,m,h) \in S_n \mid D(T_A(Encode_{\mathcal{C}}^\beta(k,m,h)), T_B(Encode_{\mathcal{C}}^\beta(k,m,h))) = 0 \}|}{|S_n|}.$$
 
 For this experiment, we use William Shakespeare's drama Hamlet as the source for messages and histories.
 For the message set $M_n$, we use blocks of length $n=128$ and $1024$ bytes from the script of Hamlet, respectively.
@@ -203,7 +203,7 @@ The modification this algorithm introduces is that after every block $m_i$ of $\
 This allows the recipient to check for decoding errors after decryption.
 $q$ is a function $q \colon \{0,1\}^\gamma \rightarrow \{0,1\}^\delta$ which generates a checksum of length $\delta$ for a message block of length $\gamma$.
 }, label={alg:marked-encode}]
-algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma, \delta}(k_{prg}, m, h, q)$
+algorithm $MarkedEncode_{\mathcal{C}}^{\beta, \gamma, \delta}(k_{prg}, m, h, q)$
   Output: Stegotext message $c$
   $c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
   Parse $m$ as blocks $m_1||m_2||\dots||m_\xi$ of size $\gamma$
@@ -211,8 +211,8 @@ algorithm $MarkedEncode_{\mathcal{M}}^{\beta, \gamma, \delta}(k_{prg}, m, h, q)$
   while $n < |m^*|$ do
     $mask \leftarrow PRG.Next(k_{prg})$
     $r \leftarrow m^*[n:n+\beta] \oplus mask$
-    $c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r)$
-    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $c_i \leftarrow Sample_{\mathcal{C}}^\beta(h, r)$
+    $\mathcal{R} = Recover_{\mathcal{C}}^\beta(h, c_i)$
     $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
     $c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i,~ i \leftarrow i + 1$
   Output $c$
@@ -225,13 +225,13 @@ If the checksum does not match, a decoding error occured.
 It then performs a lookbehind on the stegotext and generates all possible tokenizations $paths$ for a substring of $c$.
 Afterwards, rewind the internal state and retry decoding with a path $p$ selected from $paths$.
 }, label={alg:marked-decode}]
-algorithm $MarkedDecode_{\mathcal{M}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
+algorithm $MarkedDecode_{\mathcal{C}}^{\beta,\gamma,\delta}(k_{prg}, c, h, q)$
   Output: Plaintext message $m$
   $m^* \leftarrow \epsilon,~ n \leftarrow 0,~ j \leftarrow 0,~ \alpha^* \leftarrow 0$
   $paths \leftarrow \emptyset$
   Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
   for $i \in \{ 0, 1, \dots, \tau \}$ do
-    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $\mathcal{R} = Recover_{\mathcal{C}}^\beta(h, c_i)$
     $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
     $n \leftarrow n + n_i$
     $j \leftarrow j + n_i$
@@ -377,9 +377,9 @@ algorithm $SelectPath(paths = \{ p_1, p_2, \dots, p_{|paths|} \})$
 %\begin{Pseudocode}[float, caption={
 %Probabilistic Path Selection Strategy.
 %}, label={alg:select-path-prob}]
-%algorithm $SelectPath_{\mathcal{M}}(paths = \{ p_0, p_1, \dots, p_{|paths|-1} \}, h)$
+%algorithm $SelectPath_{\mathcal{C}}(paths = \{ p_0, p_1, \dots, p_{|paths|-1} \}, h)$
 % Output: path $p \in paths$
-% $\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{M}}(h)$
+% $\mathcal{T}, \mathcal{P} \leftarrow Next_{\mathcal{C}}(h)$
 % $p_i \leftarrow p_i \in paths$ such that $p_i$ starts with $t_j \in \mathcal{T}$ and $x_j \in \mathcal{P} = %max(\mathcal{P})$
   %$paths \leftarrow paths - \{ p_i \}$
   %return $p_i$

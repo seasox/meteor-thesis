@@ -127,15 +127,15 @@ Since $SES$ is IND\$-CPA secure we can, with the same reduction as in Theorem \r
 \begin{Pseudocode}[float, caption={
 $EncodeRandomized$ algorithm.
 This algorithm differs from the original $Encode$ algorithm by using $SES$ to encrypt the message.
-The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{M}$.
+The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{C}_h$.
 }, label={alg:encode-nd}]
-algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
+algorithm $EncodeRandomized_{\mathcal{C}}^{\beta}(k_{prg}, m, h)$
   Output: Stegotext message $c$
   $c \leftarrow \epsilon,~ i \leftarrow 0,~ n \leftarrow 0$
   $r \leftarrow SES.Encrypt(k, m)$
   while $n < |r|$ do
-    $c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r[n: n+\beta])$
-    $\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $c_i \leftarrow Sample_{\mathcal{C}}^\beta(h, r[n: n+\beta])$
+    $\mathcal{R} \leftarrow Recover_{\mathcal{C}}^\beta(h, c_i)$
     $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
     $c \leftarrow c || c_i,~ n \leftarrow n+n_i,~ h \leftarrow h||c_i,~ i \leftarrow i + 1$
   Output $c$
@@ -144,12 +144,12 @@ algorithm $EncodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, m, h)$
 $DecodeRandomized$ algorithm.
 This algorithm differs from the original $Decode$ algorithm by using $SES$ to decrypt the stegotext.
 }, label={alg:decode-nd}]
-algorithm $DecodeRandomized_{\mathcal{M}}^{\beta}(k_{prg}, c, h)$
+algorithm $DecodeRandomized_{\mathcal{C}}^{\beta}(k_{prg}, c, h)$
   Output: Plaintext message $m$
   $m \leftarrow \epsilon,~ n \leftarrow 0,~ r \leftarrow \epsilon$
   Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
   for $i \in \{ 0, 1, \dots, \tau \}$ do
-    $\mathcal{R} \leftarrow Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $\mathcal{R} \leftarrow Recover_{\mathcal{C}}^\beta(h, c_i)$
     $r_i \leftarrow Prefix^\beta(\mathcal{R})$
     $r \leftarrow r || r_i$
     $h \leftarrow h||c_i$

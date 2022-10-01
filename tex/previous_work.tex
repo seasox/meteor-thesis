@@ -263,7 +263,7 @@ After the tokenizer has encoded the history as a vector of tokens it is passed a
 The model's output is a \emph{logits vector} $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
 A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value in a component represents a stronger activation and therefore a higher likelihood of a token to appear as the next token in the sequence.
 Since the logits vector is unweighted, it might contain positive and negative values, which don't sum up nicely as they would in a probability distribution we can sample from.
-To get a probability distribution from a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ we can use the softmax function $\sigma$, which transforms a logits vector of some dimension $\ell$ into another vector of the same dimension representing the probability mass function for the components of the logits vector:
+To get a probability distribution from a logits vector we can use the softmax function $\sigma$, which transforms a logits vector of some dimension $\ell$ into another vector of the same dimension representing the probability mass function for the components of the logits vector:
 
 $$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},~ \sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}.$$
 
@@ -291,7 +291,7 @@ When we combine all the previous steps, we get the black box for our ML model as
             \draw[->] (sigmoid) -- node[midway,below] {$p_{|\mathcal{T}|}$} (tn);
   \end{tikzpicture}
   \caption{
-Generative ML Model as a pipeline $Next_{\mathcal{GPT}}$ as it is used in the Meteor stegosystem, which takes as input a history $h \in \mathcal{H}$ and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_{|\mathcal{T}|}\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_{|\mathcal{T}|}\}$. 
+Generative ML Model as a channel $\mathcal{C} = Next_{\mathcal{GPT}}$ used in the Meteor stegosystem. $Next_{\mathcal{GPT}}$ takes a history $h \in \mathcal{H}$ as input and outputs a tuple $(\mathcal{T}, \mathcal{P})$, where $\mathcal{P} = \{p_1, p_2, \dots, p_{|\mathcal{T}|}\}$ is a probability distribution over tokens $\mathcal{T} = \{ t_1, t_2, \dots, t_{|\mathcal{T}|}\}$. 
 The history $h$ is a string of text which is transformed to a vector $v \in \mathcal{T}^\zeta$ (with model-specific $\zeta$) of token indices using a tokenizer.
 The prediction model $\mathcal{GPT}$ takes $v$ as input and returns a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ of unscaled outputs.
 This logits vector is then transformed to a probability distribution $p \in [0,1]^{|\mathcal{T}|}$ using the softmax function.
@@ -334,6 +334,7 @@ This is what the Meteor stegosystem will abuse.
 There, the sending party will replace the randomness with a crafted value to embed a hidden message.
 While that value seems random to an observer, a recipient who possesses the secret key is able to recover the hidden message.
 
+\newpage
 
 \lstinputlisting[style=code, language=Python, caption={Python text generator using the Hugging Face Transformers Pipeline API}, label={alg:gpt2-demo}]{code/pipeline_gpt2.py}
 
@@ -355,16 +356,16 @@ This definition formally models the desired behavior described above.
 \begin{definition}[Ranged Randomness Recoverable Sampling Scheme, \cite{Meteor2021}]
   \label{def:rrrss}
   We call 
-  $(Sample_{\mathcal{M}}^\beta, Recover_{\mathcal{M}}^\beta, \mathcal{M}, \beta, \mathcal{H})$ 
+  $(Sample_{\mathcal{C}}^\beta, Recover_{\mathcal{C}}^\beta, \mathcal{C}, \beta, \mathcal{H})$ 
   with ppt. algorithms
-  $Sample_{\mathcal{M}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow \Delta$ 
+  $Sample_{\mathcal{C}}^\beta \colon \mathcal{H} \times \{0,1\}^\beta \rightarrow \Delta$ 
   and 
-  $Recover_{\mathcal{M}}^\beta \colon \mathcal{H} \times \Delta \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
-  a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over distribution $\mathcal{M}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
+  $Recover_{\mathcal{C}}^\beta \colon \mathcal{H} \times \Delta \rightarrow \mathcal{P}(\{0,1\}^\beta)$ 
+  a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over channel $\mathcal{C}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
   
   \begin{enumerate}
-    \item $Sample_{\mathcal{M}}^\beta(h, r)$, on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, samples an output $s \in \Delta$ from the underlying distribution $\mathcal{M}$.
-    \item $Recover_{\mathcal{M}}^\beta(h, s)$, on history $h \in \mathcal{H}$ and sample $s \in \Delta$ returned from $Sample_{\mathcal{M}}^\beta$, outputs the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{M}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$.
+    \item $Sample_{\mathcal{C}}^\beta(h, r)$, on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, samples an output $s \in \Delta$ from the marginal channel distribution $\mathcal{C}_h$.
+    \item $Recover_{\mathcal{C}}^\beta(h, s)$, on history $h \in \mathcal{H}$ and sample $s \in \Delta$ returned from $Sample_{\mathcal{C}}^\beta$, outputs the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{C}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$.
   \end{enumerate}
 \end{definition}
 With the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model.
@@ -372,7 +373,7 @@ While they define the $Sample$ and $Recover$ algorithms for GPT-2 only, they arg
 
 \begin{Pseudocode}[caption={
 RRRSS $Sample$ algorithm for GPT-2 \cite{Meteor2021}.
-$Sample$ produces, given a history $h$ and a value $r$, the next token sampled according to $r$ from the distribution for the next token generated by $Next_{\mathcal{GPT}}(h)$.
+$Sample$ produces, given a history $h$ and a value $r$, the next token sampled according to $r$ from the distribution generated by $\mathcal{C}_h = Next_{\mathcal{GPT}}(h)$.
 }]
 algorithm $Sample_{\mathcal{GPT}}^\beta(  h, r)$
   Output: Token $t$
@@ -400,51 +401,48 @@ algorithm $Recover_{\mathcal{GPT}}^\beta(h, s)$
   Output $\mathcal{R} \leftarrow \emptyset$
 \end{Pseudocode}
 
-Here, $Next_{\mathcal{GPT}}$ is the algorithm which generates the probability distribution for the next token given a history $h$ as shown in \autoref{fig:generative-network}.
+Here, $Next_{\mathcal{GPT}}$ is the channel $\mathcal{C}$ that generates the probability distribution for the next token given a history $h$ as shown in \autoref{fig:generative-network}.
 The tokens are denoted by $\mathcal{T}$ and probabilities are denoted by $\mathcal{P}$.
 The $Sample_{\mathcal{GPT}}^\beta$ algorithm cumulates the token probabilities $p_i$ into $cuml$ until the threshold $r$ has been reached.
-Then the current token $t_i$ is the token to be sampled from the distribution.
+Once reached, the current token $t_i$ is the token to be sampled from the distribution.
 We can see that the order of tokens is relevant for the recovery to succeed, so we expect $Next_{\mathcal{GPT}}$ to return probabilities in a somehow ordered fashion.
 
-Now that a RRRSS scheme for GPT-2 is established, we can commence with the definition of the stegosystem $\mathcal{S} = \left( Encode_{\mathcal{M}}^\beta, Decode_{\mathcal{M}}^\beta \right)$.
-The authors described those algorithms as follows while introducing three helper functions $LenPrefix^\beta$, $Prefix^\beta$ and $KeyGen_{\mathcal{M}}^\beta$:
+Now that an RRRSS scheme for GPT-2 is established, we can commence with the definition of the stegosystem $\mathcal{S} = \left(KeyGen_{\mathcal{C}}^\beta, Encode_{\mathcal{C}}^\beta, Decode_{\mathcal{C}}^\beta \right)$.
+The authors described these algorithms as follows while introducing helper functions $LenPrefix^\beta$ and $Prefix^\beta$:
 
+\begin{Pseudocode}[caption={$KeyGen$ algorithm \cite{Meteor2021}}]
+algorithm $KeyGen_{\mathcal{C}}^\beta(1^\lambda)$
+  Output: Key $k_{prg}$
+  Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
+\end{Pseudocode}%
 
 \begin{Pseudocode}[caption={$Encode$ algorithm \cite{Meteor2021}}, label={alg:encode}]
-algorithm $Encode_{\mathcal{M}}^\beta(k_{prg}, m, h)$
+algorithm $Encode_{\mathcal{C}}^\beta(k_{prg}, m, h)$
   Output: Stegotext message $c$
   $c \leftarrow \epsilon,~ n \leftarrow 0,~ i \leftarrow 0$
   while $n < |m|$ do
     $mask \leftarrow PRG.Next(k_{prg})$
     $r \leftarrow m[n:n+\beta] \oplus mask$
-    $c_i \leftarrow Sample_{\mathcal{M}}^\beta(h, r)$
-    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $c_i \leftarrow Sample_{\mathcal{C}}^\beta(h, r)$
+    $\mathcal{R} = Recover_{\mathcal{C}}^\beta(h, c_i)$
     $n_i \leftarrow LenPrefix^\beta(\mathcal{R})$
     $c \leftarrow c || c_i, n \leftarrow n+n_i, h \leftarrow h||c_i,~ i \leftarrow i + 1$
   Output $c$
-\end{Pseudocode}
-
-$Encode$ uses the PRG to sample a pseudorandom mask and applies that mask to the next $\beta$ bits of $m$ into $r$.
-Since $mask$ is pseudorandom, this makes $r$ pseudorandom as well.
-We then use $r$ to sample from the RRRSS distribution to get the next token $c_i$.
-Afterwards, $Recover_{\mathcal{M}}^\beta$ and $LenPrefix^\beta$ are queried to get the number of bits $n_i$ recoverable from $r$.
-This procedure is repeated until $|m|$ bits of hiddentext have been encoded.
-Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_{prg}$ and $h$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}.
-
-
+\end{Pseudocode}%
+\newpage
 \begin{Pseudocode}[float, caption={$Decode$ algorithm \cite{Meteor2021}}, label={alg:decode}]
-algorithm $Decode_{\mathcal{M}}^\beta(k_{prg}, c, h)$
+algorithm $Decode_{\mathcal{C}}^\beta(k_{prg}, c, h)$
   Output: Plaintext message $m$
   $m \leftarrow \epsilon$
   Parse $c$ as $c_0 || c_1 || \dots || c_{\tau}$
   for $i \in \{ 0, 1, \dots, \tau \}$ do
-    $\mathcal{R} = Recover_{\mathcal{M}}^\beta(h, c_i)$
+    $\mathcal{R} = Recover_{\mathcal{C}}^\beta(h, c_i)$
     $m_i \leftarrow Prefix^\beta(\mathcal{R})$
     $mask \leftarrow PRG.Next(k_{prg})$
     $m \leftarrow m || (m_i \oplus mask[0: |m_i|]$
     $h \leftarrow h||c_i$
   Output $m$
-\end{Pseudocode}
+\end{Pseudocode}%
 
 \begin{Pseudocode}[caption={$LenPrefix$ algorithm \cite{Meteor2021}}]
 algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
@@ -456,29 +454,30 @@ algorithm $LenPrefix^\beta(\mathcal R = \{ r_1, \dots r_n \})$
     $l \leftarrow l+1$
   Output $l$
 \end{Pseudocode}%
-%
+
 \begin{Pseudocode}[caption={$Prefix$ algorithm \cite{Meteor2021}}]
 algorithm $Prefix^\beta(  \mathcal R = \{ r_1, \dots r_n \})$
   Output: Bit String $p$
   Output $p \leftarrow r_1[0: LenPrefix^\beta(\mathcal{R})]$
 \end{Pseudocode}%
-%
-\begin{Pseudocode}[caption={$KeyGen$ algorithm \cite{Meteor2021}}]
-algorithm $KeyGen_{\mathcal{M}}^\beta(1^\lambda)$
-  Output: Key $k_{prg}$
-  Output $k_{prg} \leftarrow PRG.Setup(1^\lambda)$
-\end{Pseudocode}
+
+$Encode$ uses the PRG to sample a pseudorandom mask and applies that mask to the next $\beta$ bits of $m$ into $r$.
+Since $mask$ is pseudorandom, this makes $r$ pseudorandom as well.
+We then use $r$ to sample from the RRRSS to get the next token $c_i$.
+Afterwards, $Recover_{\mathcal{C}}^\beta$ and $LenPrefix^\beta$ are queried to get the number of bits $n_i$ recoverable from $r$.
+This procedure is repeated until $|m|$ bits of hiddentext have been encoded.
+Consider that the output of $Encode$ is deterministic, i.e. for a given $m$, $k_{prg}$ and $h$, the same stegotext $c$ will be generated, which will be important when we discuss security in \autoref{chap:security}.
 
 $Decode$ takes a stegotext $c$ and decodes it to the hiddentext message.
-It repeatedly uses $Recover_{\mathcal{M}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distribution.
+It repeatedly uses $Recover_{\mathcal{C}}^\beta$ and $Prefix^\beta$ to recover bits from the pseudorandom value used to sample from the distributions generated by $\mathcal{C}$.
 It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
 
 For reliability, the authors introduce a definition of \emph{steganographic correctness} that is roughly equivalent to our definition of reliability in \autoref{def:reliability} without giving a formal proof for the Meteor stegosystem.
-In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is in fact not reliable using GPT-2 as underlying distribution and propose a modification to Meteor that improves reliability while -- in the worst case -- introducing computational overhead exponential in stegotext length.
+In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is in fact not reliable using GPT-2 as a channel and propose a modification to Meteor that improves reliability while -- in the worst case -- introducing computational overhead exponential in stegotext length.
 
 In their paper, the Meteor authors provide performance statistics for different models and hardware setups.
-About 3 bits of hiddentext can be encoded in a stegotext token when using the GPT-2 model.
-For other generative models, such as a model that generates HTTP headers or a model trained on Wikipedia articles, the rate is significantly lower at less than 1 bit of hiddentext per token.
+About three bits of hiddentext can be encoded in a stegotext token when using the GPT-2 model.
+For other generative models, such as a model that generates HTTP headers or a model trained on Wikipedia articles, the rate is significantly lower at less than one bit of hiddentext per token.
 The results with the GPT-2 model are consistent with experiments conducted as part of this thesis.
 
 \begin{table}[h!]
@@ -492,7 +491,7 @@ The results with the GPT-2 model are consistent with experiments conducted as pa
   \caption{Meteor encoding statistics for a 160-byte hiddentext \cite{Meteor2021}.}
 \end{table}
 
-Meteor's security proof is also outlined by the authors.
-They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a random oracle $\mathcal{O}$ that samples from the distribution.
+Meteor's security proof is also outlined.
+In the paper, it is argued that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a random oracle $\mathcal{O}$ that samples from the distribution.
 In \autoref{chap:security}, we will show Meteor's security against chosen hiddentext attackers with query complexity of one.
 We will also show that Meteor is insecure against chosen hiddentext attackers with two or more queries.
