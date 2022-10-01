@@ -352,7 +352,6 @@ While it is easily possible for the encoding party to manipulate the sampling be
 Luckily, with many generative neural networks, such as GPT-2, the decoding party can do that.
 The Meteor authors have introduced the concept of Ranged Randomness Recoverable Sampling Schemes, or RRRSS.
 This definition formally models the desired behavior described above.
-
 \begin{definition}[Ranged Randomness Recoverable Sampling Scheme, \cite{Meteor2021}]
   \label{def:rrrss}
   We call 
@@ -364,11 +363,10 @@ This definition formally models the desired behavior described above.
   a \emph{Ranged Randomness Recoverable Sampling Scheme} (RRRSS) over distribution $\mathcal{M}$ with precision $\beta \in \mathbb{N}$ and histories $\mathcal{H}$, if:
   
   \begin{enumerate}
-    \item $Sample_{\mathcal{M}}^\beta(h, r)$ on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, sample an output $s$ from the underlying distribution $\mathcal{M}$
-    \item $Recover_{\mathcal{M}}^\beta(h, s)$ on history $h \in \mathcal{H}$ and sample $s \in \Delta$ returned from $Sample_{\mathcal{M}}^\beta$, output the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{M}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$
+    \item $Sample_{\mathcal{M}}^\beta(h, r)$, on history $h \in \mathcal{H}$ and randomness $r \in \{0,1\}^\beta$, samples an output $s \in \Delta$ from the underlying distribution $\mathcal{M}$.
+    \item $Recover_{\mathcal{M}}^\beta(h, s)$, on history $h \in \mathcal{H}$ and sample $s \in \Delta$ returned from $Sample_{\mathcal{M}}^\beta$, outputs the set $\mathcal{R} = \{ r \in \{0,1\}^\beta | Sample_{\mathcal{M}}^\beta(\mathcal{H}, r) = s \}$ of possible values for $r$.
   \end{enumerate}
 \end{definition}
-
 With the definition of an RRRSS, the authors define sampling and recovery algorithms for the GPT-2 model.
 While they define the $Sample$ and $Recover$ algorithms for GPT-2 only, they argue that many generative models satisfy the RRRSS property.
 
