@@ -22,6 +22,7 @@ In general, the documents $\Delta$ are defined as a set of efficiently recogniza
 However, in this thesis and the Meteor paper, the set of documents is denoted by a set $\mathcal{T}$ (for \emph{tokens}), which are sequences of unicode characters, i.e. $\Delta = \mathcal{T} \subseteq \mathcal{U}^*$. For example, given
 $$\mathcal{T} = \{ \textrm{``hello''}, \textrm{``\Vtextvisiblespace world''}, \textrm{``\Vtextvisiblespace stega''}, \textrm{``nography''} \}$$ the documents (or tokens) are ``hello'', ``\Vtextvisiblespace world'', ``\Vtextvisiblespace stega'' and ``nography''.  
 The stegotext ``hello steganography'' consists of three tokens.
+In \autoref{chap:reliability}, we will see that the tokens used in generative models used with Meteor are not prefix-free, i.e. there exist tokens $t \in \mathcal{T}$ such that there exists a prefix of $t$ which is token as well, which causes issues in reliability we will introduce as \emph{ambiguous tokenization} in \autoref{sec:amb-tok}.
 
 \begin{figure}[htbp]
 \centering
@@ -154,30 +155,24 @@ The insecurity of a stegosystem is the maximum possible advantage any attacker c
 Formally, Hopper defined a chosen hiddentext attack as follows:
 
 \begin{definition}[Chosen Hiddentext Attack, \cite{Hopper2004}]
-In a chosen hiddentext attack, the warden $W$ is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
-
+In a chosen hiddentext attack, Eve is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
 \begin{enumerate}
 \item $ST$: The oracle $ST$ has a uniformly chosen key $k \leftarrowS U_\lambda$ and responds to queries $(m, h)$ with a stegotext drawn from $SE(k, m, h)$.
 \item $CT$: The oracle $CT$ has a uniformly chosen $k$ as well, and responds to queries $(m, h)$ with a covertext of length $\mathcal{l} = |SE(k, m, h)|$ drawn from $\mathcal{C}_h^{\mathcal{l}}$.
 \end{enumerate}
-
-The warden now has to determine which oracle $M$ he has been given access to.
-$W^M(1^\lambda)$ outputs a bit which represents its guess about the type of $M$.
-We define $W$'s \emph{advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$} by
-
+Eve now has to determine which oracle $M$ she has been given access to.
+$W^M(1^\lambda)$ outputs a bit which represents her guess about the type of $M$.
+We define Eve's \emph{advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$} by
 $$Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(\lambda) = |Pr[W^{ST}(1^\lambda)=1] - Pr[W^{CT}(1^\lambda)=1]|$$
-
-where the probability is taken over the randomness of $ST$, $CT$, and $W$. 
+where the probability is taken over the randomness of $ST$, $CT$, and $W$.
 Define the \emph{insecurity of $\mathcal{S}$ with respect to channel $\mathcal{C}$} by
-
 $$InSec_{\mathcal{S}, \mathcal{C}}^{ss}(t, q, l, \lambda) = \max_{W \in \mathcal{W}(t, q, l)} \left\{ Adv_{\mathcal{S}, \mathcal{C}, W}^{ss}(\lambda) \right\}$$
-
 where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at most $q(\lambda)$ queries totaling at most $l(\lambda)$ bits (of hiddentext) and running in time at most $t(\lambda)$.
 \end{definition}
 
 \begin{definition}[Steganographic Security, \cite{Hopper2004}]
 \label{def:sec-hopper}
-A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called \emph{$(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$} ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$.
+A stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called \emph{$(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$} ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$.
 \end{definition}
 
 In the past two decades, many researchers built upon those cryptographic definitions of steganographic protocols.
