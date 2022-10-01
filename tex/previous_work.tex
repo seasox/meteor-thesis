@@ -63,7 +63,7 @@ They also have access to the same initial history $h$, which can be public.
 \label{fig:prisonersgame}
 \end{figure}
 
-While the Prisoners' Problem has already been established in the 1980s, the cryptographic community was lacking a strict definition of steganographic security until the early 2000s.
+While the Prisoners' Problem has already been established in the 1980s, the cryptographic community lacked a strict definition of steganographic security until the early 2000s.
 In 2002, Hopper et al. introduced a steganographic protocol based on rejection sampling, the first known example of a general provably secure steganographic system \cite{HLA2002}.
 On the way, the authors also established a cryptographic point of view on steganographic channels and steganographic protocols as well as a notion of steganographic security against chosen hiddentext attackers.
 The definitions and theorems established by Hopper, Langford and von Ahn have succeedingly been advanced in Hopper's dissertation \cite{Hopper2004} and further works by other researchers.
@@ -90,7 +90,7 @@ The support of a distribution consists of all elements with non-zero probability
 \begin{definition}[Support]
 Let $D$ be a distribution.
 We denote the \emph{support of $D$} as 
-$$\mathop{supp}(D) = \{ x \in D \mid Pr_{D}[x] \neq 0 \}$$
+$$\mathop{supp}(D) = \{ x \in D \mid Pr_{D}[x] \neq 0 \}.$$
 \end{definition}
 
 Now that we have established the notion of channels, we can commence with the definiton of a stegosystem.
@@ -100,9 +100,10 @@ Now that we have established the notion of channels, we can commence with the de
 A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with security parameter $\lambda$ is a pair of probabilistic algorithms:
 
 \begin{itemize}
-  \item $\mathcal{S}$.Encode (abbreviated $SE$) takes as input a key $k \in \{0,1\}^\lambda$, a string $m \in \mathcal{U}^*$ (the hiddentext), and a message history $h \in \mathcal{H}$.
+  \item $\mathcal{S}.KeyGen$ takes as input a security parameter $\lambda$ and returns a key $k \in \{0,1\}^\lambda$.
+  \item $\mathcal{S}.Encode$ (abbreviated $SE$) takes as input a key $k \in \{0,1\}^\lambda$, a string $m \in \mathcal{U}^*$ (the hiddentext), and a message history $h \in \mathcal{H}$.
     $SE(k, m, h)$ returns a sequence of documents $s_1||s_2||\dots||s_l$ (the stegotext) from the support of $\mathcal{C}_h^l$.
-  \item $\mathcal{S}$.Decode (abbreviated $SD$) takes as input a key $k \in \{0,1\}^\lambda$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h \in \mathcal{H}$.
+  \item $\mathcal{S}.Decode$ (abbreviated $SD$) takes as input a key $k \in \{0,1\}^\lambda$, a sequence of documents $s_1||s_2||\dots||s_l$, and a message history $h \in \mathcal{H}$.
     $SD(k, s, h)$ returns a hiddentext $m \in \mathcal{U}^*$
 \end{itemize}
 \end{definition}
@@ -121,8 +122,6 @@ The \emph{unreliability} $UnRel_{\mathcal{S}}(\lambda)$ is the maximum probabili
 $$UnRel_{\mathcal{S}}(\lambda) = \max_{\substack{k \in \{0,1\}^\lambda\\m \in \mathcal{U}^*\\ h \in \mathcal{H}}}\left\{ Pr[SD(k, SE(k,m,h), h) \neq m] \right\}.$$
 \end{definition}
 
-\todo{message and history length poly $\lambda$}
-
 \begin{definition}[Reliability]
 \label{def:reliability}
 A stegosystem $\mathcal{S}$ is \emph{reliable} if its unreliability is negligible in $\lambda$.
@@ -138,7 +137,7 @@ Intuitively, we want Eve to be unable to efficiently detect the use of a stegosy
 To show that Eve cannot detect the use of $\mathcal{S}$, we establish an oracle $\mathcal{O}$ which does not actually use $SE$ to encode a hidden message $m$, but instead draws a random sequence of documents of length $|SE(k,m,h)|$ from $\mathcal{C}$.
 If Eve is allowed to choose the hiddentext $m$ and history $h$, we call her a \emph{chosen hiddentext attacker}.
 
-We can model this attack as a distinguishing game between a challenger and the adversary Eve.
+We can model this attack as a distinguishing game between a challenger and an adversary Eve.
 First, the challenger samples a key $k \leftarrowS U_\lambda$.
 Next, Eve sends a tuple $(m, h)$ to the challenger.
 The challenger now secretly flips a coin.
@@ -155,13 +154,14 @@ The insecurity of a stegosystem is the maximum possible advantage any attacker c
 Formally, Hopper defined a chosen hiddentext attack as follows:
 
 \begin{definition}[Chosen Hiddentext Attack, \cite{Hopper2004}]
-In a chosen hiddentext attack, $W$ is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
+In a chosen hiddentext attack, the warden $W$ is given access to a ``mystery oracle'' $M$ which is chosen from one of the following distributions:
 
 \begin{enumerate}
 \item $ST$: The oracle $ST$ has a uniformly chosen key $k \leftarrowS U_\lambda$ and responds to queries $(m, h)$ with a stegotext drawn from $SE(k, m, h)$.
-\item $CT$: The oracle $CT$ has a uniformly chosen $k$ as well, and responds to queries $(m, h)$ with a covertext of length $\mathcal{l} = |SE(k, m, h)|$ drawn from $\mathcal{C}_h^{\mathcal{l}}$
+\item $CT$: The oracle $CT$ has a uniformly chosen $k$ as well, and responds to queries $(m, h)$ with a covertext of length $\mathcal{l} = |SE(k, m, h)|$ drawn from $\mathcal{C}_h^{\mathcal{l}}$.
 \end{enumerate}
 
+The warden now has to determine which oracle $M$ he has been given access to.
 $W^M(1^\lambda)$ outputs a bit which represents its guess about the type of $M$.
 We define $W$'s \emph{advantage against a stegosystem $\mathcal{S}$ for channel $\mathcal{C}$} by
 
@@ -177,7 +177,7 @@ where $\mathcal{W}(t, q, l)$ denotes the set of all adversaries which make at mo
 
 \begin{definition}[Steganographic Security, \cite{Hopper2004}]
 \label{def:sec-hopper}
-A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called \emph{$(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$} ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$
+A Stegosystem $\mathcal{S}$ with security parameter $\lambda$ is called \emph{$(t,q,l,\epsilon)$ steganographically secret against chosen hiddentext attack for the channel $\mathcal{C}$} ($(t,q,l,\epsilon)$-SS-CHA-$\mathcal{C}$) if $InSec_{\mathcal{S},\mathcal{C}}^{ss}(t,q,l,\lambda) \leq \epsilon$.
 \end{definition}
 
 In the past two decades, many researchers built upon those cryptographic definitions of steganographic protocols.
@@ -233,7 +233,7 @@ For example, when translating a sentence from one language to another, the trans
 
 
 When we use GPT-2 in the Meteor stegosystem, we can abstract its prediction functionality as a function $\mathcal{GPT} \colon \mathcal{T}^\zeta \rightarrow \mathbb{Z}^{|\mathcal{T}|}$.
-It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the history length supported by the model) and transforms it into a logits vector of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
+It takes an input vector $v \in \mathcal{T}^\zeta$ of tokens (with $\zeta$ the history length supported by the model) and transforms it into a \emph{logits vector} of unweighted model outputs (the next token prediction) of dimension $|\mathcal{T}|$.
 
 The input vector $v=T(h)$ is a representation of a history $h$ generated using a tokenizer $T$ over tokens $\mathcal{T}$.
 Since we work with text, we need to find a way for $T$ to transform our history $h$ into the realm of numbers, i.e. tokenize the history.
@@ -265,12 +265,12 @@ An NLP model might then learn that the token ``n't'' can be used to negate a ver
 While this approach makes it easier for the model to learn relationships between different words, there may exist multiple tokenizations for a given word, a pitfall that will be important when we discuss reliability in \autoref{chap:reliability}.
 
 After the tokenizer has encoded the history as a vector of tokens it is passed as input to the generative model.
-The model's output is a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
+The model's output is a \emph{logits vector} $z \in \mathbb{Z}^{|\mathcal{T}|}$ with components $z_i$ for each token $t_i$ in the model's token set.
 A logits vector is a vector of unweighted activations of the model's underlying layers, where a higher value in a component represents a stronger activation and therefore a higher likelihood of a token to appear as the next token in the sequence.
 Since the logits vector is unweighted, it might contain positive and negative values, which don't sum up nicely as they would in a probability distribution we can sample from.
 To get a probability distribution from a logits vector $z \in \mathbb{Z}^{|\mathcal{T}|}$ we can use the softmax function $\sigma$, which transforms a logits vector of some dimension $\ell$ into another vector of the same dimension representing the probability mass function for the components of the logits vector:
 
-$$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},~ \sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}$$
+$$\sigma \colon \mathbb{Z}^{\ell} \rightarrow [0,1]^{\ell},~ \sigma(z) = \left(\frac{e^{z_i}}{\sum_{j=1}^{\ell} e^{z_j}}\right)_{1 \leq i \leq \ell}.$$
 
 When we combine all the previous steps, we get the black box for our ML model as illustrated in \autoref{fig:generative-network}.
 
@@ -304,8 +304,6 @@ This logits vector is then transformed to a probability distribution $p \in [0,1
 }
   \label{fig:generative-network}
 \end{figure}
-
-\todo{fix alignment of $p_{|\mathcal{T}|}$}
 
 To generate the next token in the sequence, we can sample according to the generated distribution.
 After sampling from the distribution, we append the sampled token to the history and repeat the process until sufficiently many tokens have been generated.
