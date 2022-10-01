@@ -19,7 +19,7 @@ For an illustration of the Prisoners' Problem see \autoref{fig:prisonersgame}.
 
 We suppose that Alice and Bob communicate using a sequence of \emph{documents}, called the \emph{stegotext}.
 In general, the documents $\Delta$ are defined as a set of efficiently recognizable prefix-free bit strings of finite length \cite{Hopper2008}.
-However, in this thesis and the Meteor paper, the set of documents is denoted by a set $\mathcal{T}$ (for \emph{tokens}), which are sequences of unicode characters, i.e. $\Delta = \mathcal{T} \subseteq \mathcal{U}^*$. For example, given
+However, in this thesis and the Meteor paper, the set of documents is denoted by a set $\mathcal{T}$ (for \emph{tokens}), which are sequences of Unicode characters, i.e. $\Delta = \mathcal{T} \subseteq \mathcal{U}^*$. For example, given
 $$\mathcal{T} = \{ \textrm{``hello''}, \textrm{``\Vtextvisiblespace world''}, \textrm{``\Vtextvisiblespace stega''}, \textrm{``nography''} \}$$ the documents (or tokens) are ``hello'', ``\Vtextvisiblespace world'', ``\Vtextvisiblespace stega'' and ``nography''.  
 The stegotext ``hello steganography'' consists of three tokens.
 In \autoref{chap:reliability}, we will see that the tokens used in generative models used with Meteor are not prefix-free, i.e. there exist tokens $t \in \mathcal{T}$ such that there exists a prefix of $t$ which is token as well, which causes issues in reliability we will introduce as \emph{ambiguous tokenization} in \autoref{sec:amb-tok}.
@@ -109,7 +109,7 @@ A \emph{steganographic protocol} $\mathcal{S}$, or \emph{stegosystem}, with secu
 \end{itemize}
 \end{definition}
 
-This definition resembles that of a symmetric encryption scheme, except that both $SE$ and $SD$ take a message history $h$ as additional argument.
+This definition resembles that of a symmetric encryption scheme, except that both $SE$ and $SD$ take a message history $h$ as an additional argument.
 
 Now that we have defined what a steganographic protocol is, we will introduce some properties we would like a stegosystem to satisfy.
 First of all, we want a stegosystem to be reliable.
@@ -131,11 +131,11 @@ A stegosystem $\mathcal{S}$ is \emph{reliable} if its unreliability is negligibl
 The introduction of \emph{negligible unreliability} allows the stegosystem to sometimes yield wrong results, but only with probability negligible in the security parameter $\lambda$.
 This proves helpful for reductions on established cryptographic primitives.
 In some works, the term \emph{correctness} of a stegosystem is used \cite{Hopper2004, Meteor2021}.
-In this thesis however, we will call a stegosystem reliable instead.
+In this thesis, however, we will call a stegosystem reliable instead.
 
 Since we naturally want our stegosystem to be prone to analysis by Eve, we also need a definition of security.
 Intuitively, we want Eve to be unable to efficiently detect the use of a stegosystem $\mathcal{S}$ without knowledge of the secret key $k$.
-To show that Eve cannot detect the use of $\mathcal{S}$, we establish an oracle $\mathcal{O}$ which does not actually use $SE$ to encode a hidden message $m$, but instead draws a random sequence of documents of length $|SE(k,m,h)|$ from $\mathcal{C}$.
+To show that Eve cannot detect the use of $\mathcal{S}$, we establish an oracle $\mathcal{O}$ which does not use $SE$ to encode a hidden message $m$ but instead draws a random sequence of documents of length $|SE(k,m,h)|$ from $\mathcal{C}$.
 If Eve is allowed to choose the hiddentext $m$ and history $h$, we call her a \emph{chosen hiddentext attacker}.
 
 We can model this attack as a distinguishing game between a challenger and an adversary Eve.
@@ -145,7 +145,7 @@ The challenger now secretly flips a coin.
 If the coin shows heads, the challenger uses $SE$ to generate a stegotext $s = SE(k,m,h)$.
 Otherwise, the challenger uses $\mathcal{O}$ to generate a covertext $s$.
 Either way, the challenger sends $s$ back to Eve.
-If Eve is able to guess the result of the coin flip using a distinguisher $W$, she must have been able to distinguish a stegotext from a covertext.
+If Eve can guess the result of the coin flip using a distinguisher $W$, she must have been able to distinguish a stegotext from a covertext.
 
 If Eve can distinguish a stegotext from a covertext, we say that she has an advantage against the stegosystem in the distinguishing game.
 The naïve approach to win this game would be to simply guess the coin flip with a success rate of $\frac{1}{2}$ if they play this game just once.
@@ -181,7 +181,7 @@ In black-box steganography the sending party Alice knows nothing about the under
 While a black-box construction provides a definition with the least required knowledge of the channel, exponential sampling complexity is required for the encoding party with respect to the number of message bits.
 
 In contrast, white-box steganography describes the other extreme, where Alice either knows the channel distribution beforehand or can efficiently compute it.
-Both black-box and white-box steganography are unrealistic in practice, because Alice is possibly able to gain some knowledge or approximation about the channel, but most of the time cannot perfectly describe the channel's distribution.
+Both black-box and white-box steganography are unrealistic in practice because Alice is possibly able to gain some knowledge or approximation about the channel, but most of the time cannot perfectly describe the channel's distribution.
 Therefore, grey-box steganography has been introduced \cite{LRW2013}.
 Grey-box steganography tries to resolve these deficiencies by expecting that Alice has some initial knowledge of the covertext channel.
 Alice then uses machine learning techniques to learn about the covertext distribution and generates suitable stegotexts.
@@ -221,7 +221,7 @@ For example, when translating a sentence from one language to another, the trans
   Since each output in the RNN alters the hidden state, the translation has to performed in a serial manner.
     
   In contrast, a transformer model uses attention at each step of output generation.
-  When generating the token ``isst'', the models attention will predominantly be weighed to the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce a grammatically correct sentence.
+  When generating the token ``isst'', the model's attention will predominantly be weighed on the input token ``eat'', but some attention will also be placed on ``likes'' and ``the cat'' to produce a grammatically correct sentence.
   Meanwhile other tokens such as ``very'' will have low attention since that word is not relevant to generate ``isst''.
 \end{example}
 
@@ -311,12 +311,12 @@ It is a form of digital communication that uses data to hide or obscure messages
 \end{example}
 
 To use GPT-2 with the Python programming language, we can use the Hugging Face Transformers library together with PyTorch.
-PyTorch \cite{PyTorch} is a machine learning framework that implements high performance operations needed for machine learning with support for hardware acceleration.
-The Hugging Face Transformers library \cite{HFTransformers} is built upon PyTorch and gives an API for easy access to several pretrained machine learning models.
+PyTorch \cite{PyTorch} is a machine learning framework that implements high-performance operations needed for machine learning with support for hardware acceleration.
+The Hugging Face Transformers library \cite{HFTransformers} is built upon PyTorch and gives an API for easy access to several pre-trained machine learning models.
 In its simplest form, the pipeline API generates texts using not only GPT-2 but many other generative models.
 A Python program which generates the text in \exampleref{example:gpt2-output-sample} can be found in \autoref{alg:gpt2-demo}.
 
-While the use of the pipeline API is very convenient to develop simple text generation or question answering programs, it abstracts some steps that we will need to intercept for use in a stegosystem.
+While the use of the pipeline API is very convenient to develop simple text generation or question-answering programs, it abstracts some steps that we will need to intercept for use in a stegosystem.
 A more sophisticated way to generate text using GPT-2 can be found in \autoref{alg:gpt2-logits-demo}.
 Its output resembles that shown in \exampleref{example:gpt2-output-sample}. 
 This code example shows how we can:
@@ -332,7 +332,7 @@ This code example shows how we can:
 As we can see in \autoref{alg:gpt2-logits-demo}, a pseudorandom value \emph{sample} is generated to select the next token \emph{selection} from the distribution.
 This is what the Meteor stegosystem will abuse.
 There, the sending party will replace the randomness with a crafted value to embed a hidden message.
-While that value seems random to an observer, a recipient who possesses the secret key is able to recover the hidden message.
+While that value seems random to an observer, a recipient who possesses the secret key can recover the hidden message.
 
 \newpage
 
@@ -346,8 +346,8 @@ While that value seems random to an observer, a recipient who possesses the secr
 \label{sec:meteor}
 In their paper \cite{Meteor2021}, the authors present the Meteor stegosystem, a provably secure steganographic system for realistic distributions approximated by ML models.
 The central idea behind Meteor is that an encoding party Alice manipulates the randomness used in a sampling scheme to embed hidden text in a token sequence.
-The decoding party Bob receives the generated stegotext from Alice and recovers a prefix of the random value used during sampling.
-If the value which replaces the randomness for sampling is indistinguishable from an actually random value, the steganographic protocol is secure.
+The decoding party Bob receives the generated stegotext from Alice and recovers a prefix of the random value used for sampling.
+This steganographic protocol is secure if the value replacing the randomness for sampling is indistinguishable from a random value.
 
 While it is easily possible for the encoding party to manipulate the sampling because they control the randomness, it is intuitively unclear whether the decoding party can extract a prefix of the randomness from the stegotext to recover parts of the hiddentext message.
 Luckily, with many generative neural networks, such as GPT-2, the decoding party can do that.
@@ -473,7 +473,7 @@ It repeatedly uses $Recover_{\mathcal{C}}^\beta$ and $Prefix^\beta$ to recover b
 It then generates a mask from the PRG (which will be the same mask generated in the encoding step) to decrypt the original message.
 
 For reliability, the authors introduce a definition of \emph{steganographic correctness} that is roughly equivalent to our definition of reliability in \autoref{def:reliability} without giving a formal proof for the Meteor stegosystem.
-In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is in fact not reliable using GPT-2 as a channel and propose a modification to Meteor that improves reliability while -- in the worst case -- introducing computational overhead exponential in stegotext length.
+In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is not reliable using GPT-2 as a channel and propose a modification to Meteor that improves reliability while -- in the worst case -- introducing computational overhead exponential in stegotext length.
 
 In their paper, the Meteor authors provide performance statistics for different models and hardware setups.
 About three bits of hiddentext can be encoded in a stegotext token when using the GPT-2 model.
@@ -492,6 +492,6 @@ The results with the GPT-2 model are consistent with experiments conducted as pa
 \end{table}
 
 Meteor's security proof is also outlined.
-In the paper, it is argued that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a random oracle $\mathcal{O}$ that samples from the distribution.
-In \autoref{chap:security}, we will show Meteor's security against chosen hiddentext attackers with query complexity of one.
+In the paper, it is argued that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ can distinguish the output of the stegosystem from the output of a random oracle $\mathcal{O}$ that samples from the distribution.
+In \autoref{chap:security}, we will show Meteor's security against chosen hiddentext attackers with a query complexity of one.
 We will also show that Meteor is insecure against chosen hiddentext attackers with two or more queries.

@@ -143,9 +143,9 @@
     Here, the hiddentext is embedded in the randomness used for sampling from the generative model.
     
     In this thesis, we analyze reliability and security against Chosen-Hiddentext-Attackers of the Meteor stegosystem. 
-    We will find that Meteor is not reliable especially for longer hiddentexts ($|m| \geq 1024$ bytes).
+    We will find that Meteor is not reliable, especially for longer hiddentexts ($|m| \geq 1024$ bytes).
     This is due to ambiguous tokenization of text, which can occur with subword tokenization, a feature of modern generative models such as GPT-2.
-    Additionally, the Meteor stegosystem is deterministic and therefore vulnerable to chosen-hidden-text attackers with query complexity greater than one.
+    Additionally, the Meteor stegosystem is deterministic and therefore vulnerable to chosen hiddentext attackers with query complexity greater than one.
     We present optimizations that improve the reliability and chosen hiddentext attack security of the Meteor stegosystem.
     We also discuss a modification that allows Meteor to be used for more compelling use in the context of instant messaging.
   },

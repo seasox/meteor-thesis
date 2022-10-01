@@ -6,7 +6,7 @@ On the website, they state that ``due to issues with the GPT-2 algorithm interfa
 After experimentation, we conclude that the cause of this is not due to issues with the algorithm interface but to the way GNNs with subword tokenization such as GPT-2 tokenize text.
 
 In this chapter, we will, after describing the issue at hand, show that the Meteor Stegosystem is indeed unreliable by providing a counterexample.
-Afterwards, we will discuss an experiment which approximates the probability of incorrect decodings.
+Afterwards, we will discuss an experiment that approximates the probability of incorrect decodings.
 The experiment shows that for sufficiently long hiddentexts the probability of incorrect decodings increases to approximately 87 \%.
 To improve reliability, we present a change to Meteor's $Decode$ algorithm to increase the probability of successfully recovering the hiddentext message using a DFS-based graph search while -- in the worst case -- introducing computational overhead exponential in stegotext length.
 
@@ -14,15 +14,15 @@ To improve reliability, we present a change to Meteor's $Decode$ algorithm to in
 \label{sec:amb-tok}
 
 In \autoref{sec:generative-neural-networks}, we discussed that GNNs use a set of tokens to represent text.
-To improve the quality of generated text, models (not only) in the GPT-n family use subword tokenization.
-Subword tokenization is opposed to word tokenization, where text is split by spaces, and character based tokenization, where text is tokenized as a sequence of characters.
-Subword tokenization allows for more effective machine learning, as the model can easier connect related words to each other.
+To improve the quality of the generated text, models (not only) in the GPT-n family use subword tokenization.
+Subword tokenization is opposed to word tokenization, where text is split by spaces, and character-based tokenization, where text is tokenized as a sequence of characters.
+Subword tokenization allows for more effective machine learning, as the model can easier connect related words.
 This technique proved to be very effective in enhancing GNN performance in the last few years.
 
 On the other hand, this allows for one word to have multiple tokenizations because subword tokens are usually not prefix-free.
 For example, the word ``doesn't'' might be tokenized as ``do$||$es$||$n't'', but it could also be tokenized as ``does$||$n't'' or even ``d$||$o$||$e$||$s$||$n$||$'$||$t''.
-This situation is what we call an ambiguous tokenization.
-If Alice generates a stegotext which has an ambiguous tokenization and Bob choses a different tokenization than Alice, the decoding will fail because a wrong prefix of the sample used to generate a token will be recovered from the stegotext.
+This situation is what we call ambiguous tokenization.
+If Alice generates a stegotext that has an ambiguous tokenization and Bob choses a different tokenization than Alice, the decoding will fail because a wrong prefix of the sample used to generate a token will be recovered from the stegotext.
 For party $P \in \{A,B\}$ we denote by $T_P$ the tokenizer used to generate (encoding party $A$) or parse (decoding party $B$) a stegotext $c \in \Delta^*$ as a sequence of tokens $T_P(c) = t_1||t_2||\dots||t_{|t|} \in \mathcal{T}^*$.
 
 To measure the difference in tokenizations of a given word between Alice and Bob, we define a distance function $D$ that measures the number of mismatching subsequences of two tokenizations $t,~ t'$ as follows:

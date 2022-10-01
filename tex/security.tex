@@ -1,14 +1,14 @@
 \chapter{Improving the Security of Meteor}
 \label{chap:security}
 
-When we communicate using a steganographic protocol, security is of upmost importance.
+When we communicate using a steganographic protocol, security is of utmost importance.
 We probably communicate in an environment that is very hostile against its participants.
 Therefore, we should satisfy the most rigorous security requirements we can.
 
 In \autoref{def:sec-hopper}, we established the notion of steganographic security against chosen hiddentext attacks (SS-CHA).
-In this chapter, we will show that the Meteor stegosystem is secure against SS-CHA adversaries with query complexity of one, i.e. adversaries that are allowed to send up to one query to the encoding oracle.
+In this chapter, we will show that the Meteor stegosystem is secure against SS-CHA adversaries with a query complexity of one, i.e. adversaries that are allowed to send up to one query to the encoding oracle.
 Afterwards, we will argue that Meteor is insecure against adversaries with query complexity greater than one.
-In conclusion, we will introduce a modification to the Meteor stegosystem that improves its security against SS-CHA adversaries by replacing the one-time pad used in Meteor with a symmetric encryption scheme in counter mode (SES-CTR).
+In conclusion, we will modify the Meteor stegosystem to improve its security against SS-CHA adversaries by replacing the one-time pad used in Meteor with a symmetric encryption scheme in counter mode (SES-CTR).
 
 \section{Security Against Chosen Hiddentext Attackers}
 
@@ -17,7 +17,7 @@ In this chapter, we will show that the Meteor stegosystem is secure against SS-C
 
 
 \begin{theorem}
-  Meteor is secure against SS-CHA adversaries with query complexity of one.
+  Meteor is secure against SS-CHA adversaries with a query complexity of one.
 \label{thm:meteor-secure}
 \end{theorem}
 \begin{proof}
