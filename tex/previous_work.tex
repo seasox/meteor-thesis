@@ -485,6 +485,22 @@ It then generates a mask from the PRG (which will be the same mask generated in 
 For reliability, the authors introduce a definition of \emph{steganographic correctness} that is roughly equivalent to our definition of reliability in \autoref{def:reliability} without giving a formal proof for the Meteor stegosystem.
 In \autoref{chap:reliability}, we will argue that the Meteor stegosystem is in fact not reliable using GPT-2 as underlying distribution and propose a modification to Meteor that improves reliability while -- in the worst case -- introducing computational overhead exponential in stegotext length.
 
+In their paper, the Meteor authors provide performance statistics for different models and hardware setups.
+About 3 bits of hiddentext can be encoded in a stegotext token when using the GPT-2 model.
+For other generative models, such as a model that generates HTTP headers or a model trained on Wikipedia articles, the rate is significantly lower at less than 1 bit of hiddentext per token.
+The results with the GPT-2 model are consistent with experiments conducted as part of this thesis.
+
+\begin{table}[h!]
+  \begin{tabular}{l||c|c|c|c}
+    Model & GPU (sec) & CPU (sec) & Stegotext Length (bytes) & Rate (bits/token) \\
+    \hline
+    GPT-2        & 13.089 & 82.214  & 1976 & 3.09 \\
+    Wikipedia    & 19.791 & 46.583  & 2002 & 0.64 \\
+    HTTP Headers & 49.380 & 103.280 & 6144 & 0.21 \\
+  \end{tabular}
+  \caption{Meteor encoding statistics for a 160-byte hiddentext \cite{Meteor2021}.}
+\end{table}
+
 Meteor's security proof is also outlined by the authors.
 They argue that a steganographic protocol is secure if no ppt. adversary $\mathcal{A}$ is able to distinguish the output of the stegosystem from the output of a random oracle $\mathcal{O}$ that samples from the distribution.
 In \autoref{chap:security}, we will show Meteor's security against chosen hiddentext attackers with query complexity of one.
