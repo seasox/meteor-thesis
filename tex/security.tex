@@ -6,7 +6,7 @@ We probably communicate in an environment that is very hostile against its parti
 Therefore, we should satisfy the most rigorous security requirements we can.
 
 In \autoref{def:sec-hopper}, we established the notion of steganographic security against chosen hiddentext attacks (SS-CHA).
-In this chapter, we will show that the Meteor stegosystem is secure against SS-CHA adversaries with a query complexity of one, i.e. adversaries that are allowed to send up to one query to the encoding oracle.
+In this chapter, we will show that the Meteor stegosystem is secure against SS-CHA adversaries with a query complexity of one, i.e., adversaries that are allowed to send up to one query to the encoding oracle.
 Afterwards, we will argue that Meteor is insecure against adversaries with query complexity greater than one.
 In conclusion, we will modify the Meteor stegosystem to improve its security against SS-CHA adversaries by replacing the one-time pad used in Meteor with a symmetric encryption scheme in counter mode (SES-CTR).
 
@@ -22,7 +22,7 @@ In this chapter, we will show that the Meteor stegosystem is secure against SS-C
 \end{theorem}
 \begin{proof}
   We show SS-CHA security by reduction to an attack against the underlying PRG.
-  Let $\mathcal{A}$ be an SS-CHA attacker against the Meteor stegosystem, i.e. $\mathcal{A}$ can distinguish the output of $Encode$ from that of a random oracle $\mathcal{O}$ after one query.
+  Let $\mathcal{A}$ be an SS-CHA attacker against the Meteor stegosystem, i.e., $\mathcal{A}$ can distinguish the output of $Encode$ from that of a random oracle $\mathcal{O}$ after one query.
   We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
   For a given query $(m,h)$, the attacker gets the response $c = c_0 ||c_1 || \dots || c_{\tau}$ from $Encode$ or $\mathcal{O}$, depending on the challenger's random bit.
   The attacker can then use $Prefix$ and $LenPrefix$ (as Bob would during decoding) to recover the bit string $r$ used to sample $c$ from the underlying distribution.
@@ -30,7 +30,7 @@ In this chapter, we will show that the Meteor stegosystem is secure against SS-C
   How is $r$ constructed if the challenger used $Encode$ to generate $c$?
   It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from a PRG.
   Since $mask$ is pseudorandom, the exclusive-or of $mask$ and some other value is pseudorandom as well.
-  To distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e. the attacker has to distinguish $r$ from a truly random value $r'$.
+  To distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e., the attacker has to distinguish $r$ from a truly random value $r'$.
   Therefore, $\mathcal{A}$ can be used to attack the PRG.
   Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
@@ -72,7 +72,7 @@ In the following section, we will propose a modification to Meteor that improves
 
 \section{Improving Meteor's Security Against Chosen Hiddentext Attackers}
 
-To improve Meteor's security, we have to randomize the output of $Encode$, i.e. on each invocation with the same inputs, $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
+To improve Meteor's security, we have to randomize the output of $Encode$, i.e., on each invocation with the same inputs, $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
 
 To achieve that we introduce a new cryptographic primitive, symmetric encryption schemes in counter mode with a pseudorandom function $F$ (SES-CTR with PRF).
 We will introduce a definition of an SES which is equivalent to that introduced in \cite{Berndt2017}.
