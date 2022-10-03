@@ -10,7 +10,7 @@ If we can establish provably secure steganographic protocols -- or stegosystems 
 Steganographic techniques such as protocol obfuscation are already in use today, for example in the Tor anonymity service to circumvent the so-called ``Great Firewall'' of China \cite{TorBlocking2012}.
 Those techniques are not necessarily cryptographically secure but might rely on the adversary to have a default open policy, i.e., allow communication if the protocol in use cannot be identified.
 
-This thesis discusses Meteor, an innovative cryptographically secure steganographic protocol that exploits the randomness used in sampling from distributions of machine learning based text generation models such as GPT-2 to embed a hidden message into the generated text.
+This thesis discusses Meteor, an innovative cryptographically secure steganographic protocol that exploits the randomness used in sampling from distributions of machine learning based text generation models, such as GPT-2, to embed a hidden message into the generated text.
 We will show that the Meteor stegosystem is not reliable concerning the formal definition of steganographic reliability.
 Afterwards, we present a modification to the Meteor stegosystem to improve its use in instant messaging applications by replacing the generative model with one that is trained to generate chat-like texts.
 Subsequently, Meteor's security against chosen hiddentext attackers is discussed.
@@ -26,7 +26,7 @@ For both reliability and security, we propose algorithms that improve the Meteor
 \autoref{chap:previous-work} discusses previous works we will need to understand the architecture of the Meteor stegosystem.
 First, we will discuss steganography and provably secure steganography.
 Afterwards, we will examine how generative neural networks such as GPT-2 iteratively produce high-quality text.
-Concluding, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels.
+Finally, the Meteor stegosystem is presented, a provably secure steganographic system over ML-based channels.
 
 \autoref{chap:reliability} analyzes the reliability of the Meteor stegosystem. 
 This chapter relies on the material presented in \autoref{chap:previous-work}, especially the definitions of steganographic (un-)reliability established in \autoref{def:unreliability} and \autoref{def:reliability} as well as the discussion of generative neural networks (GNNs) in \autoref{sec:generative-neural-networks}.
@@ -35,8 +35,8 @@ Afterwards, algorithms are presented that improve the reliability of Meteor on t
 Unfortunately, these algorithms -- in the worst case and for some models -- introduce overhead exponential in the length of the generated stegotext.
 
 In \autoref{chap:twowaycommunication} we present a small modification to the Meteor stegosystem that allows two-way communication.
-This chapter relies on the material presented in \autoref{sec:meteor} and \autoref{sec:generative-neural-networks}.
-We embed a fixed amount of bits in each message, using the DialoGPT model presented in \cite{Zhang2020} to generate dialog-like messages.
+This chapter relies on the material presented in \autoref{sec:generative-neural-networks} and \autoref{sec:meteor}.
+To generate dialog-like messages, we will embed a fixed number of bits in each message using the DialoGPT model presented in \cite{Zhang2020}.
 This modification allows users of the Meteor stegosystem to communicate more naturally in the context of instant messaging.
 It also makes sure that the algorithms from \autoref{chap:reliability} can be applied more conveniently with smaller overhead.
 

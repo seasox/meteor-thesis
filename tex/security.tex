@@ -81,7 +81,7 @@ There, it is argued that SES satisfies the IND\$-CPA property if F is a secure p
 The idea behind encryption in SES-CTR is simple:
 First, split the message $m$ into $n$ blocks of size $F.in(\lambda)$ specific to $F$.
 Choose an $IV$ of size $F.in(\lambda)$ at random.
-It is important to not reuse an $IV$ with a given key $k$ to retain One-Time-Pad security.
+It is important to not reuse an $IV$ with a given key $k$ to retain one-time pad security.
 Now, for each block $m_i$, use $F.Eval$ to generate a pseudorandom value $r = F.Eval(k, IV+i)$.
 Afterwards, calculate the exclusive or of $r$ and $m_i$ to get the next block $c_i$.
 The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is the $IV$ concatenated with ciphertext blocks $c_i$.
@@ -121,13 +121,13 @@ Since $SES.Encrypt$ yields different ciphertexts on each invocation (even with t
 
 These modifications improve Meteor's security against SS-CHA adversaries.
 Repeated invocations of $EncodeRandomized$ return different stegotexts with overwhelming probability.
-Since $SES$ is IND\$-CPA secure we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA security against polynomial attackers as long as the same $IV$ is not generated twice, which is -- in practice -- very unlikely for sufficient $IV$ lengths.
+Since $SES$ is IND\$-CPA secure, we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA security against polynomial attackers as long as the same $IV$ is not generated twice, which is -- in practice -- very unlikely for sufficient $IV$ lengths.
 
 
 \begin{Pseudocode}[float, caption={
 $EncodeRandomized$ algorithm.
 This algorithm differs from the original $Encode$ algorithm by using $SES$ to encrypt the message.
-The ciphertext (which is indistinguishable from randomness and indeterministic) is then used to sample from $\mathcal{C}_h$.
+The ciphertext (which is indistinguishable from randomness and nondeterministic) is then used to sample from $\mathcal{C}_h$.
 }, label={alg:encode-nd}]
 algorithm $EncodeRandomized_{\mathcal{C}}^{\beta}(k_{prg}, m, h)$
   Output: Stegotext message $c$
