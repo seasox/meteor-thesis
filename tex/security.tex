@@ -72,7 +72,7 @@ In the following section, we will propose a modification to Meteor that improves
 
 \section{Improving Meteor's Security Against Chosen Hiddentext Attackers}
 
-To improve Meteor's security, we have to randomize the output of $Encode$, i.e., on each invocation with the same inputs, $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
+To improve Meteor's security, we have to randomize the output of $Encode$, i.e., on each invocation with the same inputs $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
 
 To achieve that we introduce a new cryptographic primitive, symmetric encryption schemes in counter mode with a pseudorandom function $F$ (SES-CTR with PRF).
 We will introduce a definition of an SES which is equivalent to that introduced in \cite{Berndt2017}.
