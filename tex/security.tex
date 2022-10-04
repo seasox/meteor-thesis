@@ -2,7 +2,7 @@
 \label{chap:security}
 
 When we communicate using a steganographic protocol, security is of utmost importance.
-We probably communicate in an environment that is very hostile against its participants.
+We probably communicate in an environment that is very hostile against its parties.
 Therefore, we should satisfy the most rigorous security requirements we can.
 
 In \autoref{def:sec-hopper}, we established the notion of steganographic security against chosen hiddentext attacks (SS-CHA).
@@ -13,43 +13,44 @@ In conclusion, we will modify the Meteor stegosystem to improve its security aga
 \section{Security Against Chosen Hiddentext Attackers}
 
 In \autoref{def:sec-hopper}, we introduced Hopper's notion of steganographic security against chosen hiddentext attackers (SS-CHA).
-In this chapter, we will show that the Meteor stegosystem is secure against SS-CHA adversaries with query complexity of one and insecure against SS-CHA adversaries with query complexity greater than one.
+In this chapter, we will show that the Meteor stegosystem is secure against ppt. SS-CHA adversaries with query complexity of one and insecure against ppt. SS-CHA adversaries with query complexity greater than one.
 
 
 \begin{theorem}
-  Meteor is secure against SS-CHA adversaries with a query complexity of one.
+  Meteor is secure against ppt. SS-CHA adversaries with query complexity of one.
 \label{thm:meteor-secure}
 \end{theorem}
 \begin{proof}
   We show SS-CHA security by reduction to an attack against the underlying PRG.
-  Let $\mathcal{A}$ be an SS-CHA attacker against the Meteor stegosystem, i.e., $\mathcal{A}$ can distinguish the output of $Encode$ from that of a random oracle $\mathcal{O}$ after one query.
-  We will now show that $\mathcal{A}$ is also an attacker against the underlying PRG.
-  For a given query $(m,h)$, the attacker gets the response $c = c_0 ||c_1 || \dots || c_{\tau}$ from $Encode$ or $\mathcal{O}$, depending on the challenger's random bit.
-  The attacker can then use $Prefix$ and $LenPrefix$ (as Bob would during decoding) to recover the bit string $r$ used to sample $c$ from the underlying distribution.
+  Let $\mathcal{A}$ be a ppt. SS-CHA attacker against the Meteor stegosystem, i.e., $\mathcal{A}$ can distinguish the output of $ST$, i.e., $Encode_{\mathcal{C}}^\beta$, from that of $CT$, an oracle randomly sampling from the RRRSS $\mathcal{C}$, with one query $(m,h)$.
+  
+  We will now show that $\mathcal{A}$ can be used to attack the PRG.
+  For the given query $(m,h)$, the attacker gets the response $c = c_0 ||c_1 || \dots || c_{\tau}$ from $ST$ or $CT$, i.e., a stegotext from $Encode$ or a random sequence of samples from the RRRSS, respectively, depending on the challenger's random bit.
+  The attacker can then use $Prefix$ and $LenPrefix$ (as Bob would during decoding) to recover the bit string $r$ used to sample from the channel, since these functions don't need the secret key $k$.
 
-  How is $r$ constructed if the challenger used $Encode$ to generate $c$?
+  How is $r$ constructed if the challenger used $ST$ to generate $c$?
   It is the exclusive-or of $\beta$ bits of $m$ and a pseudorandom value $mask$ from a PRG.
   Since $mask$ is pseudorandom, the exclusive-or of $mask$ and some other value is pseudorandom as well.
-  To distinguish the output of $Encode$ from some oracle $\mathcal{O}$, the attacker has to distinguish $r$ from a randomly sampled token, i.e., the attacker has to distinguish $r$ from a truly random value $r'$.
+  To distinguish the output of $ST$ from that of $CT$, the attacker has to distinguish $r$ from a randomly sampled token, i.e., the attacker has to distinguish $r$ from a truly random value $r'$.
   Therefore, $\mathcal{A}$ can be used to attack the PRG.
   Since we expect the underlying PRG to be secure, $\mathcal{A}$ cannot distinguish $r$ from $r'$ with non-negligible probability in polynomial time.
 \end{proof}
 
 But is this sufficient to satisfy Hopper's definition of steganographic security?
 Unfortunately not.
-In Hopper's $(t,q,l)$-SS-CHA game, an attacker may perform up to $q(k)$ queries.
+In Hopper's $(t,q,l)$-SS-CHA game, an attacker may perform up to $q(\lambda)$ queries.
 The aforementioned security proof only considers security against one query.
 
 \begin{theorem}
-  Meteor is insecure against SS-CHA adversaries with query complexity of at least two.	
+  Meteor is insecure against ppt. SS-CHA adversaries with query complexity greater than one.
 \end{theorem}
 \begin{proof}
 Let $\mathcal{A}$ be an SS-CHA adversary with at least two queries.
 Let $\mathcal{A}$ repeat the same query $(m,h)$ twice.
-While the oracle $\mathcal{O}$ will~ --~ with overwhelming probability~ --~ sample an entirely different covertext from the distribution,  $Encode$ will output the same stegotext twice.
+While the oracle $CT$ will~ --~ with overwhelming probability~ --~ sample an entirely different covertext from the distribution,  $ST$ will output the same stegotext twice.
 After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs from those of a random oracle with high certainty.
 
-We can easily verify this using the Meteor online demo \cite{MeteorDemo2021}.
+We can verify this using the Meteor online demo \cite{MeteorDemo2021}.
 For example, with query
 \begin{lstlisting}
 m = "Hello world"
@@ -65,7 +66,7 @@ deterministically generates the stegotext
 c = "- The great strength of steganography is the ability to send messages without any significant communication layer of encryption, Pinnew"
 \end{lstlisting}
 while random sampling from the distribution would -- with overwhelming probability -- yield a different covertext for each invocation of the encoding oracle.
-Therefore, $\mathcal{A}$ has significant advantage against the challenger after only two queries.
+Therefore, $\mathcal{A}$ has significant advantage against the challenger after two queries.
 \end{proof}
 
 In the following section, we will propose a modification to Meteor that improves the security against SS-CHA adversaries by randomizing the stegotext returned by $Encode$.
@@ -74,28 +75,25 @@ In the following section, we will propose a modification to Meteor that improves
 
 To improve Meteor's security, we have to randomize the output of $Encode$, i.e., on each invocation with the same inputs $Encode$ should, with overwhelming probability, return a different stegotext while retaining indistinguishability from random sampling.
 
-To achieve that we introduce a new cryptographic primitive, symmetric encryption schemes in counter mode with a pseudorandom function $F$ (SES-CTR with PRF).
-We will introduce a definition of an SES which is equivalent to that introduced in \cite{Berndt2017}.
-There, it is argued that SES satisfies the IND\$-CPA property if F is a secure pseudorandom function.
+To achieve that we introduce a new cryptographic primitive, a symmetric encryption scheme in counter mode with a pseudorandom function $F$ (SES-CTR or simply $SES$).
+We will introduce a definition of $SES$ which is equivalent to that introduced in \cite{Berndt2017}.
+There, it is argued that $SES$ satisfies the IND\$-CPA property if $F$ is a secure pseudorandom function.
 
-The idea behind encryption in SES-CTR is simple:
-First, split the message $m$ into $n$ blocks of size $F.in(\lambda)$ specific to $F$.
+The idea behind encryption in $SES$ is simple:
+First, split the message $m$ into $n$ blocks of size $F.in(\lambda)$.
 Choose an $IV$ of size $F.in(\lambda)$ at random.
-It is important to not reuse an $IV$ with a given key $k$ to retain one-time pad security.
+It is important not to reuse an $IV$ with a given key $k$ to retain one-time pad security.
 Now, for each block $m_i$, use $F.Eval$ to generate a pseudorandom value $r = F.Eval(k, IV+i)$.
-Afterwards, calculate the exclusive or of $r$ and $m_i$ to get the next block $c_i$.
+Afterwards, calculate the exclusive-or of $r$ and $m_i$ to get the next block $c_i$.
 The ciphertext of size $(n+1)\cdot F.in(\lambda)$ is the $IV$ concatenated with ciphertext blocks $c_i$.
 
 Decryption is similar to encryption.
 First, split $c$ into $n+1$ blocks of size $F.in(\lambda)$.
 Interpret the first block of $c$ as $IV$.
 For each block $c_i$, calculate $r = F.Eval(k, IV+i)$.
-Then, calculate the exclusive or of $r$ and $c_i$ to recover the message block $m_i = c_i \oplus r$.
+Then, calculate the exclusive-or of $r$ and $c_i$ to recover the message block $m_i = c_i \oplus r$.
 
-Now that we introduced SES, we still need to find $F$ which is a PRF.
-In practice, we can use AES as $F$, which is believed to be a pseudorandom permutation (PRP), with key $k$ and messages $IV+i$.
-
-\begin{Pseudocode}[caption={SES Encrypt algorithm}]
+\begin{Pseudocode}[caption={$SES.Encrypt_F$ algorithm}]
 algorithm $SES.Encrypt_F(k, m=m_1 m_2 \dots m_n \in \{0,1\}^{n\cdot F.in(\lambda)})$
 Output: Ciphertext $c$
   $\lambda = |k|$
@@ -104,7 +102,7 @@ Output: Ciphertext $c$
     $c_i \leftarrow F.Eval(k, (IV+i) \mod 2^{F.in(\lambda)}) \oplus m_i$
   Output $IV||c_1||c_2||\dots||c_n$
 \end{Pseudocode}%
-\begin{Pseudocode}[caption={SES Decrypt algorithm}]
+\begin{Pseudocode}[caption={$SES.Decrypt_F$ algorithm}]
 algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\lambda)})$
   Output: cleartext $m$
   $\lambda = |k|$
@@ -114,15 +112,14 @@ algorithm $SES.Decrypt_F(k, c=c_0 c_1 \dots c_n \in \{0,1\}^{(n+1)\cdot F.in(\la
   Output $m_1||m_2||\dots||m_n$
 \end{Pseudocode}%
 
-In \autoref{alg:encode-nd}, we use this SES to encrypt the hiddentext message.
+In \autoref{alg:encode-nd}, we use $SES$ to encrypt the hiddentext message.
 Since $IV$ as well as all blocks $c_i$ are indistinguishable from randomness, the entire output of $SES.Encrypt_F$ is indistinguishable from randomness.
-In \autoref{alg:decode-nd}, the SES is used to decrypt the hiddentext.
-Since $SES.Encrypt$ yields different ciphertexts on each invocation (even with the same message $m$ and key $k$ because $IV$ is sampled at random on each invocation), an attacker can only distinguish the value $r \leftarrow SES.Encrypt(k,m)$ used to sample a stegotext from randomness if the same $IV$ is generated twice for the same pair $(m,k)$, which is very unlikely.
+In \autoref{alg:decode-nd}, $SES$ is used to decrypt the hiddentext.
+Since $SES.Encrypt_F$ yields different ciphertexts on each invocation (even with the same message $m$ and key $k$ because $IV$ is sampled at random on each invocation), an attacker can only distinguish $r \leftarrow SES.Encrypt_F(k,m)$ from randomness if an $IV$ is reused for the same pair $(m,k)$, which is very unlikely.
 
 These modifications improve Meteor's security against SS-CHA adversaries.
 Repeated invocations of $EncodeRandomized$ return different stegotexts with overwhelming probability.
-Since $SES$ is IND\$-CPA secure, we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA security against polynomial attackers as long as the same $IV$ is not generated twice, which is -- in practice -- very unlikely for sufficient $IV$ lengths.
-
+Since $SES$ is IND\$-CPA secure, we can, with the same reduction as in Theorem \ref{thm:meteor-secure}, show SS-CHA security against polynomial attackers as long as the same $IV$ is not generated twice, which is very unlikely.
 
 \begin{Pseudocode}[float, caption={
 $EncodeRandomized$ algorithm.
@@ -132,7 +129,7 @@ The ciphertext (which is indistinguishable from randomness and nondeterministic)
 algorithm $EncodeRandomized_{\mathcal{C}}^{\beta}(k_{prg}, m, h)$
   Output: Stegotext message $c$
   $c \leftarrow \epsilon,~ i \leftarrow 0,~ n \leftarrow 0$
-  $r \leftarrow SES.Encrypt(k, m)$
+  $r \leftarrow SES.Encrypt_F(k, m)$
   while $n < |r|$ do
     $c_i \leftarrow Sample_{\mathcal{C}}^\beta(h, r[n: n+\beta])$
     $\mathcal{R} \leftarrow Recover_{\mathcal{C}}^\beta(h, c_i)$
@@ -153,6 +150,6 @@ algorithm $DecodeRandomized_{\mathcal{C}}^{\beta}(k_{prg}, c, h)$
     $r_i \leftarrow Prefix^\beta(\mathcal{R})$
     $r \leftarrow r || r_i$
     $h \leftarrow h||c_i$
-  $m \leftarrow SES.Decrypt(k, r)$
+  $m \leftarrow SES.Decrypt_F(k, r)$
   Output $m$
 \end{Pseudocode}

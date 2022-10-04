@@ -76,10 +76,10 @@
   % The titles:
   %
   Titel auf Deutsch     = {
-     Sichere Steganographie auf ML-Basierten Kanälen (Draft v4)
+     Sichere Steganographie auf ML-basierten Kanälen
   }, 
   Titel auf Englisch    = {
-    Secure Steganography on ML-Based Channels (Draft v4)
+    Secure Steganography on ML-Based Channels
   },
   %
   % Author and supervisor:
@@ -138,28 +138,28 @@
   % and in English. 
   %
   Abstract              = {
-    Steganography enables confidential communication even when the use of classical cryptography is prevented or impeded.
-    The Meteor stegosystem extends classical steganographic primitives for use on channels based on generative models, such as GPT-2.
-    Here, the hiddentext is embedded in the randomness used for sampling from the generative model.
+    Steganography enables confidential communication even if the use of cryptography is prevented or impeded.
+    The Meteor stegosystem extends classical steganographic primitives for use on channels based on generative ML models, such as GPT-2.
+    In the Meteor stegosystem, the hiddentext is embedded in the randomness used in sampling from the generative model.
     
-    In this thesis, we analyze reliability and security against Chosen-Hiddentext-Attackers of the Meteor stegosystem. 
-    We will find that Meteor is not reliable, especially for longer hiddentexts ($|m| \geq 1024$ bytes).
+    In this thesis, we analyze reliability and security against chosen hiddentext attackers of the Meteor stegosystem. 
+    We will find that Meteor is not reliable, especially for longer hiddentexts.
     This is due to ambiguous tokenization of text, which can occur with subword tokenization, a feature of modern generative models such as GPT-2.
     Additionally, the Meteor stegosystem is deterministic and therefore vulnerable to chosen hiddentext attackers with query complexity greater than one.
-    We present optimizations that improve the reliability and chosen hiddentext attack security of the Meteor stegosystem.
-    We also discuss a modification that allows Meteor to be used for more compelling use in the context of instant messaging.
+    We present modifications that improve the reliability and security against chosen hiddentext attackers of the Meteor stegosystem.
+    We also discuss a modification that enables us to use the Meteor stegosystem for more compelling use in the context of instant messaging.
   },
   Zusammenfassung       = {
-    Steganographie ermöglicht vertrauliche Kommunikation auch dann, wenn die Nutzung klassischer Kryptographie verhindert oder erschwert wird.
-    Das Meteor-Stegosystem erweitert klassische steganographische Primitive für die Verwendung auf Kanälen, die auf generativen Modellen basieren, wie etwa GPT-2.
-    Hierbei wird der Geheimtext in den verwendeten Zufall im Sampling des generativen Modells eingebettet.
+    Steganographie ermöglicht vertrauliche Kommunikation auch dann, wenn die Nutzung von Kryptographie verhindert oder erschwert wird.
+    Das Meteor-Stegosystem erweitert klassische steganographische Primitive für die Verwendung auf Kanälen, die auf generativen ML-Modellen basieren, wie etwa \mbox{GPT-2}.
+    Im Meteor-Stegosystem wird der Geheimtext in den verwendeten Zufall im Sampling des generativen Modells eingebettet.
     
-    In dieser Arbeit werden Zuverlässigkeit sowie Sicherheit gegen Chosen-Hiddentext-Angreifer des Meteor-Stegosystems analysiert. 
-    Wir werden feststellen, dass die Zuverlässigkeit insbesondere bei längeren Geheimtexten ($|m| \geq 1024$ Bytes) verletzt ist.
-    Dies passiert aufgrund uneindeutiger Tokenisierung von Text, welche bei Subword-Tokenisierung, einem Feature moderner generativer Modelle wie etwa GPT-2, auftreten kann.
-    Zudem ist das Meteor-Stegosystem deterministisch und dadurch verwundbar gegen Chosen-Hiddentext-Angreifer mit polynomiell vielen Queries.
-    Wir präsentieren Optimierungen, die die Zuverlässigkeit und Chosen-Hiddentext-Attack-Sicherheit des Meteor-Stegosystems verbessern.
-    Außerdem wird eine Modifikation diskutiert, mit welcher Meteor zur überzeugenderen Verwendung im Kontext von Instant Messaging verwendet werden kann.
+    In dieser Arbeit werden Zuverlässigkeit sowie Sicherheit gegen Chosen-Hiddentext-Angriffe des Meteor-Stegosystems untersucht. 
+    Wir werden feststellen, dass die Zuverlässigkeit insbesondere bei längeren Geheimtexten verletzt ist.
+    Dies geschieht aufgrund uneindeutiger Tokenisierung von Text, welche bei Subword-Tokenisierung, einem Feature moderner generativer Modelle wie etwa GPT-2, auftreten kann.
+    Zudem ist das Meteor-Stegosystem deterministisch und dadurch verwundbar gegen Chosen-Hiddentext-Angriffe mit Querykomplexität größer als eins.
+    Wir präsentieren Modifikationen, die die Zuverlässigkeit und Sicherheit gegen Chosen-Hiddentext-Angriffe des Meteor-Stegosystems verbessern.
+    Außerdem wird eine Modifikation präsentiert, mit der das Meteor-Stegosystem zur überzeugenderen Verwendung im Kontext von Instant Messaging verwendet werden kann.
   },
   %
   % Optional: 'Danksagungen' (German) or 'Acknowledgements'
@@ -168,10 +168,13 @@
   % table of contents.
   %
   Acknowledgements = {
-  First and foremost, I'd like to thank Prof. Dr. Maciej Liśkiewicz for sparking my interest in the topic at hand and enabling me to write this thesis.
-  Our meetings and discussions have helped me tremendously to approach and understand the highly exciting topic of steganography .
+  I would like to express my sincere thanks to Prof. Dr. Maciej Liśkiewicz for sparking my interest in the topic at hand and enabling me to write this thesis.
+  Our meetings and conversations have helped me tremendously to approach the highly interesting topic of steganography and to formalize my sometimes vague thoughts.
   
-  I also want to thank my parents Viola and Torsten, who always support me on my way.
+  I am also grateful for my fellow students, for their editing help and late-night feedback sessions.
+  
+  Lastly, I would like to thank my parents Viola and Torsten for their continued love and support.
+  Without you, my studies would not have been possible.
   },
   %  This is the place where you can thank people and institutions, do
   %  not try to do this on the title page. The only exception is in
