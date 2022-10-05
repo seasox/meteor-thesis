@@ -24,7 +24,7 @@ For example, the word ``doesn't'' might be tokenized as ``do$||$es$||$n't'', but
 This situation is what we call \emph{ambiguous tokenization}.
 If Alice generates a stegotext that has an ambiguous tokenization and Bob choses a different tokenization than Alice, the decoding will fail because a wrong prefix of the sample used to generate a token will be recovered from the stegotext.
 
-For party $P \in \{A,B\}$ we denote by $T_P$ the tokenizer used to generate (encoding party $A$) or parse (decoding party $B$) a stegotext $c \in \Delta^*$ as a sequence of tokens $T_P(c) = t_1||t_2||\dots||t_{|t|} \in \mathcal{T}^*$.
+For party $P \in \{A,B\}$ we denote by $T_P$ the tokenizer used to generate (encoding party $A$) or parse (decoding party $B$) a stegotext $c$ as a sequence of tokens $$T_P(c) = t_1||t_2||\dots||t_{|t|} \in \mathcal{T}^*.$$
 To measure the difference in tokenizations of a given stegotext between Alice and Bob, we define a distance function $D$ that measures the number of mismatching subsequences of two tokenizations $t = T_A(c),~ t' = T_B(c)$ as follows:
 
 \begin{definition}[Tokenization Distance]
