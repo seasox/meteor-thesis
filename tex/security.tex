@@ -51,22 +51,28 @@ While the oracle $CT$ will~ --~ with overwhelming probability~ --~ sample an ent
 After only two queries, $\mathcal{A}$ is able to distinguish Meteor's outputs from those of a random oracle with high certainty.
 
 We can verify this using the Meteor online demo \cite{MeteorDemo2021}.
-For example, with query
+For example, let
 \begin{lstlisting}
 m = "Hello world"
 h = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
 \end{lstlisting}
-the Meteor online demo initialized with key (just for this example, Meteor is deterministic for any key $k$)
+be a query to the Meteor online demo.
+Besides a key, the Meteor online demo requires a nonce, which is neither part of the stegotext nor contained in the protocol, but has to be shared between participants.
+Therefore, we expect the nonce to be part of the key.
+For the sake of this example, let $k = (key, nonce)$ be given as follows:
 \begin{lstlisting}
-k = 0x010101010101010101010101010101010101
-      010101010101010101010101010101010101
+key   = 0x010101010101010101010101010101010101
+          010101010101010101010101010101010101
+nonce = 0x030303030303030303030303030303030303
+          030303030303030303030303030303030303
 \end{lstlisting}
-deterministically generates the stegotext
+The specific choice of $k$ is not relevant, as the Meteor stegosystem is deterministic for any $k$.
+The stegotext generated for this combination $(k,m,h)$ is
 \begin{lstlisting}
 c = "- The great strength of steganography is the ability to send messages without any significant communication layer of encryption, Pinnew"
 \end{lstlisting}
 while random sampling from the distribution would -- with overwhelming probability -- yield a different covertext for each invocation of the encoding oracle.
-Therefore, $\mathcal{A}$ has significant advantage against the challenger after two queries.
+Therefore, $\mathcal{A}$ has significant advantage against the stegosystem after two queries.
 \end{proof}
 
 In the following section, we will propose a modification to Meteor that improves the security against SS-CHA adversaries by randomizing the stegotext returned by $Encode$.

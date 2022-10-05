@@ -52,16 +52,16 @@ Now, Bob can recover the hiddentext $m$ by concatenating the decoded blocks $m_i
     \nextlevel
   \end{msc}
   \caption{
-  A Two-Way Steganographic Communication Protocol for participants Alice and Bob.
+  Steganographic two-way communication protocol for participants Alice and Bob.
   In this scheme, Alice encodes blocks of her hiddentext message $m$ into stegotexts $s_i$ and sends them to Bob, who decodes the blocks using the Meteor stegosystem.
-  Bob then generates his response $r$ and sends it back.
+  Bob then generates his response $r$ and sends it back to Alice.
   The response can be generated using a GNN, be (part of) a stegotext, or handwritten chat messages.
   After $\ell$ iterations, Bob can reconstruct the hiddentext $m$ by concatenating the $m_i$.
   }
   \label{fig:twowaycommunication}
 \end{figure}
 
-\section{Implementing Steganographic Two-Way Communication with Meteor}
+\section{Implementing Steganographic Two-Way Communication}
 While we can generate stegotexts for two-way communication using the GPT-2 model, as the original Meteor stegosystem does, the texts generated with GPT-2 are not convincing as chat messages. 
 In the following example, we see a conversation between Alice and Bob using the protocol described in \autoref{fig:twowaycommunication}.
 The initial history consists of a short sequence of messages where both participants greet and ask each other how their respective day was.
