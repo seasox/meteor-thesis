@@ -38,7 +38,7 @@ This causes reliability issues due to \emph{ambiguous tokenization}, which we wi
   \node[below=of bob] (hb) {history $h$};
   \node[block, below=of warden] (steganalysis) {Steganalysis: is $c$ stegotext?};
   \node[below left=of steganalysis] (isstego) {suppress message};
-  \node[below right=of steganalysis] (notstego) {forward message to recipient};
+  \node[below right=of steganalysis] (notstego) {forward message};
   \draw[->] (alice) -- node[above] {$c$} (warden);
   \draw[->] (warden) -- node[above] {$c$} (bob);
   \draw[->] (m) -- (alice);
