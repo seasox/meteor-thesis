@@ -1,5 +1,5 @@
 # meteor-thesis
-Code and TeX for my bachelor's thesis regarding extensions of the Meteor stegosystem
+Code and TeX for my bachelor's thesis `Secure Steganography on ML-Based Channels`
 
 # Code
 See `code/README.md` for instructions
