@@ -16,7 +16,7 @@ def main():
     coder = MeteorCoder(enc, model, device)
 
     chosen_context = "Despite a long history of research and wide-spread applications to censorship resistant systems, practical steganographic systems capable of embedding messages into realistic communication distributions, like text, do not exist.\n\n"
-    message_text = "Hello world"
+    message_text = "Hi! Did anyone follow you last night? Are we still up for tommorow? It was 12 am at the market, right?"
     while True:
         import os
         key = os.urandom(64)

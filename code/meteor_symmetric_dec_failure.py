@@ -18,6 +18,7 @@ def main():
 
     stegotext, _, _ = coder.encode_message(message, history, key, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', coding='arithmetic')
     message_recovered, _ = coder.decode_message(stegotext, history, key, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', coding='arithmetic')
+    assert message != message_recovered
     print('Decode("%s") = "%s" != "%s"' % (stegotext.replace('\n', '\\n'), message_recovered.replace('\n', '\\n'), message))
 
 
