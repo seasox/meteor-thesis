@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc}
 
 \usetheme[progressbar=frametitle]{metropolis}
+%\usetheme{ITS}
 \usepackage{appendixnumberbeamer}
 \usepackage{tikz}
 \usepackage{tikzpeople}
@@ -128,7 +129,7 @@
 \section{Improving the Reliability of the Meteor Stegosystem}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
-	\begin{itemize}[<+- | alert@+>]
+	\begin{itemize}[<+->]
 		\item \textbf{Tokens} used in generative models are \textbf{not prefix-free}.
 		\item Example: GPT-2 has tokens for ``hel'', ``lo'', and ``hello''.
 		\item This causes decoding failures, hence \textbf{unreliability}.
@@ -142,7 +143,7 @@
 \end{frame}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
-	\begin{itemize}[<+- | alert@+>]
+	\begin{itemize}[<+->]
 		\item \textbf{How often} does this happen?
 		\item \textbf{Experiment:} Encode Hamlet in blocks of 128 and 1024 bytes
 		\item Calculate \textbf{tokenization distance} $D$
@@ -164,7 +165,7 @@
 \end{frame}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
-	\begin{itemize}[<+- | alert@+>]
+	\begin{itemize}[<+->]
 		\item \textbf{Can we recover} from decoding failures? 
 		\item Good news: Yes, we can!
 		\item Bad news: \textbf{exponential computational overhead} (potentially).
@@ -172,12 +173,14 @@
 \end{frame}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
-	\begin{itemize}[<+- | alert@+>]
+	\begin{itemize}[<+->]
 		\item A: \textbf{split hiddentext} into blocks of size $\gamma$, add \textbf{checksums} of size $\delta$.
-		\item B: \textbf{verify checksums} while decoding $c$.
-		\item If \textbf{verification fails}, a tokenization mismatch occurred.
-		\item Generate \textbf{tokenization graph} $G=(V,E)$ of $c$.
+		\item B: \textbf{verify checksums} while decoding stegotext $c$.
+		\item If \textbf{verification fails}, a tokenization mismatch in word $c_w$ occurred.
+		\item Generate \textbf{tokenization graph} $G=(V,E)$ of $c_w$.
 		\item Find all paths in $G$ and \textbf{retry with a random path}.
+		\item \textbf{Worst case}: $c_w$ has $2^{\left|V\right|-2} = 2^{|c_w|-1}$ paths in $G$.
+		\item \textbf{Average case}: $|c_w| = 5$, up to 16 tokenizations (GPT tokenizer).
 	\end{itemize}
 \end{frame}
 	
@@ -213,7 +216,6 @@
   \end{tikzpicture}
 \end{frame}
 
-
 \section{Adapting the Meteor Stegosystem for Two-Way Communication}
 
 \begin{frame}{Meteor One-Way (Example with GPT-2)}
@@ -235,7 +237,7 @@
 \section{Improving the Security of the Meteor Stegosystem}
 
 \begin{frame}{Improving the Security of the Meteor Stegosystem}
-	\begin{itemize}[<+- | alert@+>]
+	\begin{itemize}[<+->]
 		\item \textbf{SS-CHA security} by reduction to PRG.
 		\item Meteor's implementation is \textbf{deterministic}.
 		\item \textbf{Secure} against CHA with query complexity one.
@@ -247,21 +249,13 @@
 \section{Conclusion}
 
 \begin{frame}{Conclusion}
-    \begin{itemize}[<+- | alert@+>]
+    \begin{itemize}[<+->]
         \item \textbf{Generative models} can be used to build \textbf{secure stegosystems}
         \item Ambiguous tokenization causes \textbf{computational overhead}
         \item Meteor is \textbf{easily adaptable} to different models (DialoGPT)
         \item We can \textbf{improve security} by replacing cryptographic primitive
         \item \textbf{Stegotext quality} and \textbf{ML performance} are improving
     \end{itemize}
-    \centering
-    \only<5>{\begin{tabular}{l||c|c|c|c}
-	    Model & GPU (sec) & CPU (sec) & Rate (bits/token) \\
-	    \hline
-	    GPT-2        & 13.089 & 82.214  & 3.09 \\
-	    Wikipedia    & 19.791 & 46.583  & 0.64 \\
-	    HTTP Headers & 49.380 & 103.280 & 0.21 \\
-	  \end{tabular}}
 \end{frame}
     
 \end{document}
