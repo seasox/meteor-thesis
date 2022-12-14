@@ -10,7 +10,6 @@
 \usetikzlibrary{shapes,fit}
 \usepackage{xcolor}
 
-\usepackage{pstricks}
 \usepackage[operators,sets]{cryptocode}
 
 \setbeameroption{hide notes} % Only slides
@@ -18,6 +17,8 @@
 %\setbeameroption{show notes on second screen=right} % Both
 
 \usepackage{amsmath}
+
+\usepackage{adjustbox}
 
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
@@ -42,7 +43,7 @@
 
 
 \title{Secure Steganography on ML-Based Channels}
-\date{2022-11-11}
+\date{11. November 2022}
 \author{Jeremy Boy}
 \institute{Universität zu Lübeck}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
@@ -126,6 +127,53 @@
   \tableofcontents[hideallsubsections]
 \end{frame}
 
+\section{Secure Steganography and the Meteor Stegosystem}
+
+\begin{frame}{Secure Steganography and the Meteor Stegosystem}
+\centering
+\begin{adjustbox}{max totalsize={.9\textwidth}{.7\textheight},center}
+	\begin{tikzpicture}
+	  \node[rectangle, draw=black] (alice) {Alice};
+	  \node[rectangle, draw=black, right=3cm of alice] (warden) {Eve};
+	  \node[rectangle, draw=black, right=3cm of warden] (bob) {Bob};
+	  \node[left=of alice] (m) {$m$};
+	  \node[above=of alice] (k) {$k$};
+	  \node[below=of alice] (h) {history $h$};
+	  \node[right=of bob] (mb) {$m$};
+	  \node[above=of bob] (kb) {$k$};
+	  \node[below=of bob] (hb) {history $h$};
+	  \node[rectangle, draw=black, below=of warden] (steganalysis) {Steganalysis: is $c$ stegotext?};
+	  \node[below left=of steganalysis] (isstego) {suppress message};
+	  \node[below right=of steganalysis] (notstego) {forward message};
+	  \draw[->] (alice) -- node[above] {$c$} (warden);
+	  \draw[->] (warden) -- node[above] {$c$} (bob);
+	  \draw[->] (m) -- (alice);
+	  \draw[->] (k) -- (alice);
+	  \draw[->] (h) -- (alice);
+	  \draw[->] (bob) -- (mb);
+	  \draw[->] (kb) -- (bob);
+	  \draw[->] (hb) -- (bob);
+	  \draw[->] (warden) -- (steganalysis);
+	  \draw[->] (steganalysis) -- node[below] {Yes} (isstego);
+	  \draw[->] (steganalysis) -- node[below] {No} (notstego);
+	\end{tikzpicture}
+\end{adjustbox}
+\vskip 1cm
+\small The Prisoners' Problem (Simmons, 1984)
+\end{frame}
+
+\begin{frame}{Secure Steganography and the Meteor Stegosystem}
+	\begin{itemize}[<+->]
+		\item \textbf{Secure steganography}: proposed in 2002 by Hopper et al.
+		\item Apply \textbf{tools and methods from cryptography} to show \textbf{security} and \textbf{reliablity} of a stegosystem
+		\item \textbf{Meteor}: proposed in 2021 by Kaptchuk et al.
+		\item \textbf{Embed hiddentext in sampling} from generative model.
+		\item \textbf{Provably secure} by reduction to PRG real-or-random game.
+	\end{itemize}
+\end{frame}
+
+
+
 \section{Improving the Reliability of the Meteor Stegosystem}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
@@ -137,18 +185,12 @@
 \end{frame}
 
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
-	\begin{center}
-		\textbf{Example: Failed Decoding}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Improving the Reliability of the Meteor Stegosystem}
 	\begin{itemize}[<+->]
 		\item \textbf{How often} does this happen?
-		\item \textbf{Experiment:} Encode Hamlet in blocks of 128 and 1024 bytes
-		\item Calculate \textbf{tokenization distance} $D$
-		\item Random variable $X = D(T_A(c), T_B(c))$
-		\item If distance greater than zero: \textbf{decoding failure}
+		\item \textbf{Experiment:} Encode Hamlet in blocks of 128 and 1024 bytes.
+		\item Calculate \textbf{tokenization distance} $D$.
+		\item Random variable $X = D(T_A(c), T_B(c))$.
+		\item If distance greater than zero: \textbf{decoding failure}.
 	\end{itemize}
 \end{frame}
 
@@ -167,7 +209,7 @@
 \begin{frame}{Improving the Reliability of the Meteor Stegosystem}
 	\begin{itemize}[<+->]
 		\item \textbf{Can we recover} from decoding failures? 
-		\item Good news: Yes, we can!
+		\item Good news: \textbf{Yes}, we can!
 		\item Bad news: \textbf{exponential computational overhead} (potentially).
 	\end{itemize}
 \end{frame}
@@ -183,8 +225,24 @@
 		\item \textbf{Average case}: $|c_w| = 5$, up to 16 tokenizations (GPT tokenizer).
 	\end{itemize}
 \end{frame}
+
+\section{Conclusion}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}[<+->]
+        \item \textbf{Generative models} can be used to build \textbf{secure stegosystems}.
+        \item Ambiguous tokenization causes \textbf{computational overhead}.
+        \item Meteor is \textbf{easily adaptable} to different models, e.g., DialoGPT.
+        \item We can \textbf{improve security} by replacing cryptographic primitive.
+        \item Improved \textbf{hardware support} and \textbf{model performance}.
+    \end{itemize}
+\end{frame}
 	
-\begin{frame}{Improving the Reliability of the Meteor Stegosystem}
+
+
+\section*{Appendix}
+
+\begin{frame}{Appendix: Improving the Reliability of the Meteor Stegosystem}
   \centering
   \begin{tikzpicture}
     \node[rectangle, draw=black] (hello) {hello};
@@ -216,28 +274,8 @@
   \end{tikzpicture}
 \end{frame}
 
-\section{Adapting the Meteor Stegosystem for Two-Way Communication}
-
-\begin{frame}{Meteor One-Way (Example with GPT-2)}
-	\centering
-	\includegraphics[height=0.9\textheight]{twoway_no_split.png}
-\end{frame}
-
-
-\begin{frame}{Meteor Conversation (Example with GPT-2)}
-	\centering
-	\includegraphics[height=0.9\textheight]{twoway_gpt.png}
-\end{frame}
-
-\begin{frame}{Meteor Conversation (Example with DialoGPT)}
-	\centering
-	\includegraphics[height=0.9\textheight]{twoway_dialogpt.png}
-\end{frame}
-
-\section{Improving the Security of the Meteor Stegosystem}
-
-\begin{frame}{Improving the Security of the Meteor Stegosystem}
-	\begin{itemize}[<+->]
+\begin{frame}{Appendix: Improving the Security of the Meteor Stegosystem}
+	\begin{itemize}
 		\item \textbf{SS-CHA security} by reduction to PRG.
 		\item Meteor's implementation is \textbf{deterministic}.
 		\item \textbf{Secure} against CHA with query complexity one.
@@ -246,16 +284,19 @@
 	\end{itemize}
 \end{frame}
 
-\section{Conclusion}
-
-\begin{frame}{Conclusion}
-    \begin{itemize}[<+->]
-        \item \textbf{Generative models} can be used to build \textbf{secure stegosystems}
-        \item Ambiguous tokenization causes \textbf{computational overhead}
-        \item Meteor is \textbf{easily adaptable} to different models (DialoGPT)
-        \item We can \textbf{improve security} by replacing cryptographic primitive
-        \item \textbf{Stegotext quality} and \textbf{ML performance} are improving
-    \end{itemize}
+\begin{frame}{Appendix: Meteor One-Way (Example with GPT-2)}
+	\centering
+	\includegraphics[height=0.9\textheight]{twoway_no_split.png}
 \end{frame}
-    
+
+\begin{frame}{Appendix: Meteor Conversation (Example with GPT-2)}
+	\centering
+	\includegraphics[height=0.9\textheight]{twoway_gpt.png}
+\end{frame}
+
+\begin{frame}{Appendix: Meteor Conversation (Example with DialoGPT)}
+	\centering
+	\includegraphics[height=0.9\textheight]{twoway_dialogpt.png}
+\end{frame}
+
 \end{document}

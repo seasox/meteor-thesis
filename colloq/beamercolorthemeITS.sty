@@ -1,0 +1,74 @@
+% Based on template from Malte Schmitz (mlte.de)
+% Adjusted for ITS
+%
+% Original copyright notice:
+%
+%     Copyright 2010 by Malte Schmitz
+%     This file may be distributed and/or modified
+%     1. under the LaTeX Project Public License and/or
+%     2. under the GNU Public License.
+
+\mode<presentation>
+
+% University palette (see http://corporatedesign.uni-luebeck.de/handbuch/0307.html)
+\definecolor{uzlmain}{RGB}{0,75,90}
+\definecolor{uzlpal1}{RGB}{232,192,173}
+\definecolor{uzlpal1a}{RGB}{228,32,50}
+\definecolor{uzlpal1b}{RGB}{181,22,33}
+\definecolor{uzlpal1c}{RGB}{127,21,24}
+\definecolor{uzlpal2}{RGB}{240,205,178}
+\definecolor{uzlpal2a}{RGB}{236,116,4}
+\definecolor{uzlpal2b}{RGB}{203,81,25}
+\definecolor{uzlpal2c}{RGB}{129,53,19}
+\definecolor{uzlpal3}{RGB}{236,218,136}
+\definecolor{uzlpal3a}{RGB}{250,187,0}
+\definecolor{uzlpal3b}{RGB}{191,134,20}
+\definecolor{uzlpal3c}{RGB}{117,83,17}
+\definecolor{uzlpal4}{RGB}{219,215,187}
+\definecolor{uzlpal4a}{RGB}{149,188,14}
+\definecolor{uzlpal4b}{RGB}{126,133,37}
+\definecolor{uzlpal4c}{RGB}{50,88,75}
+\definecolor{uzlpal5}{RGB}{205,219,216}
+\definecolor{uzlpal5a}{RGB}{59,178,160}
+\definecolor{uzlpal5b}{RGB}{36,143,133}
+\definecolor{uzlpal5c}{RGB}{0,90,91}
+\definecolor{uzlpal6}{RGB}{198,220,226}
+\definecolor{uzlpal6a}{RGB}{0,174,199}
+\definecolor{uzlpal6b}{RGB}{0,145,168}
+\definecolor{uzlpal6c}{RGB}{0,97,122}
+\definecolor{uzlpal7}{RGB}{194,217,230}
+\definecolor{uzlpal7a}{RGB}{60,169,213}
+\definecolor{uzlpal7b}{RGB}{0,131,173}
+\definecolor{uzlpal7c}{RGB}{0,88,119}
+\definecolor{uzlpal8}{RGB}{195,217,237}
+\definecolor{uzlpal8a}{RGB}{110,165,206}
+\definecolor{uzlpal8b}{RGB}{0,106,163}
+\definecolor{uzlpal8c}{RGB}{0,70,114}
+
+\setbeamercolor{structure}{fg=uzlmain}
+
+\setbeamercolor{block title}{fg=black,bg=uzlpal7}
+\setbeamercolor{block title alerted}{use=alerted text,fg=black,bg=uzlpal1}
+\setbeamercolor{block title example}{use=example text,fg=black,bg=uzlpal4}
+
+\setbeamercolor{block body}{parent=normal text,use=block title,bg=block title.bg!50!bg}
+\setbeamercolor{block body alerted}{parent=normal text,use=block title alerted,bg=block title alerted.bg!50!bg}
+\setbeamercolor{block body example}{parent=normal text,use=block title example,bg=block title example.bg!50!bg}
+
+\setbeamercolor{palette sidebar primary}{fg=black}
+\setbeamercolor{palette sidebar secondary}{fg=black}
+\setbeamercolor{palette sidebar tertiary}{fg=black}
+\setbeamercolor{palette sidebar quaternary}{fg=uzlpal6b}
+
+\setbeamercolor*{title in sidebar}{fg=uzlmain}
+\setbeamercolor*{section in sidebar shaded}{parent=palette sidebar secondary}
+\setbeamercolor*{section in sidebar}{parent=section in sidebar shaded,fg=uzlmain}
+    
+\setbeamercolor*{subsection in sidebar shaded}{parent=palette sidebar primary}
+\setbeamercolor*{subsection in sidebar}{parent=subsection in sidebar shaded,fg=uzlmain}
+
+\setbeamercolor{page number in head/foot}{fg=black}
+
+
+\mode
+<all>

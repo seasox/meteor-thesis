@@ -1,0 +1,63 @@
+% Based on template from Malte Schmitz (mlte.de)
+% Adjusted for ITS
+%
+% Original copyright notice:
+%
+%     Copyright 2010 by Malte Schmitz
+%     This file may be distributed and/or modified
+%     1. under the LaTeX Project Public License and/or
+%     2. under the GNU Public License.
+
+\DeclareOptionBeamer{hideothersubsections}{\PassOptionsToPackage{hideothersubsections}{beamerouterthemesidebar}}
+\DeclareOptionBeamer{hideallsubsections}{\PassOptionsToPackage{hideallsubsections}{beamerouterthemesidebar}}
+
+\PassOptionsToPackage{right}{beamerouterthemesidebar}
+\PassOptionsToPackage{width=2cm}{beamerouterthemesidebar}
+
+\DeclareOptionBeamer{width}{\PassOptionsToPackage{width=#1}{beamerouterthemesidebar}}
+\DeclareOptionBeamer{left}{\PassOptionsToPackage{left}{beamerouterthemesidebar}}
+\DeclareOptionBeamer{right}{\PassOptionsToPackage{right}{beamerouterthemesidebar}}
+
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+\useinnertheme{default} % circles, rounded, rectangles
+
+\usefonttheme{structurebold}
+
+\setbeamertemplate{navigation symbols}{} % hide navigation symbols
+\setbeamertemplate{footline}{
+  \hfill%
+  \usebeamercolor[fg]{page number in head/foot}%
+  \usebeamerfont{page number in head/foot}%
+  \insertframenumber\kern3em\vskip1em%
+}
+
+\setbeamertemplate{sections/subsections in toc}[sections numbered]
+
+\useoutertheme[height=0pt]{sidebar}
+
+{\usebeamercolor{structure}}
+\definecolor{sidebarbackground}{RGB}{198,220,226} % == uzlpal6, needed to copy this from the color theme
+\setbeamertemplate{sidebar canvas \beamer@sidebarside}[vertical shading][top=sidebarbackground!20,bottom=sidebarbackground!20]
+
+% Set colors
+\usecolortheme{ITS}
+
+% Show logo on title page
+\newcommand{\@itsbeamertheme@logos}{\includegraphics[height=1.5cm]{logoITS}}
+\newcommand{\setlogo}[1]{\renewcommand{\@itsbeamertheme@logos}{#1}}
+\titlegraphic{\@itsbeamertheme@logos}
+
+% Font and encoding packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{courier}
+\usepackage[ngerman]{babel}
+\usepackage[german=quotes]{csquotes}
+
+\mode
+<all>
