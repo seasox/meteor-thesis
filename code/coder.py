@@ -507,6 +507,146 @@ def decode_conversation_meteor(model, enc, text, context, key, nonce, device='cu
     return message, enc.decode(inp)[1]
 
 
+def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
+                  temp=1.0,
+                  precision=16, topk=50000, is_sort=False):
+    x = message
+    message = bitarray.bitarray()
+    message.frombytes(x)
+    mask_generator = DRBG(key, sample_seed_prefix + nonce)
+    context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
+
+    max_val = 2 ** precision
+    threshold = 2 ** (-precision)
+    cur_interval = [0, max_val]  # bottom inclusive, top exclusive
+
+    prev = context
+    output = context
+    encoded_bits_in_output = []
+    past = None
+
+    total_num = 0
+    total_num_for_stats = 0
+    total_log_probs = 0
+    total_kl = 0  # in bits
+    total_entropy_ptau = 0
+
+    with torch.no_grad():
+        i = 0
+        sent_finish = False
+        while (i < len(message) or (finish_sent and not sent_finish)):
+            # print(f'{i}: {i / float(len(message))}')
+            result = model(prev.unsqueeze(0), past_key_values=past)
+            logits = result.logits
+            past = result.past_key_values
+            past = limit_past(past)
+            logits[0, -1, -1] = -1e20  # endoftext token can't happen
+            logits[0, -1, 628] = -1e20  # 2 newlines token can't happen
+            logits, indices = logits[0, -1, :].sort(descending=True)
+            logits = logits.double()
+            logits_temp = logits / temp
+            probs_temp = F.softmax(logits_temp, dim=0)
+            log_probs_temp = F.log_softmax(logits_temp, dim=0)
+            log_probs = F.log_softmax(logits, dim=0)
+
+            # conditions for having reached the end of the message
+            if i >= len(message):
+                # select first message in distribution until finish
+                selection = 0
+                sent_finish = is_sent_finish(indices[selection].item(), enc)
+            else:
+                # Cutoff low probabilities that would be rounded to 0
+                cur_int_range = cur_interval[1] - cur_interval[0]
+                cur_threshold = 1 / cur_int_range
+                k = min(max(2, (probs_temp < cur_threshold).nonzero()[0].item()), topk)
+                probs_temp_int = probs_temp[:k]  # Cutoff all but top k
+                old_indices = indices
+                indices = indices[:k]
+
+                # Rescale to correct range
+                probs_temp_int = probs_temp_int / probs_temp_int.sum() * cur_int_range
+
+                entropy_in_this_distribution = entropy(probs_temp, log_probs_temp)
+
+                # Round probabilities to integers given precision
+                probs_temp_int = probs_temp_int.round().long()
+
+                if is_sort:
+                    probs_temp_int, indices = bin_sort(probs_temp_int, indices, cur_int_range,
+                                                       entropy_in_this_distribution, device)
+                cum_probs = probs_temp_int.cumsum(0)
+
+                # Remove any elements from the bottom if rounding caused the total prob to be too large
+                overfill_index = (cum_probs > cur_int_range).nonzero()
+                if len(overfill_index) > 0:
+                    cum_probs = cum_probs[:overfill_index[0]]
+
+                # Add any mass to the top if removing/rounding causes the total prob to be too small
+                cum_probs += cur_int_range - cum_probs[-1]  # add
+
+                # Get out resulting probabilities
+                probs_final = cum_probs.clone()
+                probs_final[1:] = cum_probs[1:] - cum_probs[:-1]
+
+                # Convert to position in range
+                cum_probs += cur_interval[0]
+
+                # Apply the mask to the message
+                message_bits = message[i:i + precision]
+                if i + precision > len(message):
+                    message_bits = message_bits + [0] * (i + precision - len(message))
+
+                mask_bits = mask_generator.generate_bits(precision)
+
+                for b in range(0, len(message_bits)):
+                    message_bits[b] = message_bits[b] ^ mask_bits[b]
+
+                # Get selected index based on binary fraction from message bits
+                message_idx = bits2int(reversed(message_bits))
+                selection = (cum_probs > message_idx).nonzero()[0].item()
+
+                # Calculate new range as ints
+                new_int_bottom = cum_probs[selection - 1] if selection > 0 else cur_interval[0]
+                new_int_top = cum_probs[selection]
+
+                # Convert range to bits
+                new_int_bottom_bits_inc = list(reversed(int2bits(new_int_bottom, precision)))
+                new_int_top_bits_inc = list(
+                    reversed(int2bits(new_int_top - 1, precision)))  # -1 here because upper bound is exclusive
+
+                # Consume most significant bits which are now fixed and update interval
+                num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
+                encoded_bits_in_output += [num_bits_encoded]  # for statistics
+                i += num_bits_encoded
+
+                # Gather statistics
+                total_log_probs += log_probs[selection].item()
+
+                q = probs_final.double() / probs_final.sum()
+                logq = q.log()
+                total_kl += kl(q, logq, log_probs[:len(q)])
+                total_entropy_ptau += entropy_in_this_distribution
+                total_num_for_stats += 1
+
+            # Update history with new token
+            prev = indices[selection].view(1)
+            output = torch.cat((output, prev))
+            total_num += 1
+
+            # For text->bits->text
+            partial = enc.decode(output[len(context):].tolist())
+            if '<eos>' in partial:
+                break
+
+    avg_NLL = -total_log_probs / total_num_for_stats
+    avg_KL = total_kl / total_num_for_stats
+    avg_Hq = total_entropy_ptau / total_num_for_stats
+    words_per_bit = total_num_for_stats / i
+    stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output}
+
+    return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
+
+
 def encrypt_ctr_aes(key: bytes, message: bytes) -> bytes:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     iv = os.urandom(16)
@@ -1420,6 +1560,8 @@ class MeteorCoder:
         meteor_random = False
 
         # Next encode bits into cover text, using arbitrary context
+        if binned_resample:
+            encode = encode_meteor_binned_resample
         if randomized:
             encode = encode_meteor_randomized
         else:
