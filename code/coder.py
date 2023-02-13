@@ -606,7 +606,8 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
     past = None
 
     total_num = 0
-    # total_num_for_stats = 0
+    total_num_for_stats = 0
+    total_entropy = 0
     # total_log_probs = 0
     # total_kl = 0  # in bits
     # total_entropy_ptau = 0
@@ -665,8 +666,9 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
                 # q = cum_probs.double() / cum_probs.sum()
                 # logq = q.log()
                 # total_kl += kl(q, logq, log_probs[:len(q)])
-                # total_entropy_ptau += entropy_in_this_distribution
-                # total_num_for_stats += 1
+                total_entropy += entropy(probs/probs.sum(), torch.log(probs/probs.sum()))
+                total_num_for_stats += 1
+                print(f'average entropy: {total_entropy/total_num_for_stats}')
 
             # Update history with new token
             prev = None
@@ -696,6 +698,7 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
             partial = enc.decode(output[context_len:].tolist())[0]
             if '<eos>' in partial:
                 break
+    print(f'average entropy: {total_entropy/total_num_for_stats}')
 
     # avg_NLL = -total_log_probs / total_num_for_stats
     # avg_KL = total_kl / total_num_for_stats
