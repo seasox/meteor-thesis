@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tikzplotlib
 
-from meteor_analysis import MeteorStatistic
+from meteor_analysis import MeteorStatistic, entropy
 
 
 def flat_map(f, xs):
@@ -52,8 +52,23 @@ def check_matching_tokenizations(data: [MeteorStatistic]):
             or (len(x.mismatches) != 0 and x.encoded_tokens == x.decoded_tokens)
     return list(filter(pred, data))
 
-if __name__ == '__main__':
+def tokens_to_string(tokens, enc):
+    return enc.convert_tokens_to_string(tokens)
+
+
+def print_mismatches(data: [MeteorStatistic], enc):
+    from functools import reduce
+    for d in filter(lambda x: len(x.mismatches) > 0, data):
+        stegotext = tokens_to_string(d.decoded_tokens, enc)
+        assert d.decoded_tokens == enc.tokenize(stegotext)
+        print(tokens_to_string(d.encoded_tokens, enc))
+        print(d.mismatches)
+
+
+def main():
     tikzexport = True
+    from util import get_model
+    enc, _ = get_model(device='cpu')
     for step_size in [128, 1024]:
         print(f'generating {step_size} bytes stats')
         fname = f'meteor_statistics_{step_size}.pickle'
@@ -61,6 +76,10 @@ if __name__ == '__main__':
         data_w_coding = list(filter(lambda x: x.coding == 'arithmetic', data))
         if not data_w_coding:
             raise 'no data'
+        enc_tokens = list(flat_map(lambda x: x.encoded_tokens, data_w_coding))
+        dec_tokens = list(flat_map(lambda x: x.decoded_tokens, data_w_coding))
+        print(f"encoding entropy: {entropy(enc_tokens)}")
+        print(f"decoding entropy: {entropy(dec_tokens)}")
         no_mismatch_cnt = len(list(filter(lambda x: len(x.mismatches) == 0, data_w_coding)))
         no_mismatch_prob = no_mismatch_cnt/len(data_w_coding)
         total_encoded_tokens = sum(list([len(x.encoded_tokens) for x in data_w_coding]))
@@ -70,6 +89,11 @@ if __name__ == '__main__':
         print(f'no mismatch: {no_mismatch_cnt}')
         print(f'len {step_size}: {len(data_w_coding)}')
         print(f'Pr_{step_size}[X=0]={no_mismatch_prob}')
-        create_plot(data_w_coding, step_size, tikzexport)
+        # create_plot(data_w_coding, step_size, tikzexport)
+        #print_mismatches(data_w_coding, enc)
         # just a little test if the data makes sense
         #print(check_matching_tokenizations(data_w_coding))
+
+
+if __name__ == '__main__':
+    main()

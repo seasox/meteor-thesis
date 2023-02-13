@@ -82,6 +82,22 @@ def compare_tokens(message, context, key, nonce, coding, encode_tokens, decode_t
                            stats)
 
 
+def entropy(enc_tokens):
+    print("calculating entropy")
+    token_probs = probabilities(enc_tokens)
+    from math import log2
+    entropy = 0
+    n = len(enc_tokens)
+    for (_, p_tok) in token_probs:
+        entropy += p_tok*log2(p_tok)
+    return -entropy
+
+
+def probabilities(tokens):
+    n = len(tokens)
+    return [(tok, tokens.count(tok)/n) for tok in set(tokens)]
+
+
 class TestMeteorAnalysis:
     def test_one_mismatch_decoded_longer(self):
         encoded = ["hello", " world"]
