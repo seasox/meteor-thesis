@@ -12,11 +12,13 @@ class TokenTrie:
     def insert(self, label, probability=None, token=None) -> bool:
         if token is None:
             token = label
+        if isinstance(label, str):
+            label = label.encode('utf-8', errors='strict')
         edges = self.edges.keys()
         for e in edges:
             import os
             prefix = os.path.commonprefix([e, label])
-            if prefix == '':
+            if prefix == b'':
                 # no common prefix
                 continue
             if e == label:
@@ -74,7 +76,7 @@ class TokenTrie:
 
     def visualize(self, level=0, max_depth=None) -> str:
         # todo graphviz?
-        label = self.label
+        label = self.label.decode('utf-8', errors='strict') if self.label is not None else ''
         if self.probability is not None:
             label += f' ({self.token}, {self.probability})'
         indent = '    ' * level
@@ -92,7 +94,9 @@ class TokenTrie:
         return 1 + max(map(lambda t: t.depth(), self.edges.values()))
 
     def subtree(self, suffix):
-        if suffix == '' or self.token == suffix:
+        if isinstance(suffix, str):
+            suffix = suffix.encode('utf-8', errors='strict')
+        if suffix == b'' or (self.token is not None and self.token.encode('utf-8', errors='strict') == suffix):
             return self
         for e in self.edges.keys():
             if e == suffix or (suffix.startswith(e) and e != ''):
@@ -204,6 +208,6 @@ def test_empty_label_split():
     trie = TokenTrie()
     trie.insert('ABC', 2, token=234)
     trie.insert('AB', 3, token=123)
-    assert trie.edges['AB'].token == 123
-    assert trie.edges['AB'].probability == 3
-    assert '' not in trie.edges['AB'].edges
+    assert trie.edges[b'AB'].token == 123
+    assert trie.edges[b'AB'].probability == 3
+    assert b'' not in trie.edges[b'AB'].edges
