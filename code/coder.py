@@ -786,10 +786,10 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
                 resampled_token = tokens[selection].view(1)
-                resampled_token_str = enc.decode(resampled_token)[0]
+                resampled_token_str = enc.decoder[resampled_token.item()].encode('utf-8', errors='strict')
                 print(f'resampled "{resampled_token_str}"')
                 if resampled_token != inp[i]:
-                    inp_str = enc.decode(inp[i])[0]
+                    inp_str = enc.decoder[inp[i]].encode('utf-8', errors='strict')
                     print(f'{i}: resampling mismatch {inp[i]} ("{enc.decode(inp[i])[1]}") != {resampled_token} ("{enc.decode(resampled_token)[1]}")')
                     if len(inp_str) > len(resampled_token_str):
                         print(f'inp_str > resampled_token_str')
