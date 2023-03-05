@@ -796,7 +796,7 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
                         # replace inp[i] with resampled token, encode and append suffix of inp_str
                         suffix = inp_str[len(resampled_token_str):]
                         print(f'suffix "{suffix}" ')
-                        encoded = enc.encode(suffix)
+                        encoded = enc.encode(suffix.decode('utf-8', errors='strict'))
                         inp = inp[:i] + [resampled_token.item()] + encoded + inp[i+1:]
                     elif len(inp_str) < len(resampled_token_str):
                         print(f'inp_str < resampled_token_str')
@@ -807,9 +807,14 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
                             if enc.decode(t)[0].startswith(' '):
                                 break
                             curr_word.append(t)
-                        curr_word = enc.decode(curr_word)[0]
-                        suffix = curr_word[len(resampled_token_str):]
-                        print(f're-encode curr word: "{curr_word}" -> "{suffix}"')
+                        curr_word_str = ''
+                        for t in curr_word:
+                            curr_word_str += enc.decoder[t]
+                        curr_word_str = curr_word_str.encode('utf-8', errors='strict')
+                        suffix = curr_word_str[len(resampled_token_str):]
+                        curr_word_str = curr_word_str.decode('utf-8', errors='strict')
+                        suffix = suffix.decode('utf-8', errors='strict')
+                        print(f're-encode curr word: "{curr_word_str}" -> "{suffix}"')
                         encoded = enc.encode(suffix)
                         inp = inp[:i] + [resampled_token.item()] + encoded + inp[i+1+j:]
                     else:
