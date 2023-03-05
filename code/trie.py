@@ -76,7 +76,7 @@ class TokenTrie:
 
     def visualize(self, level=0, max_depth=None) -> str:
         # todo graphviz?
-        label = self.label.decode('utf-8', errors='strict') if self.label is not None else ''
+        label = f"{self.label}"
         if self.probability is not None:
             label += f' ({self.token}, {self.probability})'
         indent = '    ' * level
