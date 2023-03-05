@@ -629,7 +629,7 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
             if i >= len(message):
                 # select first message in distribution until finish
                 selection = 0
-                sent_finish = is_sent_finish(indices[selection].item(), enc)
+                sent_finish = is_sent_finish(tokens[selection].item(), enc)
             else:
                 # Apply the mask to the message
                 message_bits = message[i:i + precision]
@@ -689,7 +689,7 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
                 prev = tokens[selection].view(1)
                 print(f'resampled {prev}: {enc.decode(prev)[0]}')
             else:
-                prev = indices[selection].view(1)
+                prev = torch.tensor(tokens[selection])
                 print(f'sampled {prev}: {enc.decode(prev)[0]}')
             output = torch.cat((output, prev))
             total_num += 1
