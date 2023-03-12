@@ -9,6 +9,9 @@ import bitarray
 import numpy as np
 import torch
 import torch.nn.functional as F
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+from trie import TokenTrie
 
 sample_seed_prefix = b'sample'
 
@@ -582,16 +585,6 @@ def encrypt(message_bits, mask_generator, precision):
     return message_bits
 
 
-def create_token_trie(enc, indices, probs):
-    from trie import TokenTrie
-    trie = TokenTrie()
-    for i, p in zip(indices, probs):
-        trie.insert(enc.decoder[i.item()].encode('utf-8', errors=enc.errors), p, i)
-    return trie
-
-
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-
 def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
                   temp=1.0,
                   precision=16, topk=50000, is_sort=False):
@@ -615,6 +608,8 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
     # total_kl = 0  # in bits
     # total_entropy_ptau = 0
 
+    trie = TokenTrie.from_tokenizer(enc)
+
     with torch.no_grad():
         i = 0
         sent_finish = False
@@ -625,7 +620,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                                           sort=bin_sort if is_sort else None, device=device)
             #indices, probs_int = sort_tokens(enc, indices, probs_int)
             #cum_probs = cumsum_adjust(probs_int, precision=precision)
-            trie = create_token_trie(enc, indices, probs_int)
+            trie.update(zip(indices, probs_int))
             reprs, tokens, probs = zip(*trie.distribution())
             probs = torch.tensor(probs)
             cum_probs = cumsum_adjust(probs, precision=precision)
@@ -678,7 +673,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
             prev = None
             if len(tokens[selection]) > 1:
                 # we chose an undecodable path. Resample from subtree
-                repr = enc.decoder[reprs[selection].item()].encode('utf-8', errors=enc.errors)
+                repr = reprs[selection]
                 st = trie.subtree(repr)
                 if st is None:
                     logging.debug(trie.visualize(max_depth=2))
@@ -689,10 +684,10 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 mask = mask_generator.generate_bits(precision)
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
-                prev = tokens[selection].view(1)
+                prev = torch.tensor(tokens[selection]).view(1)
                 logging.debug(f'resampled {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)} from subtrie {repr}')
             else:
-                prev = torch.tensor(tokens[selection])
+                prev = torch.tensor(tokens[selection]).view(1)
                 logging.debug(f'resampled from singleton {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)}')
             output = torch.cat((output, prev))
             total_num += 1
@@ -722,6 +717,8 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
     # context is a list of token indices
     inp: bytes = text.encode('utf-8', errors=enc.errors)
 
+    trie = TokenTrie.from_tokenizer(enc)
+
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
@@ -743,7 +740,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
                                           sort=bin_sort if is_sort else None, device=device)
             #indices, probs_int = sort_tokens(enc, indices, probs_int)
             #cum_probs = cumsum_adjust(probs_int, precision=precision)
-            trie = create_token_trie(enc, indices, probs_int)
+            trie.update(zip(indices, probs_int))
             reprs, tokens, probs = zip(*trie.distribution())
             probs = torch.tensor(probs)
             #if is_sort:
@@ -783,7 +780,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
 
             if len(tokens[rank]) > 1:
                 # during encoding, resampling was done. Generate bits and update tokenization
-                repr = enc.decoder[reprs[rank].item()].encode('utf-8', errors=enc.errors)
+                repr = reprs[rank]
                 st = trie.subtree(repr)
                 tokens = st.tokens()
                 probabilities = torch.tensor(st.probabilities())
@@ -791,7 +788,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
                 mask = mask_generator.generate_bits(precision)
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
-                resampled_token = tokens[selection].item()
+                resampled_token = tokens[selection]
                 resampled_token_str: bytes = enc.decoder[resampled_token].encode('utf-8', errors=enc.errors)
                 logging.debug(f'resampled {resampled_token} = "{resampled_token_str}" from subtrie {repr}')
                 selected = resampled_token

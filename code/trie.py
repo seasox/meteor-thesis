@@ -1,8 +1,18 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict, Union, Iterable
+
+import torch
+from transformers import GPT2Tokenizer
 
 
 class TokenTrie:
-    def __init__(self, label=None, probability: float = None, token=None, edges=None, parent=None):
+    label: bytes
+    token: int
+    probability: Union[int, float]
+    edges: Dict[bytes, 'TokenTrie']
+    parent: Optional['TokenTrie']
+    lookup: Dict[int, 'TokenTrie']
+
+    def __init__(self, label: bytes = None, probability: Union[int, float] = None, token: int = None, edges: Dict = None, parent: 'TokenTrie' = None):
         from collections import OrderedDict
         if edges is None:
             edges = OrderedDict()
@@ -11,13 +21,38 @@ class TokenTrie:
         self.probability = probability
         self.edges = OrderedDict(edges)  # label: node
         self.parent = parent
+        self.lookup = {}
 
-    def insert(self, label: bytes, probability=None, token=None) -> bool:
+    @classmethod
+    def from_tokenizer(cls, enc: GPT2Tokenizer) -> 'TokenTrie':
+        labels = [(v, k.encode('utf-8', errors=enc.errors)) for k, v in enc.encoder.items()]
+        return cls.from_labels(labels)
+
+    @classmethod
+    def from_labels(cls, labels: List[Tuple[int, bytes]]) -> 'TokenTrie':
+        from collections import OrderedDict
+        self = cls()
+        self.label = None
+        self.token = None
+        self.edges = OrderedDict()
+        self.parent = None
+        self.lookup = {}
+        for index, label in labels:
+            self.lookup[index] = self.insert(label=label, token=index)
+            if self.lookup[index] is None:
+                raise Exception(f'insert inconsistency: {label}')
+        return self
+
+    def update(self, probabilities: Iterable[Tuple[torch.Tensor, int]]):
+        for k, trie in self.lookup.items():
+            trie.probability = None
+        for label, prob in probabilities:
+            self.lookup[label.item()].probability = prob
+
+    def insert(self, label: bytes, probability=None, token=None) -> 'TokenTrie':
+        assert isinstance(label, bytes)
         if token is None:
             token = label
-        if isinstance(label, str):
-            assert False
-            # label = label.encode('utf-8', errors='strict')
         edges = self.edges.keys()
         for e in edges:
             prefix = commonprefix(e, label)
@@ -30,7 +65,7 @@ class TokenTrie:
                     raise Exception('element already in trie with probability')
                 self.edges[e].token = token
                 self.edges[e].probability = probability
-                return True
+                return self.edges[e]
             if len(prefix) == len(e):
                 # bubble down: append token as child in e
                 return self.edges[e].insert(label[len(prefix):], probability, token)
@@ -50,32 +85,35 @@ class TokenTrie:
                     t.token = token
                     t.probability = probability
                 self.edges[prefix] = t
-                return True
+                return self.edges[prefix]
         self.edges[label] = TokenTrie(label, token=token, probability=probability, parent=self)
-        return True
+        return self.edges[label]
 
-    def tokens(self):
+    def tokens(self) -> List[int]:
         return ([self.token] if self.token is not None else []) + list(flat_map(lambda x: x.tokens(), self.edges.values()))
 
-    def probabilities(self):
-        return ([self.probability] if self.probability is not None else []) + list(flat_map(lambda x: x.probabilities(), self.edges.values()))
+    def probabilities(self) -> list[int]:
+        return ([self.probability] if self.probability is not None else []) \
+            + list(flat_map(lambda x: x.probabilities(), self.edges.values()))
 
-    def distribution(self):
+    def distribution(self) -> List[Tuple[int, List[int], int]]:
         if self.token is None:
             # the current node is a split node. Bubble down
             distr = []
             for t in self.edges.values():
                 distr += t.distribution()
             return distr
-        elif not self.edges:
+        if not self.edges:
+            if self.probability is None:
+                return []
             # the current node is a leaf
-            distr = [(self.token, [self.token], self.probability)]
-        else:
-            # the current node has a probability assigned and child nodes -> not uniquely decodable
-            distr = [(self.token,
-                self.tokens(), sum(self.probabilities())
-            )]
-        return distr
+            return [(self.token, [self.token], self.probability)]
+        probs = sum(self.probabilities())
+        if probs == 0:
+            # empty subtree
+            return []
+        # the current node has a probability assigned and child nodes -> not uniquely decodable
+        return [(self.token, self.tokens(), sum(self.probabilities()))]
 
     def visualize(self, level=0, max_depth=None) -> str:
         # todo graphviz?
@@ -96,13 +134,8 @@ class TokenTrie:
             return 0
         return 1 + max(map(lambda t: t.depth(), self.edges.values()))
 
-    def subtree(self, suffix: bytes) -> Optional['TokenTrie']:
-        if suffix == b'' or (self.token is not None and self.token == suffix):
-            return self
-        for e in self.edges.keys():
-            if e == suffix or (suffix.startswith(e) and e != ''):
-                return self.edges[e].subtree(suffix[len(e):])
-        return None
+    def subtree(self, token: int) -> Optional['TokenTrie']:
+        return self.lookup[token] if token in self.lookup else None
 
     def __eq__(self, other):
         return self.label == other.label \
