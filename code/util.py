@@ -3,16 +3,17 @@
 import sys
 from typing import Tuple, List, Optional
 
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-def get_model(seed=1234, model_name='gpt2', device='cuda'):
+
+def get_model(seed=1234, model_name='gpt2', device='cuda') -> (GPT2LMHeadModel, GPT2Tokenizer):
     import numpy as np
     import torch
-    from transformers import GPT2LMHeadModel, GPT2Tokenizer
     np.random.seed(seed)
     torch.random.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
-    enc = GPT2Tokenizer.from_pretrained(model_name)
+    enc = GPT2Tokenizer.from_pretrained(model_name, errors='surrogateescape')
     # enc.unk_token = None
     # enc.bos_token = None
     # enc.eos_token = None
@@ -74,6 +75,23 @@ def get_model(seed=1234, model_name='gpt2', device='cuda'):
         return input_ids, model_kwargs
 
     GPT2LMHeadModel.prepare_model_inputs = prepare_model_inputs
+
+    def _tokenize(self, text):
+        """Tokenize a string.
+
+        this is an edited version of GPT2Tokenizer._encode. The only change is that we include errors=self.errors, mainly to
+        allow the use of surrogate escapes using errors='surrogateescape'
+        """
+        bpe_tokens = []
+        import regex as re
+        for token in re.findall(self.pat, text):
+            token = "".join(
+                self.byte_encoder[b] for b in token.encode("utf-8", errors=self.errors)
+            )  # Maps all our bytes to unicode strings, avoiding control tokens of the BPE (spaces in our case)
+            bpe_tokens.extend(bpe_token for bpe_token in self.bpe(token).split(" "))
+        return bpe_tokens
+
+    GPT2Tokenizer._tokenize = _tokenize
 
     return enc, model
 

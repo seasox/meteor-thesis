@@ -1,10 +1,10 @@
 import hashlib
 import hmac
+import math
 import os
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Literal
 
 import bitarray
-import math
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -584,15 +584,17 @@ def encrypt(message_bits, mask_generator, precision):
 def create_token_trie(enc, indices, probs):
     from trie import TokenTrie
     trie = TokenTrie()
-    tokens = enc.decode(indices)[1]
-    for t, i, p in zip(tokens, indices, probs):
-        trie.insert(t, p, i)
+    for i, p in zip(indices, probs):
+        trie.insert(enc.decoder[i.item()].encode('utf-8', errors=enc.errors), p, i)
     return trie
 
-def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
+
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
                   temp=1.0,
                   precision=16, topk=50000, is_sort=False):
-    print(f'will embed message,{len(message)} bytes, precision {precision}')
+    print(f'will embed message, {len(message)} bytes, precision {precision}')
     x = message
     message = bitarray.bitarray()
     message.frombytes(x)
@@ -616,6 +618,7 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
         i = 0
         sent_finish = False
         while i < len(message) or (finish_sent and not sent_finish):
+            print(f'{total_num}: prev = {prev}')
             indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                           temp=temp, topk=topk, precision=precision,
                                           sort=bin_sort if is_sort else None, device=device)
@@ -658,7 +661,7 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
                 num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
                 encoded_bits_in_output += [num_bits_encoded]  # for statistics
                 i += num_bits_encoded
-                print(f'{total_num}:{num_bits_encoded} bits embedded: {message_bits} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
+                print(f'{total_num}:{num_bits_encoded} bits embedded: {message_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
 
                 # Gather statistics
                 # total_log_probs += log_probs[selection].item()
@@ -674,12 +677,11 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
             prev = None
             if len(tokens[selection]) > 1:
                 # we chose an undecodable path. Resample from subtree
-                repr = enc.decode(reprs[selection].view(1))[1][0]
-                print(f'will resample from repr {repr}')
+                repr = enc.decoder[reprs[selection].item()].encode('utf-8', errors=enc.errors)
                 st = trie.subtree(repr)
                 if st is None:
                     print(trie.visualize(max_depth=2))
-                    raise Exception()
+                    raise Exception(f'no subtrie for repr {repr} found')
                 tokens = st.tokens()
                 probabilities = torch.tensor(st.probabilities())
                 cum_probs = cumsum_adjust(probabilities, precision)
@@ -687,16 +689,16 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
                 prev = tokens[selection].view(1)
-                print(f'resampled {prev}: {enc.decode(prev)[0]}')
+                print(f'resampled {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)} from subtrie {repr}')
             else:
                 prev = torch.tensor(tokens[selection])
-                print(f'sampled {prev}: {enc.decode(prev)[0]}')
+                print(f'resampled from singleton {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)}')
             output = torch.cat((output, prev))
             total_num += 1
 
             # For text->bits->text
             partial = enc.decode(output[context_len:].tolist())[0]
-            if '<eos>' in partial:
+            if prev == enc.eos_token_id or '<eos>' in partial:
                 break
     print(f'average entropy: {total_entropy/total_num_for_stats}')
 
@@ -709,13 +711,15 @@ def encode_meteor_binned_resample(model, enc, message: bytes, context: List[int]
     return output[context_len:].tolist(), 0, 0, 0, 0, {} #, avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
 
 
-def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device='cuda', temp=1.0, precision=16, topk=50000,
-                  is_sort=False, enc_tokens=None) -> Tuple[List[bool], List[str]]:
+def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, text: str, context,
+                                  key: bytes, nonce: bytes, device: Literal['cuda', 'cpu'] ='cuda',
+                                  temp: float =1.0, precision: int =16, topk: int =50000,
+                                  is_sort: bool =False, enc_tokens: List[str] =None) -> List[bool]:
     # TODO enc_tokens is for debug only, remove!
     import torch
     # inp is a list of token indices
     # context is a list of token indices
-    inp = enc.encode(text)
+    inp: bytes = text.encode('utf-8', errors=enc.errors)
 
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
@@ -731,7 +735,8 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
     debug_encoded_num = []
     with torch.no_grad():
         i = 0
-        while i < len(inp):
+        while inp:
+            print(f'{i}: prev = {prev}')
             indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                           temp=temp, topk=topk, precision=precision,
                                           sort=bin_sort if is_sort else None, device=device)
@@ -746,7 +751,7 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
 
             cum_probs = cumsum_adjust(probs, precision)
 
-            selected = inp[i]
+            selected = enc.encode(inp.decode('utf-8', errors=enc.errors))[0]
             rank = None
             for rank, toks in enumerate(tokens):
                 if selected in toks:
@@ -777,7 +782,7 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
 
             if len(tokens[rank]) > 1:
                 # during encoding, resampling was done. Generate bits and update tokenization
-                repr = enc.decode(reprs[rank].view(1))[1][0]
+                repr = enc.decoder[reprs[rank].item()].encode('utf-8', errors=enc.errors)
                 st = trie.subtree(repr)
                 tokens = st.tokens()
                 probabilities = torch.tensor(st.probabilities())
@@ -785,54 +790,24 @@ def decode_meteor_binned_resample(model, enc, text, context, key, nonce, device=
                 mask = mask_generator.generate_bits(precision)
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
-                resampled_token = tokens[selection].view(1)
-                resampled_token_str = enc.decoder[resampled_token.item()].encode('utf-8', errors='strict')
-                print(f'resampled "{resampled_token_str}"')
-                if resampled_token != inp[i]:
-                    inp_str = enc.decoder[inp[i]].encode('utf-8', errors='strict')
-                    print(f'{i}: resampling mismatch {inp[i]} ("{enc.decode(inp[i])[1]}") != {resampled_token} ("{enc.decode(resampled_token)[1]}")')
-                    if len(inp_str) > len(resampled_token_str):
-                        print(f'inp_str > resampled_token_str')
-                        # replace inp[i] with resampled token, encode and append suffix of inp_str
-                        suffix = inp_str[len(resampled_token_str):]
-                        print(f'suffix "{suffix}" ')
-                        encoded = enc.encode(suffix.decode('utf-8', errors='strict'))
-                        inp = inp[:i] + [resampled_token.item()] + encoded + inp[i+1:]
-                    elif len(inp_str) < len(resampled_token_str):
-                        print(f'inp_str < resampled_token_str')
-                        # skip in inp until resampled_token_str is empty
-                        # resample full word (TODO be smart)
-                        curr_word = [inp[i]]
-                        for j, t in enumerate(inp[i+1:]):
-                            if enc.decode(t)[0].startswith(' '):
-                                break
-                            curr_word.append(t)
-                        curr_word_str = ''
-                        for t in curr_word:
-                            curr_word_str += enc.decoder[t]
-                        curr_word_str = curr_word_str.encode('utf-8', errors='strict')
-                        suffix = curr_word_str[len(resampled_token_str):]
-                        curr_word_str = curr_word_str.decode('utf-8', errors='strict')
-                        suffix = suffix.decode('utf-8', errors='strict')
-                        print(f're-encode curr word: "{curr_word_str}" -> "{suffix}"')
-                        encoded = enc.encode(suffix)
-                        inp = inp[:i] + [resampled_token.item()] + encoded + inp[i+1+j:]
-                    else:
-                        print('same length, TODO!')
-                        raise Exception('not yet implemented')
-                else:
-                    print(f'{i}: sampling match {resampled_token} ("{resampled_token_str}")')
+                resampled_token = tokens[selection].item()
+                resampled_token_str: bytes = enc.decoder[resampled_token].encode('utf-8', errors=enc.errors)
+                print(f'resampled {resampled_token} = "{resampled_token_str}" from subtrie {repr}')
+                selected = resampled_token
             else:
-                print(f'resample from singleton: {tokens[rank][0]}')
+                print(f'resampled from singleton {tokens[rank][0]}')
 
             # Update history with new token
-            assert enc.decode(inp[:i])[1] == enc_tokens[:i], {"inp": enc.decode(inp[:i])[1], "enc": enc_tokens[:i], "idx": i}
-            prev = torch.tensor([inp[i]], device=device, dtype=torch.long)
+            inp = inp[len(enc.decode(selected)[0].encode('utf-8', errors=enc.errors)):]
+            prev = torch.tensor([selected], device=device, dtype=torch.long)
+            if enc_tokens is not None:
+                assert prev == enc.encoder[enc_tokens[i]]
             i += 1
 
-    return message, enc.decode(inp)[1]
+    return message
 
 
+# <editor-fold desc="CTR randomized">
 def encrypt_ctr_aes(key: bytes, message: bytes) -> bytes:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     iv = os.urandom(16)
@@ -1137,6 +1112,7 @@ def decode_meteor_randomized(model, enc, text, context, key, nonce, device='cuda
     message.frombytes(decrypt_ctr_aes(key, ciphertext))
 
     return message.tolist(), enc.decode(inp)[1]
+# </editor-fold>
 
 
 def encode_meteor(model, enc, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
@@ -1423,8 +1399,9 @@ def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0
 
 
 # <editor-fold desc="Arithmetic Coding">
-def encode_arithmetic(model, enc, message, context, finish_sent=False, device='cuda', temp=1.0, precision=16,
-                      topk=50000):
+def encode_arithmetic(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: List[bool], context: List[int],
+                      finish_sent: bool =False, device: str = 'cuda', temp: float = 1.0, precision: int = 16,
+                      topk: int = 50000) -> tuple[List[int], float, float, float, float]:
     context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
 
     max_val = 2 ** precision
@@ -1545,7 +1522,8 @@ def encode_arithmetic(model, enc, message, context, finish_sent=False, device='c
     return output[len(context):].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq
 
 
-def decode_arithmetic(model, enc, text, context, device='cuda', temp=1.0, precision=16, topk=50000) -> bytes:
+def decode_arithmetic(model: GPT2LMHeadModel, enc: GPT2Tokenizer, text: str, context: List[int], device: str ='cuda',
+                      temp: float =1.0, precision: int =16, topk: int =50000) -> bytes:
     import torch.nn.functional as F
     # inp is a list of token indices
     # context is a list of token indices
@@ -1774,8 +1752,7 @@ class MeteorCoder:
         return text, tokens, stats
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000,
-                      randomized=False, binned_resample=True, enc_tokens=None) -> Tuple[
-        list, List[str]]:
+                      randomized=False, binned_resample=True, enc_tokens=None) -> List[bool]:
         # TODO enc_tokens is for debug only, remove!
         meteor_sort = False
         if binned_resample:
@@ -1818,11 +1795,10 @@ class MeteorCoder:
     Decode a meteor stegotext to message string
     """
 
-    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8', randomized=False, binned_resample=True, enc_tokens=None) -> Tuple[
-        str, List[str]]:
+    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8', randomized=False, binned_resample=True, enc_tokens=None) -> str:
         # TODO enc_tokens is for debug only, REMOVE!
         context_tokens = encode_context(context_str, self.enc)
-        message_rec, tokens = self.decode_binary(text, context_tokens, key, nonce, randomized=randomized, binned_resample=binned_resample, enc_tokens=enc_tokens)
+        message_rec = self.decode_binary(text, context_tokens, key, nonce, randomized=randomized, binned_resample=binned_resample, enc_tokens=enc_tokens)
         if coding == 'utf-8':
             reconst = bitarray.bitarray(message_rec)
             reconst = reconst.tobytes().decode('utf-8', 'replace')
@@ -1840,7 +1816,7 @@ class MeteorCoder:
         # print("=" * 99)
 
         # Remove <eos>
-        return reconst[:eos_idx], tokens
+        return reconst[:eos_idx]
 
     def encode_conversation_history(self, history: [str]):
         context_str = self.enc.eos_token.join(history) + self.enc.eos_token
@@ -1870,3 +1846,56 @@ class MeteorCoder:
                                                  temp=0.6, precision=16, topk=50, device=self.device, is_sort=False,
                                                  randomized=randomized)
         return msg, tokens
+
+
+def test_decode_binned_resample_surrogateescape():
+    from util import get_model
+    model_name = 'gpt2-medium'
+    device = 'cpu'
+    enc, model = get_model(model_name=model_name, device=device)
+    coder = MeteorCoder(enc, model, device)
+    # GIVEN
+    context = 'Give me a good example for a dilemma.\n\n'
+    key = b'\xb2"\x0e\xb5\x81\xff0,\xc5\xe6\xd2T\xc4d9B/\xa8\xc6,+H\xcf\xaf\x9d\xd6\xc3\x00\xd1c\xabN\xacX`\xaa,\x01l;<\xbe\x87\x1a \xdbFA\x13\x15I5E\xb7\xed(DP@\x9f\xd4\x1e\x89Y'
+    nonce = b'\xe1\x907\xa6RF\x96`\x8a\xdc\xe4mw\xda4\x08\xd0?\xd2`\xb2\xe4\x98\x80\xb3G\xcd\xa8\xd1\xd2\x88\x1c^\xc1\xb2e2A\xd6\xeb:O\rC\xcc\xfe\xbcpru\xf7t\t\x18\xdb\x81\x91\xeep.\xb0pQ['
+    stegotext = b"\nOn one hand, if you'I ike you are free to do as you wish, and you can tell me \xef\x86\x99 why you ; \xee\x98\x80 Stream \xee\xa9\x86 Play \xee\x9d\x9c \xee\x82\x9a \xee\x99\x90 \xee\xa4\x90 Attach a image \xee\x98\x81 m \xee\x98\x82 Instagram \xee\x98\x8e Flickr \xee\x98\x89 You can share. makes it easier to do. \xe2\x80\x94 hue \xee\x98\x81 \xee\x98\x83 Instagram \xee\x98\x92 Flickr Wal \xee\x98\x8f On your fault? \xee\x98\x84 \xee\x98\x85"\
+        .decode('utf-8', errors=enc.errors)
+    enc_tokens = ['Ċ', 'On', 'Ġone', 'Ġhand', ',', 'Ġif', 'Ġyou', "'", 'I', 'Ġ', 'ike', 'Ġyou', 'Ġare', 'Ġfree', 'Ġto',
+                  'Ġdo', 'Ġas', 'Ġyou', 'Ġwish', ',', 'Ġand', 'Ġyou', 'Ġcan', 'Ġtell', 'Ġme', 'Ġ', 'ï', 'Ĩ', 'Ļ',
+                  'Ġwhy', 'Ġyou', 'Ġ;', 'Ġ', 'î', 'ĺ', 'Ģ', 'ĠStream', 'Ġ', 'î', '©', 'Ĩ', 'ĠPlay', 'Ġ', 'î', 'Ŀ', 'ľ',
+                  'Ġ', 'î', 'Ĥ', 'ļ', 'Ġ', 'î', 'Ļ', 'Ĳ', 'Ġ', 'î', '¤', 'Ĳ', 'ĠAtt', 'ach', 'Ġa', 'Ġimage', 'Ġ', 'î',
+                  'ĺ', 'ģ', 'Ġm', 'Ġ', 'î', 'ĺ', 'Ĥ', 'ĠInstagram', 'Ġ', 'î', 'ĺ', 'İ', 'ĠFlickr', 'Ġ', 'î', 'ĺ', 'ī',
+                  'ĠYou', 'Ġcan', 'Ġshare', '.', 'Ġmakes', 'Ġit', 'Ġeasier', 'Ġto', 'Ġdo', '.', 'ĠâĢĶ', 'Ġhue', 'Ġ',
+                  'î', 'ĺ', 'ģ', 'Ġ', 'î', 'ĺ', 'ĥ', 'ĠInstagram', 'Ġ', 'î', 'ĺ', 'Ĵ', 'ĠFlickr', 'ĠWal', 'Ġ', 'î', 'ĺ',
+                  'ı', 'ĠOn', 'Ġyour', 'Ġfault', '?', 'Ġ', 'î', 'ĺ', 'Ħ', 'Ġ', 'î', 'ĺ', 'ħ']
+    # WHEN
+    msg = coder.decode_message(stegotext, context, key, nonce, coding='arithmetic',
+                               binned_resample=True, enc_tokens=enc_tokens)
+
+    # THEN
+    expected_msg = 'water'
+    assert msg == expected_msg
+
+
+def test_decode_binned_resample_weirdsuffix():
+    from util import get_model
+    model_name = 'gpt2-medium'
+    device = 'cpu'
+    enc, model = get_model(model_name=model_name, device=device)
+    coder = MeteorCoder(enc, model, device)
+    # GIVEN
+    context = 'Gnällbältet, Swedish, "The whining belt", is an informal name referring to a geographic belt in central Sweden where the dialects have certain features in common, mostly extensive usage of the schwa sound. The belt consists of Västmanland, Närke and the western parts of Södermanland, but are characteristic to a much reduced degree throughout the Mälaren Valley.'
+    key = b'_\x02T\xfc\x1d\xd5\x93\x83\xbb\x8b\xebQ\x96#\x85\xc2;\xfb\x17\x7f%\xf5\x87\xa4\x1b\x10\xb0JY\x97\x08c3\x18\x04\x99\xc0\xc4\xe5TG(:\xd8GG\x08KKD\x03S=S\xfc\\\x03\xace\xa9\xbb\xcd;M'
+    nonce = b'\xa5\xcf\x87\xe0\\v\x16\x96\xe2\xb0\x18Cj"\x86/\xa1;\x0b\x9f\xdc\xe3\xe5v\xc3\x95@M[\xa3JiW\xb2\x18\xd3\xc6\x9e\x86\xf3\xa5\xe2\x92\xeb\x91D\xe9L\xa6\xdbt\xf6,\xc0\xb5\xb1\xec\xcf\x0e\x8c\xa4%\xdb"'
+    stegotext = b'\n\nFu\xc3\x9fe Romano Neva v i gi\xc3\xa4n ya hen\n\n\xc5\xa0luhi vv\xc3\xa4r i vycva jyh i hia ikeg'.decode(
+        'utf-8', errors=enc.errors)
+    enc_tokens = ['Ċ', 'Ċ', 'F', 'u', 'ÃŁ', 'e', 'ĠRoman', 'o', 'ĠNev', 'a', 'Ġ', 'v', 'Ġ', 'i', 'Ġg', 'i', 'Ã¤', 'n',
+                  'Ġy', 'a', 'Ġhe', 'n', 'Ċ', 'Ċ', 'Å', 'ł', 'l', 'u', 'h', 'i', 'Ġv', 'v', 'Ã¤', 'r', 'Ġ', 'i', 'Ġv',
+                  'y', 'c', 'v', 'a', 'Ġj', 'y', 'h', 'Ġ', 'i', 'Ġ', 'h', 'i', 'a', 'Ġ', 'ike', 'g']
+    # WHEN
+    msg = coder.decode_message(stegotext, context, key, nonce, coding='arithmetic',
+                               binned_resample=True, enc_tokens=enc_tokens)
+
+    # THEN
+    expected_msg = 'water'
+    assert msg == expected_msg

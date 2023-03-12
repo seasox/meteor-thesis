@@ -1,3 +1,6 @@
+from typing import List, Optional
+
+
 class TokenTrie:
     def __init__(self, label=None, probability: float = None, token=None, edges=None, parent=None):
         from collections import OrderedDict
@@ -9,15 +12,15 @@ class TokenTrie:
         self.edges = OrderedDict(edges)  # label: node
         self.parent = parent
 
-    def insert(self, label, probability=None, token=None) -> bool:
+    def insert(self, label: bytes, probability=None, token=None) -> bool:
         if token is None:
             token = label
         if isinstance(label, str):
-            label = label.encode('utf-8', errors='strict')
+            assert False
+            # label = label.encode('utf-8', errors='strict')
         edges = self.edges.keys()
         for e in edges:
-            import os
-            prefix = os.path.commonprefix([e, label])
+            prefix = commonprefix(e, label)
             if prefix == b'':
                 # no common prefix
                 continue
@@ -93,18 +96,35 @@ class TokenTrie:
             return 0
         return 1 + max(map(lambda t: t.depth(), self.edges.values()))
 
-    def subtree(self, suffix):
-        if isinstance(suffix, str):
-            suffix = suffix.encode('utf-8', errors='strict')
-        if suffix == b'' or (self.token is not None and self.token.encode('utf-8', errors='strict') == suffix):
+    def subtree(self, suffix: bytes) -> Optional['TokenTrie']:
+        if suffix == b'' or (self.token is not None and self.token == suffix):
             return self
         for e in self.edges.keys():
             if e == suffix or (suffix.startswith(e) and e != ''):
                 return self.edges[e].subtree(suffix[len(e):])
         return None
 
+    def __eq__(self, other):
+        return self.label == other.label \
+            and self.token == other.token \
+            and self.edges == other.edges \
+            and self.probability == other.probability \
+            and self.parent == other.parent
+
     def __str__(self):
         return self.visualize()
+
+
+def commonprefix(x: bytes, y: bytes, carry: List[int] = None) -> bytes:
+    if carry is None:
+        carry = []
+    if not x or not y:
+        return bytes(carry)
+    if len(x) == 0 or len(y) == 0:
+        return bytes(carry)
+    if x[0] == y[0]:
+        return commonprefix(x[1:], y[1:], carry + [x[0]])
+    return bytes(carry)
 
 
 def flat_map(f, xs):
@@ -113,16 +133,16 @@ def flat_map(f, xs):
 
 def test_webex_example():
     trie = TokenTrie()
-    trie.insert('Alice', 0.3)
-    trie.insert('found', 0.1)
-    trie.insert('an', 0.2)
-    trie.insert('ant', 0.1)
-    trie.insert('at', 0.05)
-    trie.insert('the', 0.05)
-    trie.insert('tree', 0.2)
+    trie.insert(b'Alice', 0.3)
+    trie.insert(b'found', 0.1)
+    trie.insert(b'an', 0.2)
+    trie.insert(b'ant', 0.1)
+    trie.insert(b'at', 0.05)
+    trie.insert(b'the', 0.05)
+    trie.insert(b'tree', 0.2)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs == ('Alice', 'found', 'an', 'at', 'the', 'tree')
-    assert tokens[2] == ['an', 'ant']
+    assert reprs == (b'Alice', b'found', b'an', b'at', b'the', b'tree')
+    assert tokens[2] == [b'an', b'ant']
     for i in range(0, len(reprs)):
         if i == 2:
             continue
@@ -131,12 +151,12 @@ def test_webex_example():
 
 def test_resample():
     trie = TokenTrie()
-    trie.insert('Alice', 3)
-    trie.insert('an', 3)
-    trie.insert('ant', 4)
+    trie.insert(b'Alice', 3)
+    trie.insert(b'an', 3)
+    trie.insert(b'ant', 4)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[1] == 'an'
-    assert tokens[1] == ['an', 'ant']
+    assert reprs[1] == b'an'
+    assert tokens[1] == [b'an', b'ant']
     assert probs[1] == 7
     assert tokens[1] == trie.subtree(reprs[1]).tokens()
     assert probs[1] == sum(trie.subtree(reprs[1]).probabilities())
@@ -144,35 +164,35 @@ def test_resample():
 
 def test_resample_deep():
     trie = TokenTrie()
-    trie.insert('a', 1)
-    trie.insert('alice', 3)
-    trie.insert('an', 3)
-    trie.insert('ant', 4)
-    trie.insert('bob', 5)
+    trie.insert(b'a', 1)
+    trie.insert(b'alice', 3)
+    trie.insert(b'an', 3)
+    trie.insert(b'ant', 4)
+    trie.insert(b'bob', 5)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == 'a'
-    assert tokens[0] == ['a', 'alice', 'an', 'ant']
+    assert reprs[0] == b'a'
+    assert tokens[0] == [b'a', b'alice', b'an', b'ant']
     assert probs[0] == 11
 
 
 def test_resample_multi_split():
     trie = TokenTrie()
-    trie.insert('alice', 3)
-    trie.insert('an', 3)
-    trie.insert('albert', 4)
-    trie.insert('ant', 5)
-    trie.insert('bob', 7)
-    trie.insert('a', 1)
+    trie.insert(b'alice', 3)
+    trie.insert(b'an', 3)
+    trie.insert(b'albert', 4)
+    trie.insert(b'ant', 5)
+    trie.insert(b'bob', 7)
+    trie.insert(b'a', 1)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == 'a'
-    assert tokens[0] == ['a', 'an', 'ant', 'alice', 'albert']
+    assert reprs[0] == b'a'
+    assert tokens[0] == [b'a', b'an', b'ant', b'alice', b'albert']
     assert probs[0] == 16
     st = trie.subtree(reprs[0])
-    assert st.tokens() == ['a', 'an', 'ant', 'alice', 'albert']
+    assert st.tokens() == [b'a', b'an', b'ant', b'alice', b'albert']
     assert st.probabilities() == [1, 3, 5, 3, 4]
     reprs, tokens, probs = zip(*st.distribution())
-    assert tokens[0] == ['a', 'an', 'ant', 'alice', 'albert']
-    assert reprs[0] == 'a'
+    assert tokens[0] == [b'a', b'an', b'ant', b'alice', b'albert']
+    assert reprs[0] == b'a'
     assert probs[0] == 16
     assert len(probs) == 1
     assert len(reprs) == 1
@@ -182,21 +202,21 @@ def test_resample_multi_split():
 
 def test_resample_multi_split_pseudo():
     trie = TokenTrie()
-    trie.insert('alice', 3)
-    trie.insert('an', 3)
-    trie.insert('albert', 4)
-    trie.insert('ant', 5)
-    trie.insert('bob', 7)
+    trie.insert(b'alice', 3)
+    trie.insert(b'an', 3)
+    trie.insert(b'albert', 4)
+    trie.insert(b'ant', 5)
+    trie.insert(b'bob', 7)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == 'an'
-    assert tokens[0] == ['an', 'ant']
+    assert reprs[0] == b'an'
+    assert tokens[0] == [b'an', b'ant']
     assert probs[0] == 8
     print(trie)
     st = trie.subtree(reprs[0])
     assert st is not None
     reprs, tokens, probs = zip(*st.distribution())
-    assert tokens[0] == ['an', 'ant']
-    assert reprs[0] == 'an'
+    assert tokens[0] == [b'an', b'ant']
+    assert reprs[0] == b'an'
     assert probs[0] == 8
     assert len(probs) == 1
     assert len(reprs) == 1
@@ -206,8 +226,8 @@ def test_resample_multi_split_pseudo():
 
 def test_empty_label_split():
     trie = TokenTrie()
-    trie.insert('ABC', 2, token=234)
-    trie.insert('AB', 3, token=123)
+    trie.insert(b'ABC', 2, token=234)
+    trie.insert(b'AB', 3, token=123)
     assert trie.edges[b'AB'].token == 123
     assert trie.edges[b'AB'].probability == 3
     assert b'' not in trie.edges[b'AB'].edges
