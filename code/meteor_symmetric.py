@@ -2,9 +2,9 @@ import logging
 import os
 import time
 from optparse import OptionParser
-from typing import Optional
+from typing import Optional, List
 
-from coder import MeteorCoder
+from coder import MeteorCoder, MeteorStatistics
 from util import get_model
 
 
@@ -35,15 +35,7 @@ def file_read_bin(fname: str) -> Optional[bytes]:
     return b
 
 
-def main():
-    model_name = 'gpt2-medium'
-    device = 'cpu'
-
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S')
-
+def parse_options():
     parser = OptionParser()
     parser.add_option('--message', dest='message', help='message to encode', default='water')
     parser.add_option('--stegotext', dest='stegotext', help='stegotext to decode', default=None)
@@ -54,9 +46,38 @@ def main():
     parser.add_option('--nonce', dest='nonce', help='nonce (defaults to random nonce)', default=None)
     parser.add_option('--nonce-out', dest='nonce_out', help='nonce out file (defaults to random nonce.bin)', default='nonce.bin')
     parser.add_option('--repeat', action='store_true', dest='repeat', help='repeat encode/decode (test mode)', default=False)
+    parser.add_option('--stats', dest='stats', help='statistics output file', default=None)
+    parser.add_option('-n', dest='count', help='number of repetitions (mostly for statistic runs', default=1, type=int)
     (options, args) = parser.parse_args()
 
+    return options, args
+
+
+def load_stats(fname) -> List[MeteorStatistics]:
+    import pickle
+    if not os.path.exists(fname):
+        return []
+    with open(fname, 'rb') as f:
+        return pickle.load(f)
+
+
+def save_stats(fname, stats: List[MeteorStatistics]):
+    import pickle
+    with open(fname, 'wb+') as f:
+        pickle.dump(stats, f)
+
+
+def main():
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+
+    options, args = parse_options()
+
     logging.info('get model')
+    model_name = 'gpt2-medium'
+    device = 'cpu'
     enc, model = get_model(model_name=model_name, device=device)
     logging.info('done')
 
@@ -68,7 +89,7 @@ def main():
     num_rounds = 0
     while repeat:
         if options.random_context:
-            chosen_context = get_random_wiki()[1]
+            chosen_context = get_random_wiki()[1] + '\n\n'
         key = file_read_bin(options.key) or os.urandom(64)
         nonce = file_read_bin(options.nonce) or os.urandom(64)
         start = time.time()
@@ -91,6 +112,11 @@ def main():
             f = open(options.nonce_out, 'wb')
             f.write(nonce)
             f.close()
+            if options.stats:
+                logging.info(stats)
+                all_stats = load_stats(options.stats)
+                all_stats.append(stats)
+                save_stats(options.stats, all_stats)
         else:
             enc_tokens = None
         if options.stegotext is not None or options.repeat:
@@ -101,7 +127,8 @@ def main():
             assert y[:len(message_text)] == message_text[:len(y)], f'{y} != {message_text}'
             if y != message_text:
                 logging.warning(f'WARNING: recovered message has additional data or not embedded completely: y={y}; message_text={message_text}')
-        repeat = options.repeat
+        options.count -= 1
+        repeat = options.repeat or options.count
         num_rounds += 1
         logging.info(f'total rounds: {num_rounds}')
 

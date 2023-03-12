@@ -3,7 +3,8 @@ import hmac
 import logging
 import math
 import os
-from typing import List, Dict, Tuple, Literal
+from dataclasses import dataclass, astuple
+from typing import List, Dict, Tuple, Literal, Optional
 
 import bitarray
 import numpy as np
@@ -16,7 +17,7 @@ from trie import TokenTrie
 sample_seed_prefix = b'sample'
 
 
-def limit_past(past):
+def limit_past(past: Tuple[Tuple[torch.FloatTensor]]) -> List[Tuple[torch.FloatTensor]]:
     past = list(past)
     for i in range(len(past)):
         past[i] = list(past[i])
@@ -530,7 +531,18 @@ def cumsum_adjust(probs_temp_int, precision):
     return cum_probs
 
 
-def get_token_probabilities(model, context, past_key_values, temp, topk, precision, sort, device):
+@dataclass
+class TokenProbabilities:
+    indices: torch.Tensor
+    past: List[Tuple[torch.FloatTensor]]
+    probs_temp_int: torch.Tensor
+    log_probs: torch.Tensor
+
+    def __iter__(self):
+        return iter(astuple(self))
+
+
+def get_token_probabilities(model: GPT2LMHeadModel, context: Optional[torch.LongTensor], past_key_values: Optional[Tuple[Tuple[torch.Tensor]]], temp: float, topk: int, precision: int, sort: bool, device: str) -> TokenProbabilities:
     max_val = 2 ** precision
     cur_interval = [0, max_val]  # bottom inclusive, top exclusive
 
@@ -564,7 +576,7 @@ def get_token_probabilities(model, context, past_key_values, temp, topk, precisi
         probs_temp_int, indices = bin_sort(probs_temp_int, indices, cur_int_range,
                                            entropy_in_this_distribution, device)
 
-    return indices, past, probs_temp_int
+    return TokenProbabilities(indices, past, probs_temp_int, log_probs)
 
 
 def sort_tokens(enc, indices, probs_int):
@@ -585,9 +597,9 @@ def encrypt(message_bits, mask_generator, precision):
     return message_bits
 
 
-def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
-                  temp=1.0,
-                  precision=16, topk=50000, is_sort=False):
+def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: bytes, context: List[int],
+                                  key: bytes, nonce: bytes, finish_sent=False, device='cuda', temp=1.0,
+                                  precision=16, topk=50000, is_sort=False):
     logging.debug(f'will embed message, {len(message)} bytes, precision {precision}')
     x = message
     message = bitarray.bitarray()
@@ -603,10 +615,9 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
 
     total_num = 0
     total_num_for_stats = 0
-    total_entropy = 0
-    # total_log_probs = 0
-    # total_kl = 0  # in bits
-    # total_entropy_ptau = 0
+    total_log_probs = 0
+    total_kl = 0  # in bits
+    total_entropy_ptau = 0
 
     trie = TokenTrie.from_tokenizer(enc)
 
@@ -615,11 +626,10 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
         sent_finish = False
         while i < len(message) or (finish_sent and not sent_finish):
             logging.debug(f'{total_num}: prev = {prev}')
-            indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
-                                          temp=temp, topk=topk, precision=precision,
-                                          sort=bin_sort if is_sort else None, device=device)
-            #indices, probs_int = sort_tokens(enc, indices, probs_int)
-            #cum_probs = cumsum_adjust(probs_int, precision=precision)
+            indices, past, probs_int, log_probs = get_token_probabilities(model=model, context=prev,
+                                                                          past_key_values=past, temp=temp,
+                                                                          topk=topk, precision=precision,
+                                                                          sort=is_sort, device=device)
             trie.update(zip(indices, probs_int))
             reprs, tokens, probs = zip(*trie.distribution())
             probs = torch.tensor(probs)
@@ -660,14 +670,14 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 logging.debug(f'{total_num}:{num_bits_encoded} bits embedded: {message_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
 
                 # Gather statistics
-                # total_log_probs += log_probs[selection].item()
+                total_log_probs += log_probs[selection].item()
 
-                # q = cum_probs.double() / cum_probs.sum()
-                # logq = q.log()
-                # total_kl += kl(q, logq, log_probs[:len(q)])
-                total_entropy += entropy(probs/probs.sum(), torch.log(probs/probs.sum()))
+                q = cum_probs.double() / cum_probs.sum()
+                logq = q.log()
+                total_kl += kl(q, logq, log_probs[:len(q)])
+                total_entropy_ptau += entropy(probs/probs.sum(), torch.log(probs/probs.sum()))
                 total_num_for_stats += 1
-                logging.debug(f'average entropy: {total_entropy/total_num_for_stats}')
+                logging.debug(f'average entropy: {total_entropy_ptau/total_num_for_stats}')
 
             # Update history with new token
             prev = None
@@ -696,21 +706,21 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
             partial = enc.decode(output[context_len:].tolist())[0]
             if prev == enc.eos_token_id or '<eos>' in partial:
                 break
-    logging.debug(f'average entropy: {total_entropy/total_num_for_stats}')
+    logging.debug(f'average entropy: {total_entropy_ptau/total_num_for_stats}')
 
-    # avg_NLL = -total_log_probs / total_num_for_stats
-    # avg_KL = total_kl / total_num_for_stats
-    # avg_Hq = 0 # total_entropy_ptau / total_num_for_stats
-    # words_per_bit = total_num_for_stats / i
-    # stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output}
+    avg_NLL = -total_log_probs / total_num_for_stats
+    avg_KL = total_kl / total_num_for_stats
+    avg_Hq = total_entropy_ptau / total_num_for_stats
+    words_per_bit = total_num_for_stats / i
+    stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output}
 
-    return output[context_len:].tolist(), 0, 0, 0, 0, {} #, avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
+    return output[context_len:].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
 
 
 def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, text: str, context,
-                                  key: bytes, nonce: bytes, device: Literal['cuda', 'cpu'] ='cuda',
-                                  temp: float =1.0, precision: int =16, topk: int =50000,
-                                  is_sort: bool =False, enc_tokens: List[str] =None) -> List[bool]:
+                                  key: bytes, nonce: bytes, device: Literal['cuda', 'cpu'] = 'cuda',
+                                  temp: float = 1.0, precision: int = 16, topk: int = 50000,
+                                  is_sort: bool = False, enc_tokens: List[str] = None) -> List[bool]:
     # TODO enc_tokens is for debug only, remove!
     import torch
     # inp is a list of token indices
@@ -1704,6 +1714,22 @@ class DRBG(object):
         return xs
 
 
+@dataclass
+class MeteorStatistics:
+    message: bytes
+    context: List[int]
+    stegotext: str
+    stegotext_tokens: List[str]
+    key: bytes
+    nonce: bytes
+    precision: int
+    topk: int
+    ppl: float
+    kl: float
+    words_per_bit: float
+    entropy: float
+
+
 class MeteorCoder:
     """
     Constructor for MeteorCoder
@@ -1714,12 +1740,11 @@ class MeteorCoder:
         self.model = model
         self.device = device
 
-    def encode_binary(self, message: bytes, context_tokens, key, nonce, temp=0.95, precision=32, topk=50000,
-                      binned_resample=True, randomized=False) -> \
-            Tuple[str, List[str], Dict[str, any]]:
+    def encode_binary(self, message: bytes, context_tokens: List[int], key: bytes, nonce: bytes, temp=0.95,
+                      precision=32, topk=50000, binned_resample=True, randomized=False) \
+            -> Tuple[str, List[str], MeteorStatistics]:
         finish_sent = False
         meteor_sort = False
-        meteor_random = False
 
         # Next encode bits into cover text, using arbitrary context
         if binned_resample:
@@ -1734,12 +1759,12 @@ class MeteorCoder:
                                                         is_sort=meteor_sort)
         text, tokens = self.enc.decode(out, skip_special_tokens=True)
 
-        # logging.debug("="*40 + " Encoding " + "="*40)
-        # logging.debug(text)
-        # logging.debug('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
-        #      (math.exp(nll), kl, words_per_bit, 1/words_per_bit, Hq/0.69315))
-        # logging.debug('tokens: ', tokens)
-        # logging.debug("=" * 90)
+        logging.debug("="*40 + " Encoding " + "="*40)
+        logging.debug(text)
+        logging.debug('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
+                      (math.exp(nll), kl, words_per_bit, 1/words_per_bit, Hq/0.69315))
+        logging.debug('tokens: ', tokens)
+        logging.debug("=" * 90)
 
         stats.update({
             "ppl": math.exp(nll),
@@ -1747,6 +1772,8 @@ class MeteorCoder:
             "wordsbit": words_per_bit,
             "entropy": Hq / 0.69315,
         })
+        stats = MeteorStatistics(message, context_tokens, text, tokens, key, nonce, precision,
+                                 topk, math.exp(nll), kl, words_per_bit, Hq / 0.69315)
         return text, tokens, stats
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000,
@@ -1769,8 +1796,7 @@ class MeteorCoder:
     """
 
     def encode_message(self, message_str: str, context_str: str, key, nonce, coding='utf-8',
-                       context_tokens: list[int] = None, randomized=False) -> Tuple[
-        str, List[str], Dict]:
+                       context_tokens: list[int] = None, randomized=False) -> Tuple[str, List[str], MeteorStatistics]:
         # First encode message to uniform bits, without any context
         # (not essential this is arithmetic vs ascii, but it's more efficient when the message is natural language)
         if context_tokens is None:
@@ -1793,7 +1819,8 @@ class MeteorCoder:
     Decode a meteor stegotext to message string
     """
 
-    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8', randomized=False, binned_resample=True, enc_tokens=None) -> str:
+    def decode_message(self, text: str, context_str: str, key, nonce, coding='utf-8',
+                       randomized=False, binned_resample=True, enc_tokens=None) -> str:
         # TODO enc_tokens is for debug only, REMOVE!
         context_tokens = encode_context(context_str, self.enc)
         message_rec = self.decode_binary(text, context_tokens, key, nonce, randomized=randomized, binned_resample=binned_resample, enc_tokens=enc_tokens)
@@ -1815,35 +1842,6 @@ class MeteorCoder:
 
         # Remove <eos>
         return reconst[:eos_idx]
-
-    def encode_conversation_history(self, history: [str]):
-        context_str = self.enc.eos_token.join(history) + self.enc.eos_token
-        return self.enc.encode(context_str, truncation=True)
-
-    def encode_conversation(self, message: List[bool], history: [str], key, nonce, max_length=12, randomized=False) -> \
-    Tuple[
-        str, List[bool]]:
-        message_part = message[:max_length]
-        context_tokens = self.encode_conversation_history(history)
-        out, nll, kl, words_per_bit, Hq, stats, remainder = encode_conversation_meteor(self.model, self.enc,
-                                                                                       message_part,
-                                                                                       context_tokens, key, nonce,
-                                                                                       temp=0.6, finish_sent=False,
-                                                                                       precision=16, topk=50,
-                                                                                       device=self.device,
-                                                                                       is_sort=False,
-                                                                                       randomized=randomized)
-        text, tokens = self.enc.decode(out, skip_special_tokens=True)
-        remainder += message[max_length:]
-        return text, remainder
-
-    def decode_conversation(self, encoded_message, history: [str], key, nonce, randomized=False) -> Tuple[
-        List[bool], List[str]]:
-        context_tokens = self.encode_conversation_history(history)
-        msg, tokens = decode_conversation_meteor(self.model, self.enc, encoded_message, context_tokens, key, nonce,
-                                                 temp=0.6, precision=16, topk=50, device=self.device, is_sort=False,
-                                                 randomized=randomized)
-        return msg, tokens
 
 
 def test_decode_binned_resample_surrogateescape():
