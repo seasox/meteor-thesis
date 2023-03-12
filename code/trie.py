@@ -211,7 +211,6 @@ def test_resample_multi_split_pseudo():
     assert reprs[0] == b'an'
     assert tokens[0] == [b'an', b'ant']
     assert probs[0] == 8
-    print(trie)
     st = trie.subtree(reprs[0])
     assert st is not None
     reprs, tokens, probs = zip(*st.distribution())

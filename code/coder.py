@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import logging
 import math
 import os
 from typing import List, Dict, Tuple, Literal
@@ -245,7 +246,7 @@ def encode_conversation_meteor(model, enc, message, context: List[int], key, non
         i = 0
         sent_finish = False
         while (i < len(message) or (finish_sent and not sent_finish)):
-            # print(f'{i}: {i / float(len(message))}')
+            # logging.debug(f'{i}: {i / float(len(message))}')
             input_ids, kwargs = model.prepare_model_inputs(prev)
             kwargs['past_key_values'] = past
             result = model(input_ids.unsqueeze(0), **kwargs)
@@ -346,7 +347,7 @@ def encode_conversation_meteor(model, enc, message, context: List[int], key, non
             total_num += 1
 
             if prev == enc.eos_token_id:
-                print('encountered eos_token_id, stopping after encoding %d bits' % i)
+                logging.info('encountered eos_token_id, stopping after encoding %d bits' % i)
                 break
 
             # For text->bits->text
@@ -469,7 +470,7 @@ def decode_conversation_meteor(model, enc, text, context, key, nonce, device='cu
                                 inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
                             break
                 else:
-                    print('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
+                    logging.warning('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
                     rank = 0
 
             selection = rank
@@ -594,7 +595,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: bytes, context: List[int], key, nonce, finish_sent=False, device='cuda',
                   temp=1.0,
                   precision=16, topk=50000, is_sort=False):
-    print(f'will embed message, {len(message)} bytes, precision {precision}')
+    logging.debug(f'will embed message, {len(message)} bytes, precision {precision}')
     x = message
     message = bitarray.bitarray()
     message.frombytes(x)
@@ -618,7 +619,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
         i = 0
         sent_finish = False
         while i < len(message) or (finish_sent and not sent_finish):
-            print(f'{total_num}: prev = {prev}')
+            logging.debug(f'{total_num}: prev = {prev}')
             indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                           temp=temp, topk=topk, precision=precision,
                                           sort=bin_sort if is_sort else None, device=device)
@@ -661,7 +662,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 num_bits_encoded = num_same_from_beg(new_int_bottom_bits_inc, new_int_top_bits_inc)
                 encoded_bits_in_output += [num_bits_encoded]  # for statistics
                 i += num_bits_encoded
-                print(f'{total_num}:{num_bits_encoded} bits embedded: {message_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
+                logging.debug(f'{total_num}:{num_bits_encoded} bits embedded: {message_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
 
                 # Gather statistics
                 # total_log_probs += log_probs[selection].item()
@@ -671,7 +672,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 # total_kl += kl(q, logq, log_probs[:len(q)])
                 total_entropy += entropy(probs/probs.sum(), torch.log(probs/probs.sum()))
                 total_num_for_stats += 1
-                print(f'average entropy: {total_entropy/total_num_for_stats}')
+                logging.debug(f'average entropy: {total_entropy/total_num_for_stats}')
 
             # Update history with new token
             prev = None
@@ -680,7 +681,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 repr = enc.decoder[reprs[selection].item()].encode('utf-8', errors=enc.errors)
                 st = trie.subtree(repr)
                 if st is None:
-                    print(trie.visualize(max_depth=2))
+                    logging.debug(trie.visualize(max_depth=2))
                     raise Exception(f'no subtrie for repr {repr} found')
                 tokens = st.tokens()
                 probabilities = torch.tensor(st.probabilities())
@@ -689,10 +690,10 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
                 message_idx = bits2int(reversed(mask))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
                 prev = tokens[selection].view(1)
-                print(f'resampled {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)} from subtrie {repr}')
+                logging.debug(f'resampled {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)} from subtrie {repr}')
             else:
                 prev = torch.tensor(tokens[selection])
-                print(f'resampled from singleton {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)}')
+                logging.debug(f'resampled from singleton {prev} = {enc.decode(prev)[0].encode("utf-8", errors=enc.errors)}')
             output = torch.cat((output, prev))
             total_num += 1
 
@@ -700,7 +701,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, me
             partial = enc.decode(output[context_len:].tolist())[0]
             if prev == enc.eos_token_id or '<eos>' in partial:
                 break
-    print(f'average entropy: {total_entropy/total_num_for_stats}')
+    logging.debug(f'average entropy: {total_entropy/total_num_for_stats}')
 
     # avg_NLL = -total_log_probs / total_num_for_stats
     # avg_KL = total_kl / total_num_for_stats
@@ -736,7 +737,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
     with torch.no_grad():
         i = 0
         while inp:
-            print(f'{i}: prev = {prev}')
+            logging.debug(f'{i}: prev = {prev}')
             indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                           temp=temp, topk=topk, precision=precision,
                                           sort=bin_sort if is_sort else None, device=device)
@@ -772,7 +773,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
             else:
                 new_bits = new_int_top_bits_inc[:num_bits_encoded]
 
-            print(f'{i}:{num_bits_encoded} bits recovered: {new_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
+            logging.debug(f'{i}:{num_bits_encoded} bits recovered: {new_bits[:num_bits_encoded]} in [{new_int_bottom_bits_inc},{new_int_top_bits_inc}]')
 
             # Get the mask and apply it to the recovered bits
             mask_bits = mask_generator.generate_bits(precision)
@@ -792,10 +793,10 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
                 selection = (cum_probs > message_idx).nonzero()[0].item()
                 resampled_token = tokens[selection].item()
                 resampled_token_str: bytes = enc.decoder[resampled_token].encode('utf-8', errors=enc.errors)
-                print(f'resampled {resampled_token} = "{resampled_token_str}" from subtrie {repr}')
+                logging.debug(f'resampled {resampled_token} = "{resampled_token_str}" from subtrie {repr}')
                 selected = resampled_token
             else:
-                print(f'resampled from singleton {tokens[rank][0]}')
+                logging.debug(f'resampled from singleton {tokens[rank][0]}')
 
             # Update history with new token
             inp = inp[len(enc.decode(selected)[0].encode('utf-8', errors=enc.errors)):]
@@ -885,7 +886,7 @@ def encode_meteor_randomized(model, enc, message, context: List[int], key, nonce
                 probs_temp_int = probs_temp_int / probs_temp_int.sum() * cur_int_range
 
                 entropy_in_this_distribution = entropy(probs_temp, log_probs_temp)
-                #print('%d: %.02f, H(D)=%.02f' % (i, i / float(len(ciphertext_bits)), entropy_in_this_distribution))
+                #logging.debug('%d: %.02f, H(D)=%.02f' % (i, i / float(len(ciphertext_bits)), entropy_in_this_distribution))
 
                 # Round probabilities to integers given precision
                 probs_temp_int = probs_temp_int.round().long()
@@ -1071,7 +1072,7 @@ def decode_meteor_randomized(model, enc, text, context, key, nonce, device='cuda
                                 inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
                             break
                 else:
-                    print('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
+                    logging.warning('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
                     rank = 0
 
             selection = rank
@@ -1143,7 +1144,7 @@ def encode_meteor(model, enc, message: bytes, context: List[int], key, nonce, fi
         i = 0
         sent_finish = False
         while (i < len(message) or (finish_sent and not sent_finish)):
-            # print(f'{i}: {i / float(len(message))}')
+            # logging.debug(f'{i}: {i / float(len(message))}')
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values
@@ -1360,7 +1361,7 @@ def decode_meteor(model, enc, text, context, key, nonce, device='cuda', temp=1.0
                                 inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
                             break
                 else:
-                    print('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
+                    logging.warning('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
                     rank = 0
 
             selection = rank
@@ -1547,11 +1548,11 @@ def decode_arithmetic(model: GPT2LMHeadModel, enc: GPT2Tokenizer, text: str, con
     prev = context
     past = None
     message = []
-    # print("inp len: %d" % len(inp))
+    # logging.debug("inp len: %d" % len(inp))
     with torch.no_grad():
         i = 0
         while i < len(inp):
-            #print(f'{i}: {i / float(len(inp))}')
+            #logging.debug(f'{i}: {i / float(len(inp))}')
             result = model(prev.unsqueeze(0), past_key_values=past)
             logits = result.logits
             past = result.past_key_values
@@ -1631,7 +1632,7 @@ def decode_arithmetic(model: GPT2LMHeadModel, enc: GPT2Tokenizer, text: str, con
                                 inp[i + 1:i + 1] = suffix_tokens  # insert suffix tokens into list
                             break
                 else:
-                    print('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
+                    logging.warning('Unable to fix BPE error: token received: %s=%d, text: %s' % (true_token_text, inp[i], text))
                     rank = 0
 
             selection = rank
@@ -1736,12 +1737,12 @@ class MeteorCoder:
                                                         is_sort=meteor_sort)
         text, tokens = self.enc.decode(out, skip_special_tokens=True)
 
-        # print("="*40 + " Encoding " + "="*40)
-        # print(text)
-        # print('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
+        # logging.debug("="*40 + " Encoding " + "="*40)
+        # logging.debug(text)
+        # logging.debug('=> ppl: %0.2f, kl: %0.3f, words/bit: %0.2f, bits/word: %0.2f, entropy: %.2f' %
         #      (math.exp(nll), kl, words_per_bit, 1/words_per_bit, Hq/0.69315))
-        # print('tokens: ', tokens)
-        # print("=" * 90)
+        # logging.debug('tokens: ', tokens)
+        # logging.debug("=" * 90)
 
         stats.update({
             "ppl": math.exp(nll),
@@ -1811,9 +1812,9 @@ class MeteorCoder:
             raise 'unknown coding ' + coding
         eos_idx = reconst.find('<eos>')
 
-        # print("="*40 + " Recovered Message " + "="*40)
-        # print(reconst[:eos_idx])
-        # print("=" * 99)
+        # logging.debug("="*40 + " Recovered Message " + "="*40)
+        # logging.debug(reconst[:eos_idx])
+        # logging.debug("=" * 99)
 
         # Remove <eos>
         return reconst[:eos_idx]
