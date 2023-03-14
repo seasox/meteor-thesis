@@ -21,7 +21,7 @@ class TokenTrie:
         self.probability = probability
         self.edges = OrderedDict(edges)  # label: node
         self.parent = parent
-        self.lookup = {}
+        self.lookup = {} if parent is None else parent.lookup
 
     @classmethod
     def from_tokenizer(cls, enc: GPT2Tokenizer) -> 'TokenTrie':
@@ -37,9 +37,9 @@ class TokenTrie:
         self.edges = OrderedDict()
         self.parent = None
         self.lookup = {}
-        for index, label in labels:
-            self.lookup[index] = self.insert(label=label, token=index)
-            if self.lookup[index] is None:
+        for token, label in labels:
+            self.insert(label=label, token=token)
+            if self.lookup[token] is None:
                 raise Exception(f'insert inconsistency: {label}')
         return self
 
