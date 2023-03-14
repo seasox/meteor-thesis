@@ -97,7 +97,8 @@ class TokenTrie:
         return self.edges[label]
 
     def tokens(self) -> List[int]:
-        return ([self.token] if self.token is not None else []) + list(flat_map(lambda x: x.tokens(), self.edges.values()))
+        return ([self.token] if self.token is not None and self.probability is not None else []) \
+            + list(flat_map(lambda x: x.tokens(), self.edges.values()))
 
     def probabilities(self) -> list[int]:
         return ([self.probability] if self.probability is not None else []) \
