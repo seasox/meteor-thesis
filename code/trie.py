@@ -49,7 +49,8 @@ class TokenTrie:
         for label, prob in probabilities:
             self.lookup[label.item()].probability = prob
 
-    def insert(self, label: bytes, probability=None, token=None) -> 'TokenTrie':
+    def insert(self, label: bytes, token: int, probability=None) -> 'TokenTrie':
+        assert token not in self.lookup
         assert isinstance(label, bytes)
         if token is None:
             token = label
@@ -65,10 +66,11 @@ class TokenTrie:
                     raise Exception('element already in trie with probability')
                 self.edges[e].token = token
                 self.edges[e].probability = probability
+                self.lookup[token] = self.edges[e]
                 return self.edges[e]
             if len(prefix) == len(e):
                 # bubble down: append token as child in e
-                return self.edges[e].insert(label[len(prefix):], probability, token)
+                return self.edges[e].insert(label[len(prefix):], token, probability)
             else:
                 # split edge: create new prefix edge, add both e[len(prefix):] and token[len(prefix):] as children
                 t = TokenTrie(prefix, parent=self)
@@ -79,14 +81,19 @@ class TokenTrie:
                 from collections import OrderedDict
                 # rehang curr
                 t.edges[e[len(prefix):]] = curr
+                ret: TokenTrie
                 if label[len(prefix):]:
-                    t.edges[label[len(prefix):]] = TokenTrie(label[len(prefix):], token=token, parent=t, probability=probability)
+                    ret = TokenTrie(label[len(prefix):], token=token, parent=t, probability=probability)
+                    t.edges[label[len(prefix):]] = ret
                 else:
                     t.token = token
                     t.probability = probability
+                    ret = t
                 self.edges[prefix] = t
-                return self.edges[prefix]
+                self.lookup[token] = ret
+                return ret
         self.edges[label] = TokenTrie(label, token=token, probability=probability, parent=self)
+        self.lookup[token] = self.edges[label]
         return self.edges[label]
 
     def tokens(self) -> List[int]:
