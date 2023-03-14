@@ -351,7 +351,7 @@ def encode_conversation_meteor(model, enc, message, context: List[int], key, non
             total_num += 1
 
             if prev == enc.eos_token_id:
-                logging.info('encountered eos_token_id, stopping after encoding %d bits' % i)
+                logging.warning('encountered eos_token_id, stopping after encoding %d bits' % i)
                 break
 
             # For text->bits->text
@@ -550,7 +550,7 @@ def get_token_probabilities(model: GPT2LMHeadModel, context: Optional[torch.Long
     logits = result.logits
     past = result.past_key_values
     past = limit_past(past)
-    logits[0, -1, -1] = -1e20  # endoftext token can't happen
+    # logits[0, -1, -1] = -1e20  # endoftext token can't happen
     logits[0, -1, 628] = -1e20  # 2 newlines token can't happen
     logits, indices = logits[0, -1, :].sort(descending=True)
     logits = logits.double()
