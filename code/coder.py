@@ -745,11 +745,11 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel, enc: GPT2Tokenizer, te
         i = 0
         while inp:
             logging.debug(f'{i}: prev = {prev}')
-            indices, past, probs_int = get_token_probabilities(model=model, context=prev, past_key_values=past,
-                                          temp=temp, topk=topk, precision=precision,
-                                          sort=bin_sort if is_sort else None, device=device)
-            #indices, probs_int = sort_tokens(enc, indices, probs_int)
-            #cum_probs = cumsum_adjust(probs_int, precision=precision)
+            indices, past, probs_int, _ = get_token_probabilities(model=model, context=prev, past_key_values=past,
+                                                                  temp=temp, topk=topk, precision=precision,
+                                                                  sort=bin_sort if is_sort else None, device=device)
+            # indices, probs_int = sort_tokens(enc, indices, probs_int)
+            # cum_probs = cumsum_adjust(probs_int, precision=precision)
             trie.update(zip(indices, probs_int))
             reprs, tokens, probs = zip(*trie.distribution())
             probs = torch.tensor(probs)
