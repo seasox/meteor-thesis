@@ -270,3 +270,33 @@ def test_empty_label_split():
     assert trie.edges[b'AB'].token == 123
     assert trie.edges[b'AB'].probability == 3
     assert b'' not in trie.edges[b'AB'].edges
+
+
+def test_from_labels():
+    trie = TokenTrie.from_labels([(0, b'Alice'), (1, b'an',), (2, b'ant'), (3, b'a')])
+    trie.update([(torch.Tensor([0]), 1), (torch.Tensor([1]), 4), (torch.Tensor([2]), 7), (torch.Tensor([3]), 22)])
+    reprs, tokens, probs = zip(*trie.distribution())
+    assert reprs == (0, 3)
+    assert tokens == ([0], [3, 1, 2])
+    assert probs == (1, 33)
+    st = trie.subtree(3)
+    reprs, tokens, probs = zip(*st.distribution())
+    assert reprs == (3,)
+    assert tokens == ([3, 1, 2],)
+    assert probs == (33,)
+
+
+def test_update_reset():
+    trie = TokenTrie.from_labels([(0, b'Alice'), (1, b'an',), (2, b'ant'), (3, b'a')])
+    trie.update([(torch.Tensor([0]), 1), (torch.Tensor([1]), 4), (torch.Tensor([2]), 7), (torch.Tensor([3]), 22)])
+    reprs, tokens, probs = zip(*trie.distribution())
+    assert reprs == (0, 3)
+    assert tokens == ([0], [3, 1, 2])
+    assert probs == (1, 33)
+    trie.update([])
+    assert trie.distribution() == []
+    trie.update([(torch.Tensor([2]), 22)])
+    reprs, tokens, probs = zip(*trie.distribution())
+    assert reprs == (3,)
+    assert tokens == ([2],)
+    assert probs == (22,)
