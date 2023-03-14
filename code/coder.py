@@ -1728,6 +1728,7 @@ class MeteorStatistics:
     kl: float
     words_per_bit: float
     entropy: float
+    timing: float
 
 
 class MeteorCoder:
@@ -1773,7 +1774,7 @@ class MeteorCoder:
             "entropy": Hq / 0.69315,
         })
         stats = MeteorStatistics(message, context_tokens, text, tokens, key, nonce, precision,
-                                 topk, math.exp(nll), kl, words_per_bit, Hq / 0.69315)
+                                 topk, math.exp(nll), kl, words_per_bit, Hq / 0.69315, -1)
         return text, tokens, stats
 
     def decode_binary(self, text, context_tokens: List[int], key, nonce, temp=0.95, precision=32, topk=50000,

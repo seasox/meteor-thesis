@@ -113,6 +113,7 @@ def main():
             f.write(nonce)
             f.close()
             if options.stats:
+                stats.timing = end - start
                 logging.info(stats)
                 all_stats = load_stats(options.stats)
                 all_stats.append(stats)
