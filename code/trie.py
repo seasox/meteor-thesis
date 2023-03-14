@@ -166,16 +166,16 @@ def flat_map(f, xs):
 
 def test_webex_example():
     trie = TokenTrie()
-    trie.insert(b'Alice', 0.3)
-    trie.insert(b'found', 0.1)
-    trie.insert(b'an', 0.2)
-    trie.insert(b'ant', 0.1)
-    trie.insert(b'at', 0.05)
-    trie.insert(b'the', 0.05)
-    trie.insert(b'tree', 0.2)
+    trie.insert(b'Alice', 0, 0.3)
+    trie.insert(b'found', 1, 0.1)
+    trie.insert(b'an', 2, 0.2)
+    trie.insert(b'ant', 3, 0.1)
+    trie.insert(b'at', 4, 0.05)
+    trie.insert(b'the', 5, 0.05)
+    trie.insert(b'tree', 6, 0.2)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs == (b'Alice', b'found', b'an', b'at', b'the', b'tree')
-    assert tokens[2] == [b'an', b'ant']
+    assert reprs == (0, 1, 2, 4, 5, 6)
+    assert tokens[2] == [2, 3]
     for i in range(0, len(reprs)):
         if i == 2:
             continue
@@ -184,12 +184,12 @@ def test_webex_example():
 
 def test_resample():
     trie = TokenTrie()
-    trie.insert(b'Alice', 3)
-    trie.insert(b'an', 3)
-    trie.insert(b'ant', 4)
+    trie.insert(b'Alice', token=1, probability=3)
+    trie.insert(b'an', token=2, probability=3)
+    trie.insert(b'ant', token=3, probability=4)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[1] == b'an'
-    assert tokens[1] == [b'an', b'ant']
+    assert reprs[1] == 2
+    assert tokens[1] == [2, 3]
     assert probs[1] == 7
     assert tokens[1] == trie.subtree(reprs[1]).tokens()
     assert probs[1] == sum(trie.subtree(reprs[1]).probabilities())
@@ -197,35 +197,35 @@ def test_resample():
 
 def test_resample_deep():
     trie = TokenTrie()
-    trie.insert(b'a', 1)
-    trie.insert(b'alice', 3)
-    trie.insert(b'an', 3)
-    trie.insert(b'ant', 4)
-    trie.insert(b'bob', 5)
+    trie.insert(b'a', 0, 1)
+    trie.insert(b'alice', 1, 3)
+    trie.insert(b'an', 2, 3)
+    trie.insert(b'ant', 3, 4)
+    trie.insert(b'bob', 4, 5)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == b'a'
-    assert tokens[0] == [b'a', b'alice', b'an', b'ant']
+    assert reprs[0] == 0
+    assert tokens[0] == [0, 1, 2, 3]
     assert probs[0] == 11
 
 
 def test_resample_multi_split():
     trie = TokenTrie()
-    trie.insert(b'alice', 3)
-    trie.insert(b'an', 3)
-    trie.insert(b'albert', 4)
-    trie.insert(b'ant', 5)
-    trie.insert(b'bob', 7)
-    trie.insert(b'a', 1)
+    trie.insert(b'alice', 0, 3)
+    trie.insert(b'an', 1, 3)
+    trie.insert(b'albert', 2, 4)
+    trie.insert(b'ant', 3, 5)
+    trie.insert(b'bob', 4, 7)
+    trie.insert(b'a', 5, 1)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == b'a'
-    assert tokens[0] == [b'a', b'an', b'ant', b'alice', b'albert']
+    assert reprs[0] == 5
+    assert tokens[0] == [5, 1, 3, 0, 2]
     assert probs[0] == 16
     st = trie.subtree(reprs[0])
-    assert st.tokens() == [b'a', b'an', b'ant', b'alice', b'albert']
+    assert st.tokens() == [5, 1, 3, 0, 2]
     assert st.probabilities() == [1, 3, 5, 3, 4]
     reprs, tokens, probs = zip(*st.distribution())
-    assert tokens[0] == [b'a', b'an', b'ant', b'alice', b'albert']
-    assert reprs[0] == b'a'
+    assert tokens[0] == [5, 1, 3, 0, 2]
+    assert reprs[0] == 5
     assert probs[0] == 16
     assert len(probs) == 1
     assert len(reprs) == 1
@@ -235,20 +235,20 @@ def test_resample_multi_split():
 
 def test_resample_multi_split_pseudo():
     trie = TokenTrie()
-    trie.insert(b'alice', 3)
-    trie.insert(b'an', 3)
-    trie.insert(b'albert', 4)
-    trie.insert(b'ant', 5)
-    trie.insert(b'bob', 7)
+    trie.insert(b'alice', 0, 3)
+    trie.insert(b'an', 1, 3)
+    trie.insert(b'albert', 2, 4)
+    trie.insert(b'ant', 3, 5)
+    trie.insert(b'bob', 4, 7)
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs[0] == b'an'
-    assert tokens[0] == [b'an', b'ant']
+    assert reprs[0] == 1
+    assert tokens[0] == [1, 3]
     assert probs[0] == 8
     st = trie.subtree(reprs[0])
     assert st is not None
     reprs, tokens, probs = zip(*st.distribution())
-    assert tokens[0] == [b'an', b'ant']
-    assert reprs[0] == b'an'
+    assert tokens[0] == [1, 3]
+    assert reprs[0] == 1
     assert probs[0] == 8
     assert len(probs) == 1
     assert len(reprs) == 1
@@ -258,8 +258,8 @@ def test_resample_multi_split_pseudo():
 
 def test_empty_label_split():
     trie = TokenTrie()
-    trie.insert(b'ABC', 2, token=234)
-    trie.insert(b'AB', 3, token=123)
+    trie.insert(b'ABC', token=234, probability=2)
+    trie.insert(b'AB', token=123, probability=3)
     assert trie.edges[b'AB'].token == 123
     assert trie.edges[b'AB'].probability == 3
     assert b'' not in trie.edges[b'AB'].edges
