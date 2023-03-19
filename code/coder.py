@@ -61,7 +61,7 @@ def is_sent_finish(token_idx, enc):
 
 def num_same_from_beg(bits1, bits2):
     assert len(bits1) == len(bits2)
-    assert len(bits1) > 0
+    i = 0
     for i in range(len(bits1)):
         if bits1[i] != bits2[i]:
             break
@@ -542,7 +542,9 @@ class TokenProbabilities:
         return iter(astuple(self))
 
 
-def get_token_probabilities(model: GPT2LMHeadModel, context: Optional[torch.LongTensor], past_key_values: Optional[Tuple[Tuple[torch.Tensor]]], temp: float, topk: int, precision: int, sort: bool, device: str) -> TokenProbabilities:
+def get_token_probabilities(model: GPT2LMHeadModel, context: torch.LongTensor,
+                            past_key_values: Optional[Tuple[Tuple[torch.Tensor]]], temp: float, topk: int,
+                            precision: int, sort: bool, device: str) -> TokenProbabilities:
     max_val = 2 ** precision
     cur_interval = [0, max_val]  # bottom inclusive, top exclusive
 
@@ -606,7 +608,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel,
                                   temp: float = 1.0,
                                   precision: int = 16,
                                   topk: int = 50000,
-                                  is_sort: bool = False):
+                                  is_sort: bool = False) -> tuple[list, float, float, float, float, dict[str, any]]:
     logging.debug(f'will embed message {message}, {len(message)} bytes, precision {precision}')
     x = message
     message = bitarray.bitarray()
@@ -724,7 +726,7 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel,
     avg_KL = total_kl / total_num_for_stats
     avg_Hq = total_entropy_ptau / total_num_for_stats
     words_per_bit = total_num_for_stats / i
-    stats: Dict[str, object] = {"encoded_bits_in_output": encoded_bits_in_output, "entropies": entropies_for_stats}
+    stats: Dict[str, any] = {"encoded_bits_in_output": encoded_bits_in_output, "entropies": entropies_for_stats}
 
     return output[context_len:].tolist(), avg_NLL, avg_KL, words_per_bit, avg_Hq, stats
 
@@ -750,7 +752,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel,
     trie = TokenTrie.from_tokenizer(enc)
 
     mask_generator = DRBG(key, sample_seed_prefix + nonce)
-    context = torch.tensor(context[-1022:], device=device, dtype=torch.long)
+    context = torch.LongTensor(context[-1022:], device=device)
 
     max_val = 2 ** precision
     threshold = 2 ** (-precision)
@@ -767,7 +769,7 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel,
             logging.debug(f'{i}: prev = {prev}')
             indices, past, probs_int, _ = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                                                   temp=temp, topk=topk, precision=precision,
-                                                                  sort=bin_sort if is_sort else None, device=device)
+                                                                  sort=is_sort, device=device)
             # indices, probs_int = sort_tokens(enc, indices, probs_int)
             # cum_probs = cumsum_adjust(probs_int, precision=precision)
             trie.update(zip(indices, probs_int))
@@ -1499,7 +1501,7 @@ def encode_arithmetic(model: GPT2LMHeadModel, enc: GPT2Tokenizer, message: List[
                 # Get selected index based on binary fraction from message bits
                 message_bits = message[i:i + precision]
                 if i + precision > len(message):
-                    message_bits = message_bits + [0] * (i + precision - len(message))
+                    message_bits = message_bits + [False] * (i + precision - len(message))
                 message_idx = bits2int(reversed(message_bits))
                 selection = (cum_probs > message_idx).nonzero()[0].item()
 
