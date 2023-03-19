@@ -6,6 +6,28 @@ from typing import Tuple, List, Optional
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 
+# TODO this is a kinda hacky way to find non-decodable tokens
+def convert_tokens_to_string(enc: GPT2Tokenizer, tokens: [str], errors: str):
+    """Converts a sequence of tokens (string) in a single string."""
+    text = "".join(tokens)
+    text = bytearray([enc.byte_decoder[c] for c in text]).decode("utf-8", errors=errors)
+    return text
+
+
+def decode_w_errs(enc: GPT2Tokenizer, token_ids: list[int], errors: str, **kwargs) -> Tuple[str, List[str]]:
+    filtered_tokens = enc.convert_ids_to_tokens(token_ids, kwargs)
+    text = convert_tokens_to_string(enc, filtered_tokens, errors)
+    return text, filtered_tokens
+
+
+def non_decodable_tokens(enc: GPT2Tokenizer) -> list[int]:
+    l = []
+    for t, s in enc.decoder.items():
+        if decode_w_errs(enc, [t], errors='replace') != decode_w_errs(enc, [t], errors='surrogateescape'):
+            l.append(t)
+    return l
+
+
 def get_model(seed=1234, model_name='gpt2', device='cuda') -> (GPT2Tokenizer, GPT2LMHeadModel):
     import numpy as np
     import torch

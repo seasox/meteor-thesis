@@ -12,6 +12,7 @@ import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
+import util
 from trie import TokenTrie
 
 sample_seed_prefix = b'sample'
@@ -544,7 +545,8 @@ class TokenProbabilities:
 
 def get_token_probabilities(model: GPT2LMHeadModel, context: torch.LongTensor,
                             past_key_values: Optional[Tuple[Tuple[torch.Tensor]]], temp: float, topk: int,
-                            precision: int, sort: bool, device: str) -> TokenProbabilities:
+                            precision: int, sort: bool, device: str,
+                            ignore_tokens: list[int] = []) -> TokenProbabilities:
     max_val = 2 ** precision
     cur_interval = [0, max_val]  # bottom inclusive, top exclusive
 
@@ -552,6 +554,8 @@ def get_token_probabilities(model: GPT2LMHeadModel, context: torch.LongTensor,
     logits = result.logits
     past = result.past_key_values
     past = limit_past(past)
+    for t in ignore_tokens:
+        logits[0, -1, t] = -1e20
     # logits[0, -1, -1] = -1e20  # endoftext token can't happen
     logits[0, -1, 628] = -1e20  # 2 newlines token can't happen
     logits, indices = logits[0, -1, :].sort(descending=True)
@@ -639,7 +643,8 @@ def encode_meteor_binned_resample(model: GPT2LMHeadModel,
             indices, past, probs_int, log_probs = get_token_probabilities(model=model, context=prev,
                                                                           past_key_values=past, temp=temp,
                                                                           topk=topk, precision=precision,
-                                                                          sort=is_sort, device=device)
+                                                                          sort=is_sort, device=device,
+                                                                          ignore_tokens=util.non_decodable_tokens(enc))
             trie.update(zip(indices, probs_int))
             reprs, tokens, probs = zip(*trie.distribution())
             probs = torch.tensor(probs, device=device)
@@ -769,7 +774,8 @@ def decode_meteor_binned_resample(model: GPT2LMHeadModel,
             logging.debug(f'{i}: prev = {prev}')
             indices, past, probs_int, _ = get_token_probabilities(model=model, context=prev, past_key_values=past,
                                                                   temp=temp, topk=topk, precision=precision,
-                                                                  sort=is_sort, device=device)
+                                                                  sort=is_sort, device=device,
+                                                                  ignore_tokens=util.non_decodable_tokens(enc))
             # indices, probs_int = sort_tokens(enc, indices, probs_int)
             # cum_probs = cumsum_adjust(probs_int, precision=precision)
             trie.update(zip(indices, probs_int))
@@ -1739,6 +1745,7 @@ class DRBG(object):
 class MeteorStatistics:
     message: bytes
     context: List[int]
+    context_str: str
     stegotext: str
     stegotext_tokens: List[str]
     key: bytes
@@ -1789,7 +1796,7 @@ class MeteorCoder:
         # logging.debug('tokens: ', tokens)
         logging.debug("=" * 90)
 
-        stats = MeteorStatistics(message, context_tokens, text, tokens, key, nonce, precision,
+        stats = MeteorStatistics(message, context_tokens, '', text, tokens, key, nonce, precision,
                                  topk, math.exp(nll), kl, words_per_bit, Hq / 0.69315, stats['entropies'], -1)
         return text, out, stats
 

@@ -79,23 +79,48 @@ def save_stats(fname, stats: List[MeteorStatistics]):
         pickle.dump(stats, f)
 
 
-def analyse_stats(fname, format):
+def analyse_stats(fname):
+    import csv
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from visualize_stats import flat_map
+    from collections import Counter
+    # load stats
     f = open(fname, 'rb')
     dat: list[MeteorStatistics] = pickle.load(f)
-    from trie import flat_map
-    print(flat_map(lambda d: d.entropies, dat))
-    if format == 'csv':
-        import csv
-        csv = csv.writer(open('out.csv', 'w'))
-        csv.writerow(['context', 'stegotext'])
-        csv.writerows([[x.context_str, x.stegotext] for x in dat])
-    else:
-        import torch
-        entropies = torch.Tensor([x.entropy for x in dat])
-        stegotext_lens = torch.Tensor([len(x.stegotext_tokens) for x in dat])
-        avg_entropy = (entropies * stegotext_lens / stegotext_lens.sum()).sum()
-        print(torch.stack((stegotext_lens, entropies)))
-        print(avg_entropy)
+    # write context,stegotext as csv
+    csv = csv.writer(open('stats/out.csv', 'w'))
+    csv.writerow(['context', 'stegotext'])
+    csv.writerows([[x.context_str, x.stegotext.encode('utf-8', errors='replace')] for x in dat])
+    # generate entropy plot
+    entropies = flat_map(lambda x: x.entropies, dat)
+    rounded_entropies = [round(e, 1) for e in entropies]
+    c = Counter(rounded_entropies)
+    names, counts = zip(*sorted(c.items()))
+    names = [n for n in names]
+    counts = [c for c in counts]
+    plt.title(f'Entropies (n={len(entropies)})')
+    plt.plot(names, counts, 'g.', label='entropy')
+    plt.yscale('log')
+    plt.vlines(x=np.average(entropies), ymin=0, ymax=max(counts), colors='red',
+               label=f'average ({round(np.average(entropies), 2)})')
+    plt.vlines(x=np.median(entropies), ymin=0, ymax=max(counts), colors='blue',
+               label=f'median ({round(np.median(entropies), 2)})')
+    plt.legend()
+    plt.show()
+    # generate words per bit plot
+    words_per_bit = [d.words_per_bit for d in dat]
+    plt.close()
+    plt.title(f'Word per Bit (n={len(words_per_bit)})')
+    plt.plot(words_per_bit, 'g.', label='words per bit')
+    plt.xlabel('Experiment #')
+    plt.ylabel('words per bit')
+    plt.hlines(y=np.average(words_per_bit), xmin=0, xmax=len(words_per_bit), colors='red',
+               label=f'average ({round(np.average(words_per_bit), 2)})')
+    plt.hlines(y=np.median(words_per_bit), xmin=0, xmax=len(words_per_bit), colors='blue',
+               label=f'median ({round(np.median(words_per_bit), 2)})')
+    plt.legend()
+    plt.show()
 
 
 def main():
@@ -110,7 +135,7 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S')
 
     if options.analyse:
-        analyse_stats(options.analyse, options.analyse_format)
+        analyse_stats(options.analyse)
         return
 
     logging.info('get model')
@@ -127,7 +152,8 @@ def main():
     num_rounds = 0
     while repeat:
         if options.random_context:
-            chosen_context = get_random_wiki()[1] + '\n\n'
+            chosen_context = get_random_wiki()[1]
+        chosen_context += '\n'
         key = file_read_bin(options.key) or os.urandom(64)
         nonce = file_read_bin(options.nonce) or os.urandom(64)
         start = time.time()
