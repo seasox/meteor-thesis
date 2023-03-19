@@ -43,11 +43,11 @@ class TokenTrie:
                 raise Exception(f'insert inconsistency: {label}')
         return self
 
-    def update(self, probabilities: Iterable[Tuple[torch.Tensor, int]]):
+    def update(self, probabilities: Iterable[Tuple[torch.Tensor, torch.Tensor]]):
         for k, trie in self.lookup.items():
-            trie.probability = None
+            trie.probability = 0
         for label, prob in probabilities:
-            self.lookup[label.item()].probability = prob
+            self.lookup[label.item()].probability = prob.item()
 
     def insert(self, label: bytes, token: int, probability=None) -> 'TokenTrie':
         assert token not in self.lookup
@@ -62,7 +62,7 @@ class TokenTrie:
                 continue
             if e == label:
                 # we're done, set data and probability (or raise exception if double insert)
-                if self.edges[e].probability is not None:
+                if self.edges[e].probability:
                     raise Exception('element already in trie with probability')
                 self.edges[e].token = token
                 self.edges[e].probability = probability
@@ -97,7 +97,7 @@ class TokenTrie:
         return self.edges[label]
 
     def tokens(self) -> List[int]:
-        return ([self.token] if self.token is not None and self.probability is not None else []) \
+        return ([self.token] if self.token is not None else []) \
             + list(flat_map(lambda x: x.tokens(), self.edges.values()))
 
     def probabilities(self) -> list[int]:
@@ -112,21 +112,16 @@ class TokenTrie:
                 distr += t.distribution()
             return distr
         if not self.edges:
-            if self.probability is None:
-                return []
             # the current node is a leaf
             return [(self.token, [self.token], self.probability)]
         probs = sum(self.probabilities())
-        if probs == 0:
-            # empty subtree
-            return []
         # the current node has a probability assigned and child nodes -> not uniquely decodable
-        return [(self.token, self.tokens(), sum(self.probabilities()))]
+        return [(self.token, self.tokens(), probs)]
 
     def visualize(self, level=0, max_depth=None) -> str:
         # todo graphviz?
         label = f"{self.label}"
-        if self.probability is not None:
+        if self.token is not None:
             label += f' ({self.token}, {self.probability})'
         indent = '    ' * level
         tr = f'{label}'
@@ -275,7 +270,9 @@ def test_empty_label_split():
 
 def test_from_labels():
     trie = TokenTrie.from_labels([(0, b'Alice'), (1, b'an',), (2, b'ant'), (3, b'a')])
-    trie.update([(torch.Tensor([0]), 1), (torch.Tensor([1]), 4), (torch.Tensor([2]), 7), (torch.Tensor([3]), 22)])
+    tokens = torch.Tensor([0, 1, 2, 3])
+    probs = torch.Tensor([1, 4, 7, 22])
+    trie.update(zip(tokens, probs))
     reprs, tokens, probs = zip(*trie.distribution())
     assert reprs == (0, 3)
     assert tokens == ([0], [3, 1, 2])
@@ -289,15 +286,17 @@ def test_from_labels():
 
 def test_update_reset():
     trie = TokenTrie.from_labels([(0, b'Alice'), (1, b'an',), (2, b'ant'), (3, b'a')])
-    trie.update([(torch.Tensor([0]), 1), (torch.Tensor([1]), 4), (torch.Tensor([2]), 7), (torch.Tensor([3]), 22)])
+    tokens = torch.Tensor([0, 1, 2, 3])
+    probs = torch.Tensor([1, 4, 7, 22])
+    trie.update(zip(tokens, probs))
     reprs, tokens, probs = zip(*trie.distribution())
     assert reprs == (0, 3)
     assert tokens == ([0], [3, 1, 2])
     assert probs == (1, 33)
     trie.update([])
-    assert trie.distribution() == []
-    trie.update([(torch.Tensor([2]), 22)])
+    assert trie.distribution() == [(0, [0], 0), (3, [3, 1, 2], 0)]
+    trie.update([(torch.Tensor([2]), torch.Tensor([22]))])
     reprs, tokens, probs = zip(*trie.distribution())
-    assert reprs == (3,)
-    assert tokens == ([2],)
-    assert probs == (22,)
+    assert reprs == (0, 3,)
+    assert tokens == ([0], [3, 1, 2])
+    assert probs == (0, 22)
