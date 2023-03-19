@@ -1,4 +1,4 @@
-torch == 1.13.1
+torch == 2.0
 transformers == 4.25.1
 bitarray == 1.0.1
 cryptography == 36.0.2

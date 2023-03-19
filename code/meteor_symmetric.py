@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 import time
 from optparse import OptionParser
 from typing import Optional, List
@@ -39,15 +40,26 @@ def parse_options():
     parser = OptionParser()
     parser.add_option('--message', dest='message', help='message to encode', default='water')
     parser.add_option('--stegotext', dest='stegotext', help='stegotext to decode', default=None)
-    parser.add_option('--random-context', action='store_true', dest='random_context', help='Use a random context from wikipedia', default=False)
-    parser.add_option('--context', dest='context', help='initial context', default='Give me a good example for a dilemma.\n\n')
+    parser.add_option('--random-context', action='store_true', dest='random_context',
+                      help='Use a random context from wikipedia', default=False)
+    parser.add_option('--context', dest='context', help='initial context',
+                      default='Give me a good example for a dilemma.\n\n')
     parser.add_option('--key', dest='key', help='key file (defaults to random key)', default=None)
     parser.add_option('--key-out', dest='key_out', help='key out file (defaults to key.bin)', default='key.bin')
     parser.add_option('--nonce', dest='nonce', help='nonce (defaults to random nonce)', default=None)
-    parser.add_option('--nonce-out', dest='nonce_out', help='nonce out file (defaults to random nonce.bin)', default='nonce.bin')
-    parser.add_option('--repeat', action='store_true', dest='repeat', help='repeat encode/decode (test mode)', default=False)
+    parser.add_option('--nonce-out', dest='nonce_out', help='nonce out file (defaults to random nonce.bin)',
+                      default='nonce.bin')
+    parser.add_option('--repeat', action='store_true', dest='repeat', help='repeat encode/decode (test mode)',
+                      default=False)
     parser.add_option('--stats', dest='stats', help='statistics output file', default=None)
+    parser.add_option('--analyse', dest='analyse', help='analyse statistics file', default=None)
+    parser.add_option('--analyse-format', dest='analyse_format',
+                      help='Analyser Format (for use in conjunction with --analyse', default=None)
+    parser.add_option('--analyse-tokens', action='store_true', dest='analyse_tokens', help='Analyse Tokens',
+                      default=False)
     parser.add_option('-n', dest='count', help='number of repetitions (mostly for statistic runs', default=1, type=int)
+    parser.add_option('-v', dest='verbose', action='count', help='Increase verbosity (-v: verbose, -vv: debug)',
+                      default=0)
     (options, args) = parser.parse_args()
 
     return options, args
@@ -67,13 +79,39 @@ def save_stats(fname, stats: List[MeteorStatistics]):
         pickle.dump(stats, f)
 
 
+def analyse_stats(fname, format):
+    f = open(fname, 'rb')
+    dat: list[MeteorStatistics] = pickle.load(f)
+    from trie import flat_map
+    print(flat_map(lambda d: d.entropies, dat))
+    if format == 'csv':
+        import csv
+        csv = csv.writer(open('out.csv', 'w'))
+        csv.writerow(['context', 'stegotext'])
+        csv.writerows([[x.context_str, x.stegotext] for x in dat])
+    else:
+        import torch
+        entropies = torch.Tensor([x.entropy for x in dat])
+        stegotext_lens = torch.Tensor([len(x.stegotext_tokens) for x in dat])
+        avg_entropy = (entropies * stegotext_lens / stegotext_lens.sum()).sum()
+        print(torch.stack((stegotext_lens, entropies)))
+        print(avg_entropy)
+
+
 def main():
+    options, args = parse_options()
+    verbosity = options.verbose
+    verbosity = logging.WARNING if verbosity == 0 \
+        else logging.INFO if verbosity == 1 \
+        else logging.DEBUG
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
+        level=verbosity,
         datefmt='%Y-%m-%d %H:%M:%S')
 
-    options, args = parse_options()
+    if options.analyse:
+        analyse_stats(options.analyse, options.analyse_format)
+        return
 
     logging.info('get model')
     model_name = 'gpt2-medium'
@@ -98,10 +136,12 @@ def main():
             print(f'chosen_context = "{chosen_context}"')
             print(f'key = {key}')
             print(f'nonce = {nonce}')
-            stegotext, enc_tokens, stats = coder.encode_message(message_text, chosen_context, key, nonce, coding='arithmetic')
-            assert enc.decode(enc.encode(enc_tokens))[0]==stegotext
+            stegotext, enc_tokens, stats = coder.encode_message(message_text, chosen_context, key, nonce,
+                                                                coding='utf-8')
             print(f"stegotext = {stegotext.encode('utf-8', errors=enc.errors)}.decode('utf-8', errors=enc.errors)")
             print(f'enc_tokens = {enc_tokens}')
+            assert enc.decode(enc_tokens, skip_special_tokens=True)[
+                       0] == stegotext, f'enc.decode({enc_tokens})[0]!={stegotext}'
             end = time.time()
             logging.info("Encode took {:.02f} s; generated {} bytes of stegotext".format(end - start, len(stegotext)))
             logging.info(f'save key to file {options.key_out}')
@@ -113,6 +153,7 @@ def main():
             f.write(nonce)
             f.close()
             if options.stats:
+                stats.context_str = chosen_context
                 stats.timing = end - start
                 logging.info(stats)
                 all_stats = load_stats(options.stats)
@@ -122,12 +163,14 @@ def main():
             enc_tokens = None
         if options.stegotext is not None or options.repeat:
             start = time.time()
-            y = coder.decode_message(stegotext, chosen_context, key, nonce, coding='arithmetic', enc_tokens=enc_tokens)
+            y = coder.decode_message(stegotext, chosen_context, key, nonce, coding='utf-8', enc_tokens=enc_tokens)
             end = time.time()
             logging.info("Decode took {:.02f} s".format(end - start))
-            assert y[:len(message_text)] == message_text[:len(y)], f'{y} != {message_text}'
+            assert y[:len(message_text)] == message_text[
+                                            :len(y)], f'{y.encode("utf-8")} != {message_text.encode("utf-8")}'
             if y != message_text:
-                logging.warning(f'WARNING: recovered message has additional data or not embedded completely: y={y}; message_text={message_text}')
+                logging.warning(
+                    f'WARNING: recovered message has additional data or not embedded completely: y={y}; message_text={message_text}')
         options.count -= 1
         repeat = options.repeat or options.count
         num_rounds += 1
