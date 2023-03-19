@@ -6,7 +6,7 @@ from typing import Tuple, List, Optional
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 
-def get_model(seed=1234, model_name='gpt2', device='cuda') -> (GPT2LMHeadModel, GPT2Tokenizer):
+def get_model(seed=1234, model_name='gpt2', device='cuda') -> (GPT2Tokenizer, GPT2LMHeadModel):
     import numpy as np
     import torch
     np.random.seed(seed)
