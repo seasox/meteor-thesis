@@ -83,11 +83,11 @@ def analyse_stats(fname):
     import csv
     import matplotlib.pyplot as plt
     import numpy as np
-    from visualize_stats import flat_map
+    from trie import flat_map
     from collections import Counter
     # load stats
     f = open(fname, 'rb')
-    dat: list[MeteorStatistics] = pickle.load(f)
+    dat: list[MeteorStatistics] = pickle.load(f)[-1000:]
     # write context,stegotext as csv
     csv = csv.writer(open('stats/out.csv', 'w'))
     csv.writerow(['context', 'stegotext'])
@@ -99,8 +99,24 @@ def analyse_stats(fname):
     names, counts = zip(*sorted(c.items()))
     names = [n for n in names]
     counts = [c for c in counts]
+    def plot(title, data, legend, xlabel, ylabel):
+        plt.close()
+        plt.title(f'{title} (n={len(data)}, temp=0.8)')
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.plot(data, 'g.', label=legend)
+        plt.hlines(y=np.average(data), xmin=0, xmax=len(data), colors='red',
+                   label=f'average ({round(np.average(data), 2)})')
+        plt.hlines(y=np.median(data), xmin=0, xmax=len(data), colors='blue',
+                   label=f'median ({round(np.median(data), 2)})')
+        plt.legend()
+        plt.show()
+    plot('Entropies', entropies, 'Entropy', 'Experiment no.', 'Entropy in bits')
+    # grouped bar plot
+    plt.xlabel('Entropy in bits')
+    plt.ylabel('No. of experiments')
     plt.title(f'Entropies (n={len(entropies)})')
-    plt.plot(names, counts, 'g.', label='entropy')
+    plt.plot(names, counts, 'g.', label='Entropy')
     plt.yscale('log')
     plt.vlines(x=np.average(entropies), ymin=0, ymax=max(counts), colors='red',
                label=f'average ({round(np.average(entropies), 2)})')
@@ -110,17 +126,10 @@ def analyse_stats(fname):
     plt.show()
     # generate words per bit plot
     words_per_bit = [d.words_per_bit for d in dat]
-    plt.close()
-    plt.title(f'Word per Bit (n={len(words_per_bit)})')
-    plt.plot(words_per_bit, 'g.', label='words per bit')
-    plt.xlabel('Experiment #')
-    plt.ylabel('words per bit')
-    plt.hlines(y=np.average(words_per_bit), xmin=0, xmax=len(words_per_bit), colors='red',
-               label=f'average ({round(np.average(words_per_bit), 2)})')
-    plt.hlines(y=np.median(words_per_bit), xmin=0, xmax=len(words_per_bit), colors='blue',
-               label=f'median ({round(np.median(words_per_bit), 2)})')
-    plt.legend()
-    plt.show()
+    plot('Words per Bit', words_per_bit, 'Words per bit', 'Experiment no.', 'No. of words')
+    # generate stegotext lengths plot
+    stegotext_lengths = [len(d.stegotext) for d in dat]
+    plot('Stegotext Lengths', stegotext_lengths, 'Stegotext Length in bytes', 'Experiment no', 'Bytes')
 
 
 def main():
